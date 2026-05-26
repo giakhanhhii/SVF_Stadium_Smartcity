@@ -5,6 +5,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { domeConfig, getRoofStatusLabel, stadiumSceneData } from '../data/stadium-scene.js';
 import { getMarkerGroup, setMarkers, pulseMarkers } from './stadium-markers.js';
 import { tweenCamera, setSceneHint, showSceneLoading, applyCameraPreset } from './stadium-camera.js';
+import { setupStadiumEnvironment, disposeStadiumEnvironment } from './stadium-environment.js';
 
 let activeScene = null;
 let stadiumModel = null;
@@ -24,7 +25,7 @@ function setupRenderer(container) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.15;
+  renderer.toneMappingExposure = 1.22;
   container.appendChild(renderer.domElement);
   rendererEl = renderer.domElement;
   return { renderer, w, h };
@@ -34,19 +35,32 @@ function setupLighting(scene, renderer) {
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   pmrem.dispose();
-  scene.add(new THREE.HemisphereLight(0x87ceeb, 0x4a6b4a, 0.5));
-  const sun = new THREE.DirectionalLight(0xfff4e8, 1.25);
+  scene.add(new THREE.HemisphereLight(0xa8cce8, 0x3a4a38, 0.55));
+  const sun = new THREE.DirectionalLight(0xfff0d8, 0.85);
   sun.position.set(-90, 140, 70);
   scene.add(sun);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+
+  const ring = new THREE.Group();
+  ring.name = 'interior_flood';
+  for (let i = 0; i < 36; i++) {
+    const a = (i / 36) * Math.PI * 2;
+    const light = new THREE.PointLight(0xfff6e8, 0.55, 140, 1.6);
+    light.position.set(Math.sin(a) * 78, 24, Math.cos(a) * 62);
+    ring.add(light);
+  }
+  scene.add(ring);
+
+  const overhead = new THREE.DirectionalLight(0xfff8f0, 0.45);
+  overhead.position.set(0, 90, 20);
+  scene.add(overhead);
 }
 
 function createScene(container, pageId) {
   showSceneLoading(container, true);
   const { renderer, w, h } = setupRenderer(container);
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xa8cce8);
-  scene.fog = new THREE.Fog(0xa8cce8, 250, 500);
+  setupStadiumEnvironment(scene);
   setupLighting(scene, renderer);
 
   const camera = new THREE.PerspectiveCamera(42, w / h, 1, 500);
@@ -57,14 +71,6 @@ function createScene(container, pageId) {
   controls.minDistance = 45;
   controls.maxDistance = 320;
   applyCameraPreset(camera, controls, pageId);
-
-  const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(230, 40),
-    new THREE.MeshStandardMaterial({ color: 0x4a7c4e, roughness: 0.95 }),
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.1;
-  scene.add(ground);
 
   scene.add(getMarkerGroup());
 
@@ -107,6 +113,7 @@ function createScene(container, pageId) {
       cancelAnimationFrame(frameId);
       ro.disconnect();
       controls.dispose();
+      disposeStadiumEnvironment(scene);
       scene.traverse((obj) => {
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) {
@@ -140,11 +147,15 @@ export function applyPageView(pageId, container) {
 function applyRoofState(progress) {
   if (!roofOpenGroup) return;
   roofOpenGroup.visible = progress > 0.02;
+  const slide = (1 - progress) * domeConfig.panelSlide;
   const panelW = roofOpenGroup.getObjectByName('roof_panel_west');
   const panelE = roofOpenGroup.getObjectByName('roof_panel_east');
-  const slide = (1 - progress) * domeConfig.panelSlide;
+  const ridgeW = roofOpenGroup.getObjectByName('roof_ridge_west');
+  const ridgeE = roofOpenGroup.getObjectByName('roof_ridge_east');
   if (panelW) panelW.position.x = -domeConfig.panelRestX - slide;
   if (panelE) panelE.position.x = domeConfig.panelRestX + slide;
+  if (ridgeW) ridgeW.position.x = -domeConfig.panelRestX - 17.2 - slide;
+  if (ridgeE) ridgeE.position.x = domeConfig.panelRestX + 17.2 + slide;
 }
 
 export function setRoofProgress(p) {

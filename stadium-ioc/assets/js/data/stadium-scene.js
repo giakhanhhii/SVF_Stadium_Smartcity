@@ -1,8 +1,8 @@
 export const domeConfig = {
-  rimY: 35,
-  panelY: 66.2,
-  panelSlide: 32,
-  panelRestX: 17,
+  rimY: 30,
+  panelY: 73.6,
+  panelSlide: 42,
+  panelRestX: 22,
 };
 
 export const stadiumSceneData = {
@@ -17,7 +17,7 @@ export const stadiumSceneData = {
     overview: [
       { type: 'event', pos: [0, 1, 0], color: 0xef9f27, label: 'Hiệp 2' },
       { type: 'crowd', pos: [-42, 22, -28], color: 0xe24b4a, label: 'B cao' },
-      { type: 'roof', pos: [0, 58, 0], color: 0xef9f27, label: 'Mái vòm' },
+      { type: 'roof', pos: [0, 48, 0], color: 0xef9f27, label: 'Mái vòm' },
     ],
     security: [
       { type: 'camera', pos: [0, 8, -38], color: 0x97c459, label: 'CAM-S1' },
@@ -30,7 +30,7 @@ export const stadiumSceneData = {
     ],
     facilities: [
       { type: 'hvac', pos: [-68, 14, -48], color: 0x1d9e75, label: 'HVAC-A' },
-      { type: 'roof', pos: [0, 58, 0], color: 0xef9f27, label: 'Mái vòm' },
+      { type: 'roof', pos: [0, 48, 0], color: 0xef9f27, label: 'Mái vòm' },
     ],
     services: [
       { type: 'parking', pos: [-145, 2, -95], color: 0x534ab7, label: 'P1 85%' },

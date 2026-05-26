@@ -1,3 +1,7 @@
+import { getCrowdSnapshot } from './crowd-state.js';
+
+const snap = getCrowdSnapshot();
+
 export const eventsHud = {
   left: {
     match: {
@@ -22,7 +26,11 @@ export const eventsHud = {
       ],
     },
     modeTabs: ['Trực tiếp', 'Trước trận'],
-    attendance: { title: 'Khán giả', label: 'Sức chứa 60.000', value: '87%' },
+    attendance: {
+      title: 'Khán giả',
+      label: `Sức chứa ${snap.capacityFormatted}`,
+      value: `${snap.fillPercent}%`,
+    },
     entryBars: {
       title: 'Lưu lượng vào sân',
       subtitle: 'người/15 phút',
@@ -56,7 +64,7 @@ export const eventsHud = {
       title: 'Chỉ số vận hành sự kiện',
       tabs: ['Khán giả', 'F&B', 'An ninh'],
       stats: [
-        { label: 'Khán giả hiện tại', value: '34.812', trend: 'up', change: '87%' },
+        { label: 'Khán giả hiện tại', value: snap.totalFormatted, trend: 'up', change: `${snap.fillPercent}%` },
         { label: 'Thời gian mở cổng', value: '16:00', trend: 'up', change: 'Đúng KH' },
         { label: 'Kick-off', value: '19:30', trend: 'up', change: 'Đúng giờ' },
         { label: 'Dự kiến kết thúc', value: '21:45', trend: 'up', change: '+2 ph' },

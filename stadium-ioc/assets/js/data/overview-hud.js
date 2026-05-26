@@ -1,10 +1,14 @@
+import { getCrowdSnapshot } from './crowd-state.js';
+
+const snap = getCrowdSnapshot();
+
 export const overviewHud = {
   left: {
     venue: {
       title: 'Trạng thái sân PVF',
-      capacity: '34.812',
-      capacityLabel: 'Khán giả / 60.000 chỗ',
-      pct: 87,
+      capacity: snap.totalFormatted,
+      capacityLabel: `Khán giả / ${snap.capacityFormatted} chỗ`,
+      pct: snap.fillPercent,
       event: 'Trận Vòng 12 — Hiệp 2 · 67\'',
       score: '2 : 1',
     },

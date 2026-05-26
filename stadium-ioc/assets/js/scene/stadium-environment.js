@@ -31,7 +31,7 @@ function addMountains(scene) {
     const w = 80 + (i % 3) * 40;
     const h = 35 + (i % 4) * 18;
     const mesh = new THREE.Mesh(new THREE.ConeGeometry(w, h, 4), mat);
-    mesh.position.set(Math.sin(a) * 320, h * 0.35 - 8, Math.cos(a) * 320);
+    mesh.position.set(Math.sin(a) * 680, h * 0.35 - 8, Math.cos(a) * 680);
     mesh.rotation.y = a + Math.PI;
     g.add(mesh);
   }
@@ -47,7 +47,7 @@ function addCitySilhouette(scene) {
     const h = 12 + (i % 5) * 8;
     const w = 8 + (i % 3) * 4;
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mat);
-    mesh.position.set(Math.sin(a) * 260, h / 2 - 4, Math.cos(a) * 260);
+    mesh.position.set(Math.sin(a) * 540, h / 2 - 4, Math.cos(a) * 540);
     g.add(mesh);
   }
   scene.add(g);
@@ -55,10 +55,10 @@ function addCitySilhouette(scene) {
 
 export function setupStadiumEnvironment(scene) {
   scene.background = makeSkyTexture();
-  scene.fog = new THREE.Fog(0xb0cce4, 100, 360);
+  scene.fog = new THREE.Fog(0xb0cce4, 220, 820);
 
   const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(280, 48),
+    new THREE.CircleGeometry(620, 48),
     new THREE.MeshStandardMaterial({ color: 0x5a9e5e, roughness: 0.95 }),
   );
   ground.rotation.x = -Math.PI / 2;

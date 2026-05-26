@@ -1,14 +1,15 @@
+import { getCrowdSnapshot } from './crowd-state.js';
+
+const snap = getCrowdSnapshot();
+
 export const securityHud = {
   left: {
     crowd: {
       title: 'Mật độ đám đông',
-      total: 34812,
+      total: snap.total,
       totalLabel: 'Khán giả hiện tại',
-      groups: [
-        { label: 'Khán đài A', value: 9200, tone: 'cyan' },
-        { label: 'Khán đài B', value: 9800, tone: 'purple' },
-        { label: 'Khán đài C', value: 8500, tone: 'blue' },
-      ],
+      fillPercent: snap.fillPercent,
+      groups: snap.groups,
     },
     cameras: {
       title: 'Camera sân PVF',
@@ -26,14 +27,10 @@ export const securityHud = {
     densityBars: {
       title: 'Mật độ theo khán đài',
       subtitle: 'người/m² — cập nhật 5s',
-      bars: [
-        { time: 'A', value: 8 },
-        { time: 'B', value: 10 },
-        { time: 'C', value: 7 },
-        { time: 'VIP', value: 5 },
-        { time: 'Plaza', value: 4 },
-        { time: 'P4', value: 9 },
-      ],
+      bars: snap.sectors.map((s) => ({
+        time: s.label.replace('Khán đài ', ''),
+        value: Math.round(4 + s.fillPercent * 0.08),
+      })),
     },
   },
   right: {
@@ -66,7 +63,7 @@ export const securityHud = {
     alerts: [
       { tag: 'KHẨN CẤP', tagBg: '#401818', tagColor: '#E24B4A', title: 'Mật độ vượt ngưỡng — Khán đài B', time: '3 phút' },
       { tag: 'CẢNH BÁO', tagBg: '#3d3010', tagColor: '#BA7517', title: 'Vật thể lạ — Hậu trường C', time: '12 phút' },
-      { tag: 'XỬ LÝ', tagBg: '#0a3028', tagColor: '#1D9E75', title: 'Tranh cãi cổng A — Đã giải quyết', time: '28 phút' },
+      { tag: 'XỬ LÝ', tagBg: '#0a3020', tagColor: '#1D9E75', title: 'Tranh cãi cổng A — Đã giải quyết', time: '28 phút' },
     ],
   },
 };

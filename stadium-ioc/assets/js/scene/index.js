@@ -14,3 +14,5 @@ export function initPageScenes(pageId) {
 }
 
 export { setRoofProgress, getRoofProgress, applyPageView } from './stadium-scene.js';
+export { setCrowdFillPercent } from './stadium-crowd.js';
+export { getCrowdSnapshot, setFillPercent, setCrowdTotal } from '../data/crowd-state.js';

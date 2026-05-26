@@ -29,6 +29,7 @@ function makeLabel(text, color) {
 }
 
 export function getMarkerGroup() {
+  markerGroup.frustumCulled = false;
   return markerGroup;
 }
 

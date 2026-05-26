@@ -10,13 +10,24 @@ import { getMarkerGroup, setMarkers, pulseMarkers } from './stadium-markers.js';
 import { tweenCamera, setSceneHint, showSceneLoading, applyCameraPreset } from './stadium-camera.js';
 import { setupStadiumEnvironment, disposeStadiumEnvironment } from './stadium-environment.js';
 import { initStadiumCrowd, updateStadiumCrowd, disposeStadiumCrowd } from './stadium-crowd.js';
+import {
+  buildControlRooms, bindControlRoomPick, setControlRoomsVisible, disposeControlRooms,
+} from './stadium-control-rooms.js';
+import {
+  buildSecurityInterior, enterSecurityInterior, exitSecurityInterior,
+  updateSecurityMonitors, bindSecurityMonitorPick, disposeSecurityInterior,
+  isSecurityInteriorActive, feedToViewId, setSecurityInteriorVisible, reenterSecurityInterior,
+  setMonitorFeedHooks,
+  applySecurityRoomView, requestSecurityRoomView, prepareStadiumViewFromRoom,
+} from './stadium-security-interior.js';
 
 let activeScene = null;
 let stadiumModel = null;
 let roofOpenGroup = null;
 let roofProgress = 0;
 let rendererEl = null;
-let currentPageId = 'security';
+let currentNavPage = 'overview';
+let currentViewId = 'overview';
 let sceneRefs = null;
 let bloomComposer = null;
 let bloomPassRef = null;
@@ -24,6 +35,41 @@ let interiorFloodGroup = null;
 let floodlightsGroup = null;
 let facadeGlassMesh = null;
 let roofClosedCap = null;
+let parkingGroup = null;
+let controlRoomMode = 'exterior';
+let mainScene = null;
+let vocEventsBound = false;
+
+function bindVocEvents() {
+  if (vocEventsBound) return;
+  vocEventsBound = true;
+  document.addEventListener('voc-enter-security-interior', () => {
+    if (!sceneRefs) return;
+    setMarkers([]);
+    enterSecurityInterior(sceneRefs);
+  });
+  document.addEventListener('voc-exit-security-interior', (e) => {
+    if (!sceneRefs) return;
+    exitSecurityInterior(sceneRefs).then(() => {
+      const restore = e.detail?.restoreView;
+      if (restore) applyPageView(restore, sceneRefs.container);
+    });
+  });
+  document.addEventListener('voc-security-screen-open', () => {
+    setSecurityInteriorVisible(false);
+    if (sceneRefs) prepareStadiumViewFromRoom(sceneRefs);
+  });
+  document.addEventListener('voc-reenter-security-interior', () => {
+    if (sceneRefs) reenterSecurityInterior(sceneRefs);
+  });
+  document.addEventListener('voc-security-room-view', (e) => {
+    if (!sceneRefs) return;
+    const d = e.detail;
+    const mode = typeof d === 'string' ? d : d.mode;
+    const options = typeof d === 'object' && d !== null ? d : {};
+    applySecurityRoomView(sceneRefs, mode, options);
+  });
+}
 
 const MODEL_URL = 'assets/models/pvf-stadium.glb';
 const GLASS_OPAQUE = 0xe8ecf2;
@@ -52,6 +98,56 @@ function isCameraViewingInterior(camera, controls) {
   return nearStadium && underRoofLine && (inExpandedBowl || lookingIn || focusInBowl);
 }
 
+const _feedTarget = new THREE.Vector3();
+const feedRenderState = { roof: null, markersVisible: true };
+
+function prepareMonitorFeed(feedId, camera) {
+  const presetKey = feedId === 'interior' ? 'security' : 'exteriorLive';
+  const preset = stadiumSceneData.cameraPresets[presetKey];
+  if (!preset) return;
+  camera.position.set(...preset.pos);
+  _feedTarget.set(...preset.target);
+  camera.lookAt(_feedTarget);
+  camera.fov = preset.fov ?? 42;
+  camera.updateProjectionMatrix();
+
+  if (feedId === 'interior' && feedRenderState.roof === null) {
+    feedRenderState.roof = roofProgress;
+    feedRenderState.markersVisible = getMarkerGroup().visible;
+    setRoofProgress(1);
+  }
+
+  const fakeControls = { target: _feedTarget };
+  updateShellVisibility(camera, fakeControls);
+  updateStadiumCrowd(camera, isCameraViewingInterior(camera, fakeControls));
+  getMarkerGroup().visible = false;
+  setControlRoomsVisible(false);
+}
+
+function restoreAfterMonitorFeeds() {
+  if (feedRenderState.roof !== null) {
+    setRoofProgress(feedRenderState.roof);
+    feedRenderState.roof = null;
+  }
+  getMarkerGroup().visible = feedRenderState.markersVisible;
+}
+
+function updateControlRoomVisibility() {
+  const show = currentNavPage === 'overview'
+    && controlRoomMode === 'exterior'
+    && currentViewId === 'overview';
+  setControlRoomsVisible(show);
+  if (parkingGroup) parkingGroup.visible = !show;
+  if (show) {
+    document.dispatchEvent(new CustomEvent('voc-room-hint', { detail: true }));
+  }
+}
+
+export function setControlRoomMode(mode) {
+  controlRoomMode = mode;
+  updateControlRoomVisibility();
+}
+
 /** Kính trong suốt chỉ khi camera thực sự ở trong bowl hẹp */
 function isCameraInsideShell(camera) {
   const { x, y, z } = camera.position;
@@ -66,9 +162,9 @@ function updateShellVisibility(camera, controls) {
 
   if (facadeGlassMesh?.material) {
     const m = facadeGlassMesh.material;
-    if (insideShell) {
+    if (insideShell || viewingInterior) {
       m.transparent = true;
-      m.opacity = 0.72;
+      m.opacity = insideShell ? 0.72 : 0.38;
       m.depthWrite = false;
       m.side = THREE.DoubleSide;
       m.color.setHex(GLASS_TRANSPARENT);
@@ -140,10 +236,11 @@ function setupLighting(scene, renderer) {
   scene.add(overhead);
 }
 
-function createScene(container, pageId) {
+function createScene(container, navPageId) {
   showSceneLoading(container, true);
   const { renderer, w, h } = setupRenderer(container);
   const scene = new THREE.Scene();
+  mainScene = scene;
   setupStadiumEnvironment(scene);
   setupLighting(scene, renderer);
 
@@ -154,7 +251,7 @@ function createScene(container, pageId) {
   controls.maxPolarAngle = Math.PI / 2.05;
   controls.minDistance = 90;
   controls.maxDistance = 680;
-  applyCameraPreset(camera, controls, pageId);
+  applyCameraPreset(camera, controls, navPageId);
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
@@ -183,11 +280,22 @@ function createScene(container, pageId) {
     }
     facadeGlassMesh = stadiumModel.getObjectByName('facade_glass');
     roofClosedCap = stadiumModel.getObjectByName('roof_closed_cap');
+    parkingGroup = stadiumModel.getObjectByName('parking');
     initStadiumCrowd(stadiumModel, scene);
     roofOpenGroup = stadiumModel.getObjectByName('roof_open');
     setRoofProgress(roofProgress);
+    buildControlRooms(scene);
+    buildSecurityInterior(scene);
+    setMonitorFeedHooks({ beforeFeedRender: prepareMonitorFeed, afterFeedsRender: restoreAfterMonitorFeeds });
+    bindControlRoomPick(rendererEl, camera, (roomId) => {
+      document.dispatchEvent(new CustomEvent('voc-room-pick', { detail: roomId }));
+    });
+    bindSecurityMonitorPick(rendererEl, camera, (feedId) => {
+      document.dispatchEvent(new CustomEvent('voc-open-stadium-screen', { detail: feedToViewId(feedId) }));
+    });
+    bindVocEvents();
     showSceneLoading(container, false);
-    applyPageView(pageId, container);
+    applyPageView(navPageId, container);
   });
 
   const clock = new THREE.Clock();
@@ -198,6 +306,11 @@ function createScene(container, pageId) {
     controls.update();
     updateShellVisibility(camera, controls);
     updateStadiumCrowd(camera, isCameraViewingInterior(camera, controls));
+    if (isSecurityInteriorActive()) {
+      updateSecurityMonitors(renderer, scene);
+      updateShellVisibility(camera, controls);
+      updateStadiumCrowd(camera, isCameraViewingInterior(camera, controls));
+    }
     composer.render();
   }
   animate();
@@ -229,6 +342,10 @@ function createScene(container, pageId) {
       floodlightsGroup = null;
       facadeGlassMesh = null;
       roofClosedCap = null;
+      parkingGroup = null;
+      disposeControlRooms();
+      disposeSecurityInterior();
+      mainScene = null;
       disposeStadiumCrowd();
       disposeStadiumEnvironment(scene);
       scene.traverse((obj) => {
@@ -251,14 +368,21 @@ function createScene(container, pageId) {
   return sceneRefs;
 }
 
-export function applyPageView(pageId, container) {
+export function applyPageView(viewId, container) {
   if (!sceneRefs) return;
-  currentPageId = pageId;
-  const markers = stadiumSceneData.markers[pageId] || [];
+  currentViewId = viewId;
+  const markerKey = viewId === 'reports' ? 'overview' : viewId;
+  const markers = stadiumSceneData.markers[markerKey] || [];
   setMarkers(markers);
-  tweenCamera(sceneRefs.camera, sceneRefs.controls, pageId).then((hint) => {
+  const camKey = stadiumSceneData.cameraPresets[viewId] ? viewId : 'overview';
+  tweenCamera(sceneRefs.camera, sceneRefs.controls, camKey).then((hint) => {
     setSceneHint(container || sceneRefs.container, hint);
   });
+  updateControlRoomVisibility();
+}
+
+export function refreshControlRoomVisibility() {
+  updateControlRoomVisibility();
 }
 
 function applyRoofState(progress) {
@@ -295,17 +419,22 @@ export function getRoofProgress() {
   return roofProgress;
 }
 
-export function initStadiumScene(pageId) {
-  const container = document.querySelector(`#page-${pageId} [data-mount="stadium-scene"]`);
+export function initStadiumScene(navPageId) {
+  currentNavPage = navPageId;
+  const container = document.querySelector(`#page-${navPageId} [data-mount="stadium-scene"]`);
   if (!container) return;
+  if (navPageId === 'overview') {
+    document.dispatchEvent(new CustomEvent('voc-room-init'));
+  }
   if (activeScene) {
     container.appendChild(rendererEl);
     activeScene.onResize?.();
-    applyPageView(pageId, container);
+    if (navPageId !== 'security') applyPageView(navPageId, container);
+    updateControlRoomVisibility();
     return;
   }
   try {
-    activeScene = createScene(container, pageId);
+    activeScene = createScene(container, navPageId);
   } catch (err) {
     console.error('[stadium-scene]', err);
     showSceneLoading(container, false);

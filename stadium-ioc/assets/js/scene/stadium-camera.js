@@ -6,6 +6,10 @@ export function applyCameraPreset(camera, controls, pageId) {
   if (!preset) return null;
   camera.position.set(...preset.pos);
   controls.target.set(...preset.target);
+  if (preset.fov) {
+    camera.fov = preset.fov;
+    camera.updateProjectionMatrix();
+  }
   controls.update();
   return preset.hint;
 }
@@ -13,10 +17,23 @@ export function applyCameraPreset(camera, controls, pageId) {
 export function tweenCamera(camera, controls, pageId, duration = 900) {
   const preset = stadiumSceneData.cameraPresets[pageId];
   if (!preset) return Promise.resolve(null);
+  const startFov = camera.fov;
+  const endFov = preset.fov ?? startFov;
+  return tweenCameraVectors(
+    camera, controls,
+    new THREE.Vector3(...preset.pos),
+    new THREE.Vector3(...preset.target),
+    duration,
+    startFov,
+    endFov,
+  ).then(() => preset.hint);
+}
+
+export function tweenCameraVectors(camera, controls, endPos, endTarget, duration = 900, startFov = null, endFov = null) {
   const startPos = camera.position.clone();
   const startTarget = controls.target.clone();
-  const endPos = new THREE.Vector3(...preset.pos);
-  const endTarget = new THREE.Vector3(...preset.target);
+  const fov0 = startFov ?? camera.fov;
+  const fov1 = endFov ?? fov0;
   const t0 = performance.now();
   return new Promise((resolve) => {
     function step(now) {
@@ -24,9 +41,13 @@ export function tweenCamera(camera, controls, pageId, duration = 900) {
       const e = t * t * (3 - 2 * t);
       camera.position.lerpVectors(startPos, endPos, e);
       controls.target.lerpVectors(startTarget, endTarget, e);
+      if (startFov !== null || endFov !== null) {
+        camera.fov = fov0 + (fov1 - fov0) * e;
+        camera.updateProjectionMatrix();
+      }
       controls.update();
       if (t < 1) requestAnimationFrame(step);
-      else resolve(preset.hint);
+      else resolve(null);
     }
     requestAnimationFrame(step);
   });

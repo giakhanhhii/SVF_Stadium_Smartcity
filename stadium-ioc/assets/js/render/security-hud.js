@@ -55,3 +55,54 @@ export function renderSecurityRight(d) {
       <div class="hud-energy-grid">${stats}</div>${areaChartSvg(d.response.chart, 'secGrad')}
     </section>`;
 }
+
+export function renderSecurityExteriorLeft(d) {
+  const groups = d.ingress.groups.map((g) =>
+    `<div class="hud-pill hud-pill--${g.tone}"><span class="hud-pill__lbl">${g.label}</span><span class="hud-pill__val">${g.value.toLocaleString('vi-VN')}</span></div>`,
+  ).join('');
+  const cams = d.cameras.feeds.map((f) => camThumb(f.label)).join('');
+  return `
+    <section class="hud-block">${hudHead(d.ingress.title)}
+      <div class="hud-metric-lbl">${d.ingress.totalLabel}</div>
+      <div class="hud-metric-big">${d.ingress.total.toLocaleString('vi-VN')}</div>
+      <div class="hud-pill-row">${groups}</div>
+    </section>
+    <section class="hud-block">${hudHead(d.cameras.title)}<div class="hud-cam-grid">${cams}</div></section>
+    <div class="hud-tabs hud-tabs--dual">
+      <button class="hud-tab hud-tab--active">${d.modeTabs[0]}</button>
+      <button class="hud-tab">${d.modeTabs[1]}</button>
+    </div>
+    <section class="hud-block">${hudHead(d.perimeter.title)}
+      <div class="hud-inline-stat"><i class="ti ti-shield"></i><span>${d.perimeter.label}</span><strong>${d.perimeter.value}</strong></div>
+    </section>
+    <section class="hud-block">${hudHead(d.flowBars.title)}
+      <div class="hud-sub">${d.flowBars.subtitle}</div>${barChartSvg(d.flowBars.bars)}
+    </section>`;
+}
+
+export function renderSecurityExteriorRight(d) {
+  const tabs = d.parking.tabs.map((t, i) =>
+    `<button class="hud-tab${i === 0 ? ' hud-tab--active' : ''}">${t}</button>`,
+  ).join('');
+  const bars = d.parking.metrics.map((m) =>
+    `<div class="hud-bar-item"><div class="hud-bar-head"><span>${m.label}</span><strong>${m.value}</strong></div>
+    <div class="hud-bar-track"><div class="hud-bar-fill" style="width:${m.pct}%"></div></div></div>`,
+  ).join('');
+  const stats = d.traffic.stats.map((s) =>
+    `<div class="hud-energy-cell"><div class="hud-energy-lbl">${s.label}</div><div class="hud-energy-val">${s.value}</div>
+    <div class="hud-energy-trend hud-energy-trend--${s.trend}">${s.trend === 'up' ? '▲' : '▼'} ${s.change}</div></div>`,
+  ).join('');
+  return `
+    <section class="hud-block">${hudHead('Cảnh báo ngoại vi')}${renderAlerts(d.alerts)}</section>
+    <section class="hud-block">${hudHead(d.parking.title)}<div class="hud-tabs">${tabs}</div>
+      <div class="hud-env-row">${ringSvg(78, 'Bãi đỗ')}<div class="hud-env-bars">${bars}</div></div>
+    </section>
+    <section class="hud-block">${hudHead(d.patrol.title)}
+      <div class="hud-device-row"><i class="ti ti-walk"></i><span>Đội tuần tra <strong>${d.patrol.quantity}</strong></span></div>
+      <div class="hud-device-status">Trọng điểm: <span class="hud-badge">${d.patrol.status}</span></div>
+      <div class="hud-vent-row">${d.patrol.lanes.map((v) => `<button class="hud-vent-btn">${v}</button>`).join('')}</div>
+    </section>
+    <section class="hud-block hud-block--grow">${hudHead(d.traffic.title)}
+      <div class="hud-energy-grid">${stats}</div>${areaChartSvg(d.traffic.chart, 'secExtGrad')}
+    </section>`;
+}

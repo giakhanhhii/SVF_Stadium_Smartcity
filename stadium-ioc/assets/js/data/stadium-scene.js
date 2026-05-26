@@ -17,10 +17,12 @@ export const floodRingConfig = {
 export const stadiumSceneData = {
   cameraPresets: {
     overview: { pos: [320, 120, 280], target: [0, 44, 0], hint: 'VOC Dashboard · PVF Stadium tổng thể' },
-    security: { pos: [148, 52, 136], target: [0, 32, -36], hint: 'Giám sát an ninh · Camera & đám đông' },
+    exteriorLive: { pos: [480, 175, 420], target: [0, 52, 0], fov: 52, hint: 'Ngoài sân · Tổng thể sân vận động' },
+    security: { pos: [0, 48, 152], target: [0, 28, 0], fov: 50, hint: 'Trong sân · Live tổng thể sân cỏ' },
     events: { pos: [0, 48, 152], target: [0, 28, 0], hint: 'Vận hành sự kiện · Sân cỏ & khán đài' },
     facilities: { pos: [-280, 140, -188], target: [0, 76, 0], hint: 'Hạ tầng · Mái vòm PTFE' },
     services: { pos: [330, 76, -220], target: [0, 8, 0], hint: 'Dịch vụ · Bãi đỗ & lưu thông' },
+    reports: { pos: [280, 160, 320], target: [0, 50, 0], hint: 'Báo cáo · KPI theo trận' },
   },
   markers: {
     overview: [

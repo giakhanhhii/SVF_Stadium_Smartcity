@@ -1,0 +1,10 @@
+:root {
+  --ioc-accent: #0f6e56;
+  --stadium-accent: #0f6e56;
+  --ioc-accent-light: #e1f5ee;
+  --ioc-hero-bg: linear-gradient(135deg, #0a3d2e 0%, #0F6E56 45%, #1D9E75 100%);
+  --ioc-domain-banner-bg: linear-gradient(90deg, #0a3d2e 0%, #0F6E56 100%);
+  --ioc-map-bg: #0a3d2e;
+  --ioc-video-border: #0F6E56;
+  --ioc-nav-active: #0f6e56;
+}

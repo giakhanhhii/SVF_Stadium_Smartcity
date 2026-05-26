@@ -1,0 +1,7 @@
+{
+  "overview": "'ChartData'!$A$1:$C$7",
+  "pvfTabs": "'ChartData'!$E$1:$F$7",
+  "pvfWeeks": "'ChartData'!$H$1:$I$4",
+  "scLayout": "'ChartData'!$K$1:$L$3",
+  "scWeeks": "'ChartData'!$N$1:$O$4"
+}

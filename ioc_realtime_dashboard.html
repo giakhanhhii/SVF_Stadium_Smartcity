@@ -1,0 +1,211 @@
+<div style="background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-tertiary); overflow: hidden;">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 0.5px solid var(--color-border-tertiary);">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div style="font-size: 14px; font-weight: 500;">Bảng điều hành thời gian thực</div>
+      <div style="display: flex; gap: 4px; font-size: 11px;">
+        <span style="padding: 3px 10px; border-radius: 4px; background: var(--color-background-info); color: var(--color-text-info); font-weight: 500;">Trực tiếp</span>
+        <span style="padding: 3px 10px; border-radius: 4px; color: var(--color-text-secondary);">24h</span>
+        <span style="padding: 3px 10px; border-radius: 4px; color: var(--color-text-secondary);">7 ngày</span>
+        <span style="padding: 3px 10px; border-radius: 4px; color: var(--color-text-secondary);">Tháng</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--color-text-secondary);">
+      <span style="width: 6px; height: 6px; border-radius: 50%; background: #1D9E75;"></span>
+      Cập nhật mỗi 5 giây
+      <span style="margin-left: 8px;"><i class="ti ti-refresh" aria-hidden="true"></i></span>
+      <span><i class="ti ti-download" aria-hidden="true"></i></span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 0;">
+
+    <div style="padding: 16px 20px; border-right: 0.5px solid var(--color-border-tertiary);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: 500;">Bản đồ giám sát đô thị</div>
+        <div style="display: flex; gap: 6px; font-size: 10px;">
+          <span style="display: flex; align-items: center; gap: 3px; color: var(--color-text-secondary);"><span style="width: 8px; height: 8px; border-radius: 50%; background: #185FA5;"></span>Camera</span>
+          <span style="display: flex; align-items: center; gap: 3px; color: var(--color-text-secondary);"><span style="width: 8px; height: 8px; border-radius: 50%; background: #BA7517;"></span>Cảm biến</span>
+          <span style="display: flex; align-items: center; gap: 3px; color: var(--color-text-secondary);"><span style="width: 8px; height: 8px; border-radius: 50%; background: #A32D2D;"></span>Sự cố</span>
+        </div>
+      </div>
+
+      <div style="position: relative; height: 280px; background: #042C53; border-radius: var(--border-radius-md); overflow: hidden;">
+        <svg viewBox="0 0 420 280" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%;">
+          <defs>
+            <pattern id="mapgrid" width="30" height="30" patternUnits="userSpaceOnUse">
+              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#185FA5" stroke-width="0.3" opacity="0.4"/>
+            </pattern>
+          </defs>
+          <rect width="420" height="280" fill="url(#mapgrid)"/>
+
+          <g stroke="#378ADD" stroke-width="1.2" fill="none" opacity="0.6">
+            <path d="M0,140 Q100,120 210,140 T420,140"/>
+            <path d="M210,0 Q200,80 220,140 Q230,200 210,280"/>
+            <path d="M0,80 L420,90"/>
+            <path d="M60,0 L80,280"/>
+            <path d="M340,0 L320,280"/>
+          </g>
+
+          <g opacity="0.35">
+            <rect x="40" y="40" width="60" height="50" fill="#185FA5" rx="2"/>
+            <rect x="120" y="30" width="50" height="60" fill="#185FA5" rx="2"/>
+            <rect x="250" y="40" width="55" height="55" fill="#185FA5" rx="2"/>
+            <rect x="330" y="50" width="60" height="45" fill="#185FA5" rx="2"/>
+            <rect x="30" y="170" width="55" height="65" fill="#185FA5" rx="2"/>
+            <rect x="140" y="180" width="60" height="55" fill="#185FA5" rx="2"/>
+            <rect x="240" y="180" width="50" height="60" fill="#185FA5" rx="2"/>
+            <rect x="320" y="170" width="65" height="60" fill="#185FA5" rx="2"/>
+          </g>
+
+          <g>
+            <circle cx="80" cy="60" r="4" fill="#85B7EB"/><circle cx="80" cy="60" r="8" fill="#85B7EB" opacity="0.25"/>
+            <circle cx="155" cy="65" r="4" fill="#85B7EB"/>
+            <circle cx="280" cy="70" r="4" fill="#85B7EB"/><circle cx="280" cy="70" r="8" fill="#85B7EB" opacity="0.25"/>
+            <circle cx="365" cy="75" r="4" fill="#85B7EB"/>
+            <circle cx="55" cy="205" r="4" fill="#85B7EB"/>
+            <circle cx="170" cy="210" r="4" fill="#85B7EB"/>
+            <circle cx="350" cy="200" r="4" fill="#85B7EB"/>
+          </g>
+
+          <g>
+            <circle cx="115" cy="130" r="3.5" fill="#EF9F27"/>
+            <circle cx="200" cy="145" r="3.5" fill="#EF9F27"/>
+            <circle cx="305" cy="135" r="3.5" fill="#EF9F27"/>
+            <circle cx="90" cy="165" r="3.5" fill="#EF9F27"/>
+            <circle cx="265" cy="170" r="3.5" fill="#EF9F27"/>
+          </g>
+
+          <g>
+            <circle cx="220" cy="100" r="5" fill="#E24B4A"/>
+            <circle cx="220" cy="100" r="12" fill="#E24B4A" opacity="0.3"><animate attributeName="r" values="8;16;8" dur="2s" repeatCount="indefinite"/></circle>
+            <circle cx="135" cy="225" r="5" fill="#E24B4A"/>
+            <circle cx="135" cy="225" r="12" fill="#E24B4A" opacity="0.3"><animate attributeName="r" values="8;16;8" dur="2s" repeatCount="indefinite"/></circle>
+          </g>
+
+          <text x="14" y="260" fill="#B5D4F4" font-size="9" opacity="0.7">Smart City — Khu vực trung tâm</text>
+        </svg>
+
+        <div style="position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="width: 26px; height: 26px; border-radius: 4px; background: rgba(255,255,255,0.15); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px;"><i class="ti ti-plus" aria-hidden="true"></i></div>
+          <div style="width: 26px; height: 26px; border-radius: 4px; background: rgba(255,255,255,0.15); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px;"><i class="ti ti-minus" aria-hidden="true"></i></div>
+          <div style="width: 26px; height: 26px; border-radius: 4px; background: rgba(255,255,255,0.15); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px;"><i class="ti ti-layers-intersect" aria-hidden="true"></i></div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px;">
+        <div style="background: var(--color-background-secondary); padding: 8px 10px; border-radius: var(--border-radius-md);">
+          <div style="font-size: 10px; color: var(--color-text-secondary);">Camera trực tuyến</div>
+          <div style="font-size: 16px; font-weight: 500;">224<span style="font-size: 10px; color: var(--color-text-secondary);">/230</span></div>
+        </div>
+        <div style="background: var(--color-background-secondary); padding: 8px 10px; border-radius: var(--border-radius-md);">
+          <div style="font-size: 10px; color: var(--color-text-secondary);">Cảm biến IoT</div>
+          <div style="font-size: 16px; font-weight: 500;">1.842</div>
+        </div>
+        <div style="background: var(--color-background-secondary); padding: 8px 10px; border-radius: var(--border-radius-md);">
+          <div style="font-size: 10px; color: var(--color-text-secondary);">Sự cố hôm nay</div>
+          <div style="font-size: 16px; font-weight: 500; color: var(--color-text-danger);">14</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 16px 20px; max-height: 480px; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="font-size: 12px; font-weight: 500;">Dòng cảnh báo</div>
+        <span style="font-size: 10px; color: var(--color-text-info);">Lọc →</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+
+        <div style="border: 0.5px solid var(--color-border-danger); border-left: 3px solid #A32D2D; border-radius: var(--border-radius-md); padding: 10px 12px; background: var(--color-background-primary);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+            <span style="font-size: 9px; padding: 2px 6px; border-radius: 3px; background: #FCEBEB; color: #A32D2D; font-weight: 500;">KHẨN CẤP</span>
+            <span style="font-size: 9px; color: var(--color-text-secondary);">2 phút trước</span>
+          </div>
+          <div style="font-size: 12px; font-weight: 500; margin-bottom: 2px;">Va chạm giao thông — Ngã tư A4</div>
+          <div style="font-size: 10px; color: var(--color-text-secondary);">Đội cứu hộ #03 đang triển khai • Đèn tín hiệu chuyển sang chế độ ưu tiên</div>
+        </div>
+
+        <div style="border: 0.5px solid var(--color-border-tertiary); border-left: 3px solid #BA7517; border-radius: var(--border-radius-md); padding: 10px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+            <span style="font-size: 9px; padding: 2px 6px; border-radius: 3px; background: #FAEEDA; color: #854F0B; font-weight: 500;">CẢNH BÁO</span>
+            <span style="font-size: 9px; color: var(--color-text-secondary);">8 phút trước</span>
+          </div>
+          <div style="font-size: 12px; font-weight: 500; margin-bottom: 2px;">AQI vượt ngưỡng — Trạm B2</div>
+          <div style="font-size: 10px; color: var(--color-text-secondary);">Chỉ số PM2.5: 82 μg/m³ • Đề xuất thông báo cư dân</div>
+        </div>
+
+        <div style="border: 0.5px solid var(--color-border-tertiary); border-left: 3px solid #BA7517; border-radius: var(--border-radius-md); padding: 10px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+            <span style="font-size: 9px; padding: 2px 6px; border-radius: 3px; background: #FAEEDA; color: #854F0B; font-weight: 500;">CẢNH BÁO</span>
+            <span style="font-size: 9px; color: var(--color-text-secondary);">15 phút trước</span>
+          </div>
+          <div style="font-size: 12px; font-weight: 500; margin-bottom: 2px;">Trạm bơm #07 — Áp suất bất thường</div>
+          <div style="font-size: 10px; color: var(--color-text-secondary);">Kỹ thuật viên đã được phân công kiểm tra</div>
+        </div>
+
+        <div style="border: 0.5px solid var(--color-border-tertiary); border-left: 3px solid #185FA5; border-radius: var(--border-radius-md); padding: 10px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+            <span style="font-size: 9px; padding: 2px 6px; border-radius: 3px; background: #E6F1FB; color: #185FA5; font-weight: 500;">THÔNG TIN</span>
+            <span style="font-size: 9px; color: var(--color-text-secondary);">23 phút trước</span>
+          </div>
+          <div style="font-size: 12px; font-weight: 500; margin-bottom: 2px;">Phản ánh cư dân mới</div>
+          <div style="font-size: 10px; color: var(--color-text-secondary);">Đèn chiếu sáng đường D5 — Cụm 12 bị hỏng</div>
+        </div>
+
+        <div style="border: 0.5px solid var(--color-border-tertiary); border-left: 3px solid #1D9E75; border-radius: var(--border-radius-md); padding: 10px 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+            <span style="font-size: 9px; padding: 2px 6px; border-radius: 3px; background: #E1F5EE; color: #0F6E56; font-weight: 500;">XỬ LÝ XONG</span>
+            <span style="font-size: 9px; color: var(--color-text-secondary);">41 phút trước</span>
+          </div>
+          <div style="font-size: 12px; font-weight: 500; margin-bottom: 2px;">Cây đổ — Khu C — Đã giải tỏa</div>
+          <div style="font-size: 10px; color: var(--color-text-secondary);">Thời gian xử lý: 28 phút</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div style="padding: 14px 20px; border-top: 0.5px solid var(--color-border-tertiary);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <div style="font-size: 12px; font-weight: 500;">Lưu lượng giao thông — 24 giờ qua</div>
+      <span style="font-size: 10px; color: var(--color-text-secondary);">Đỉnh: 18:00 — 2.840 xe/h</span>
+    </div>
+    <div style="position: relative; width: 100%; height: 110px;">
+      <canvas id="trafficChart" role="img" aria-label="Biểu đồ lưu lượng giao thông 24 giờ">Traffic flow chart 24h</canvas>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const ctx = document.getElementById('trafficChart');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['00','02','04','06','08','10','12','14','16','18','20','22'],
+      datasets: [{
+        label: 'Xe/giờ',
+        data: [320, 180, 240, 920, 2180, 1680, 1820, 1540, 1980, 2840, 2120, 980],
+        borderColor: '#185FA5',
+        backgroundColor: 'rgba(24, 95, 165, 0.12)',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#888780' } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 9 }, color: '#888780' } }
+      }
+    }
+  });
+</script>

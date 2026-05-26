@@ -1,0 +1,20 @@
+{
+  "name": "vinsmartcity",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:stadium": "node scripts/generate-stadium-glb.mjs",
+    "dev": "node scripts/dev-server.mjs",
+    "test:stadium": "playwright test tests/stadium-visual.spec.js",
+    "test:stadium:ui": "playwright test tests/stadium-visual.spec.js --ui",
+    "export:ke-hoach": "node scripts/export-ke-hoach-ioc-excel.mjs && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/add-ke-hoach-charts.ps1"
+  },
+  "dependencies": {
+    "canvas": "^3.1.0",
+    "three": "^0.164.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "exceljs": "^4.4.0"
+  }
+}

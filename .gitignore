@@ -1,0 +1,12 @@
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/
+.cursor/
+.tools/
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+~$*

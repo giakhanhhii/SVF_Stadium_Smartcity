@@ -1,0 +1,12 @@
+.badge { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+.badge-online { background: #EAF3DE; color: #3B6D11; }
+.badge-warn { background: #FAEEDA; color: #854F0B; }
+.badge-live { background: #FCEBEB; color: #A32D2D; animation: pulse-live 2s infinite; }
+@keyframes pulse-live { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+.severity-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.severity-pill {
+  flex: 1; text-align: center; padding: 8px 6px;
+  border-radius: var(--border-radius-md); font-size: 10px;
+}
+.severity-pill strong { display: block; font-size: 16px; font-weight: 500; margin-top: 2px; }

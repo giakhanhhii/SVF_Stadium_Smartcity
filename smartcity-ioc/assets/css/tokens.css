@@ -1,0 +1,10 @@
+:root {
+  --ioc-accent: #185FA5;
+  --smartcity-accent: #185FA5;
+  --ioc-accent-light: #e6f1fb;
+  --ioc-hero-bg: linear-gradient(135deg, #042C53 0%, #185FA5 50%, #378ADD 100%);
+  --ioc-domain-banner-bg: linear-gradient(90deg, #042C53 0%, #185FA5 100%);
+  --ioc-map-bg: #042C53;
+  --ioc-video-border: #185FA5;
+  --ioc-nav-active: #1d9e75;
+}

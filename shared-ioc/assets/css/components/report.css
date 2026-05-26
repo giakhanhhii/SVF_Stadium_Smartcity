@@ -1,0 +1,15 @@
+.report-sidebar { padding: 16px 20px; border-right: 0.5px solid var(--color-border-tertiary); }
+.report-main { padding: 16px 20px; }
+.report-cat {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md); margin-bottom: 8px;
+  cursor: pointer; font-size: 11px; background: var(--color-background-primary);
+}
+.report-cat:hover { border-color: var(--ioc-accent); }
+.report-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.report-table th, .report-table td {
+  padding: 8px 10px; text-align: left;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+.report-table th { font-weight: 500; color: var(--color-text-secondary); font-size: 10px; }

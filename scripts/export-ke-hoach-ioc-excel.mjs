@@ -222,7 +222,7 @@ function buildChartDataSheet(wb) {
       ['Tổng quan', 1], ['An ninh', 1], ['Sự kiện', 1], ['Cơ sở HT', 1], ['Dịch vụ', 1], ['Báo cáo', 1],
     ]},
     { ref: 'pvfWeeks', start: [1, 8], headers: ['Tuần', 'Công việc'], rows: [
-      ['Tuần 1', 4], ['Tuần 2', 4], ['Tuần 3', 3],
+      ['Tuần 1', 5], ['Tuần 2', 4], ['Tuần 3', 3],
     ]},
     { ref: 'scLayout', start: [1, 11], headers: ['Layout', 'Số tab'], rows: [
       ['Ops classic', 4], ['Command 3D', 2],
@@ -280,11 +280,12 @@ function buildPvfSheet(wb) {
   r++;
 
   const weeks = [
-    ['TUẦN 1 (25/05 – 31/05) — Kickoff, BRD/SRS, prototype 6 tab, căn VOC–FIFA', 0, [
+    ['TUẦN 1 (25/05 – 31/05) — Kickoff, BRD/SRS, prototype 6 tab, model 3D sân, căn VOC–FIFA', 0, [
       ['1.1', 'Kickoff PVF & xác nhận phạm vi VOC–FIFA', 'Họp mở đầu; chốt phạm vi 6 tab PVF với ban lãnh đạo', 'Đang thực hiện', 'Biên bản kickoff + phạm vi VOC thống nhất', 'Tuần 1'],
       ['1.2', 'Soạn BRD/SRS PVF', 'Ghi rõ 60.000 chỗ, mái vòm, yêu cầu VOC–FIFA', 'Đang thực hiện', 'BRD/SRS bản 1', 'Tuần 1'],
       ['1.3', 'Branding & prototype 6 tab', 'stadium-ioc/ — 6 tab venue', 'Đang thực hiện', 'Prototype xem trước demo VOC', 'Tuần 1'],
-      ['1.4', 'Căn thông số sân PVF', 'Tham chiếu VnExpress (video): quy mô, mái vòm, cỏ hybrid', 'Chưa làm', 'Bảng thông số đối chiếu nguồn', 'VnExpress'],
+      ['1.4', 'Xây dựng model 3D sân vận động PVF', 'Three.js + GLB (pvf-stadium.glb): khán đài 60.000 chỗ, mái vòm, sân cỏ — phục vụ tab An ninh & Tổng quan', 'Đang thực hiện', 'Model 3D sân PVF tích hợp prototype', 'stadium-ioc/'],
+      ['1.5', 'Căn thông số sân PVF', 'Tham chiếu VnExpress (video): quy mô, mái vòm, cỏ hybrid', 'Chưa làm', 'Bảng thông số đối chiếu nguồn', 'VnExpress'],
     ]],
     ['TUẦN 2 (01/06 – 07/06) — Mô phỏng mái vòm, kiến trúc, kiểm thử phòng điều hành', 1, [
       ['2.1', 'Mô phỏng đóng/mở mái vòm', 'Tab Cơ sở hạ tầng: trạng thái, tiến trình 12–20 phút, phanh khẩn cấp', 'Chưa làm', 'Luồng vận hành mái trên prototype', 'Demo'],
@@ -441,7 +442,7 @@ function buildOverviewSheet(wb) {
   });
 
   const roadmap = [
-    ['PVF', '1', '25/05 – 31/05', 'Kickoff; BRD/SRS; prototype 6 tab; VOC–FIFA', '—'],
+    ['PVF', '1', '25/05 – 31/05', 'Kickoff; BRD/SRS; prototype 6 tab; model 3D sân; VOC–FIFA', '—'],
     ['PVF', '2', '01/06 – 07/06', 'Mô phỏng mái vòm; kiến trúc; kiểm thử VOC', '—'],
     ['PVF', '3', '08/06 – 14/06', 'UAT PVF; bàn giao tài liệu PVF', 'Nghiệm thu PVF'],
     ['Smart City', '4', '15/06 – 21/06', 'BRD/SRS SC; An ninh & Giao thông 3D', '—'],

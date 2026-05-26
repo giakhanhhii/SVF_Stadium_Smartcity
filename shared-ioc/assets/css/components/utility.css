@@ -1,0 +1,14 @@
+.utility-panel {
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md); padding: 14px;
+  background: var(--color-background-primary);
+}
+.utility-panel-head {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+}
+.utility-panel-title { font-size: 12px; font-weight: 500; }
+.progress-bar {
+  height: 6px; background: var(--color-background-secondary);
+  border-radius: 3px; overflow: hidden; margin-top: 6px;
+}
+.progress-fill { height: 100%; border-radius: 3px; background: var(--ioc-accent); }

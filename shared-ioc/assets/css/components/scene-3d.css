@@ -1,0 +1,21 @@
+.map-container--3d {
+  cursor: grab;
+}
+.map-container--3d:active {
+  cursor: grabbing;
+}
+.map-container--3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.map-scene-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  z-index: 1;
+  font-size: 9px;
+  color: #4a6888;
+  opacity: 0.85;
+  pointer-events: none;
+}

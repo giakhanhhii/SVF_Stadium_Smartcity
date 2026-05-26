@@ -1,0 +1,16 @@
+.video-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px;
+}
+.video-tile {
+  position: relative; aspect-ratio: 16/10; background: #0a1628;
+  border-radius: var(--border-radius-md); overflow: hidden;
+  border: 0.5px solid var(--ioc-video-border);
+}
+.video-tile-label {
+  position: absolute; bottom: 0; left: 0; right: 0; padding: 4px 8px;
+  background: rgba(0,0,0,0.55); color: #B5D4F4; font-size: 9px;
+}
+.video-tile-status {
+  position: absolute; top: 6px; left: 6px;
+  width: 6px; height: 6px; border-radius: 50%; background: #1D9E75;
+}

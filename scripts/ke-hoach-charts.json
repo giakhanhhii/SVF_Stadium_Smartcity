@@ -1,0 +1,67 @@
+[
+  {
+    "sheetMatch": "Tổng quan",
+    "charts": [
+      {
+        "type": "columnStacked",
+        "title": "Lộ trình 6 tuần: PVF (T1–3) → Smart City (T4–6)",
+        "range": "A1:C7",
+        "left": 20,
+        "top": 520,
+        "w": 480,
+        "h": 260,
+        "seriesColors": [ [84, 130, 53], [226, 107, 10] ]
+      }
+    ]
+  },
+  {
+    "sheetMatch": "PVF",
+    "charts": [
+      {
+        "type": "column",
+        "title": "Phạm vi 6 tab PVF (VOC–FIFA)",
+        "range": "E1:F7",
+        "left": 20,
+        "top": 520,
+        "w": 380,
+        "h": 240,
+        "seriesColors": [ [84, 130, 53] ]
+      },
+      {
+        "type": "column",
+        "title": "Khối lượng công việc theo tuần (PVF)",
+        "range": "H1:I4",
+        "left": 420,
+        "top": 520,
+        "w": 380,
+        "h": 240,
+        "seriesColors": [ [226, 107, 10] ]
+      }
+    ]
+  },
+  {
+    "sheetMatch": "Smart City",
+    "charts": [
+      {
+        "type": "pie",
+        "title": "Phân bổ layout 6 tab Smart City",
+        "range": "K1:L3",
+        "left": 20,
+        "top": 520,
+        "w": 380,
+        "h": 240,
+        "seriesColors": [ [84, 130, 53], [226, 107, 10] ]
+      },
+      {
+        "type": "column",
+        "title": "Khối lượng công việc theo tuần (Smart City)",
+        "range": "N1:O4",
+        "left": 420,
+        "top": 520,
+        "w": 380,
+        "h": 240,
+        "seriesColors": [ [197, 90, 17] ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,31 @@
+.map-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px; flex-wrap: wrap; gap: 6px;
+}
+.map-title { font-size: 12px; font-weight: 500; }
+.map-legend { display: flex; gap: 6px; font-size: 10px; color: var(--color-text-secondary); flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 3px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.map-container {
+  position: relative; width: 100%; height: min(42vh, 360px); min-height: 280px;
+  background: var(--ioc-map-bg); border-radius: var(--border-radius-md); overflow: hidden;
+}
+.map-container svg { width: 100%; height: 100%; }
+.map-controls {
+  position: absolute; top: 8px; right: 8px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.map-btn {
+  width: 26px; height: 26px; border-radius: 4px;
+  background: rgba(255,255,255,0.15); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; border: none; cursor: pointer;
+}
+
+.seat-zones {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px;
+}
+.seat-zone {
+  text-align: center; padding: 8px 4px; border-radius: 6px; font-size: 10px;
+}

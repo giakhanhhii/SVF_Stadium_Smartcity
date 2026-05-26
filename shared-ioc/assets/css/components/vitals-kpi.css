@@ -1,0 +1,30 @@
+.vitals-strip {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px;
+  padding: 14px clamp(20px, 3vw, 48px);
+  background: var(--color-background-secondary);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+}
+.vital-item {
+  background: var(--color-background-primary); border-radius: var(--border-radius-md);
+  padding: 8px 10px; text-align: center;
+}
+.vital-label { font-size: 9px; color: var(--color-text-secondary); margin-bottom: 2px; }
+.vital-value { font-size: 18px; font-weight: 500; }
+.vital-status { font-size: 9px; margin-top: 2px; }
+
+.kpi-section {
+  padding: 18px clamp(20px, 3vw, 48px);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+}
+.kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi-card {
+  background: var(--color-background-primary); border-radius: var(--border-radius-md);
+  padding: 12px 14px;
+}
+.kpi-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px;
+}
+.kpi-value { font-size: 20px; font-weight: 500; }
+.kpi-delta { font-size: 10px; margin-top: 2px; }

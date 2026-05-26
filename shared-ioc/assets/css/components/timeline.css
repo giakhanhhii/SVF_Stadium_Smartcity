@@ -1,0 +1,11 @@
+.event-timeline { display: flex; flex-direction: column; gap: 8px; }
+.event-item {
+  display: flex; gap: 12px; padding: 10px 12px;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md); font-size: 11px;
+}
+.event-time {
+  flex-shrink: 0; width: 48px; font-weight: 500; color: var(--ioc-accent);
+}
+.event-item-title { font-weight: 500; margin-bottom: 2px; }
+.event-item-desc { font-size: 10px; color: var(--color-text-secondary); }

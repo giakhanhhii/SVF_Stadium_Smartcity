@@ -1,0 +1,29 @@
+<div class="page-view" id="page-reports" data-frame="06 — Báo cáo">
+  <div class="domain-banner">
+    <div data-mount="banner"></div>
+    <div class="time-tabs" style="background:rgba(255,255,255,0.1);padding:4px;border-radius:6px">
+      <button class="time-tab active" style="color:white;background:rgba(255,255,255,0.2)">Tuần</button>
+      <button class="time-tab" style="color:rgba(255,255,255,0.7)">Tháng</button>
+      <button class="time-tab" style="color:rgba(255,255,255,0.7)">Quý</button>
+      <button class="time-tab" style="color:rgba(255,255,255,0.7)">Năm</button>
+    </div>
+  </div>
+  <div data-mount="kpis"></div>
+  <div class="report-layout">
+    <div class="report-sidebar">
+      <div class="alerts-title" style="margin-bottom:12px">Danh mục báo cáo</div>
+      <div data-mount="categories"></div>
+    </div>
+    <div class="report-main">
+      <div class="alerts-header">
+        <div class="alerts-title">So sánh KPI phân hệ — Tuần 21/2026</div>
+        <span class="closed-loop"><i class="ti ti-circle-check"></i> Closed-loop 94%</span>
+      </div>
+      <table class="report-table">
+        <thead><tr><th>Phân hệ</th><th>KPI chính</th><th>Thực tế</th><th>Mục tiêu</th><th>Xu hướng</th></tr></thead>
+        <tbody data-mount="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div data-mount="chart"></div>
+</div>

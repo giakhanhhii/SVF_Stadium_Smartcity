@@ -4,18 +4,40 @@ import {
 import { renderDomainBanner, renderDomainKpiRow } from '../../../../shared-ioc/assets/js/render/domain.js';
 import { renderChartSection } from '../../../../shared-ioc/assets/js/render/chart-section.js';
 import { renderOverviewLeft, renderOverviewRight } from '../render/overview-hud.js';
-import { renderSecurityLeft, renderSecurityRight } from '../render/security-hud.js';
+import { renderSecurityLeft, renderSecurityRight, renderSecurityExteriorLeft, renderSecurityExteriorRight } from '../render/security-hud.js';
 import { renderEventsLeft, renderEventsRight } from '../render/events-hud.js';
 import { renderFacilitiesLeft, renderFacilitiesRight } from '../render/facilities-hud.js';
 import { renderServicesLeft, renderServicesRight } from '../render/services-hud.js';
 import { overviewData } from '../data/overview.js';
 import { overviewHud } from '../data/overview-hud.js';
 import { securityHud } from '../data/security-hud.js';
+import { securityExteriorHud, SECURITY_LEGEND } from '../data/security-exterior-hud.js';
 import { eventsHud } from '../data/events-hud.js';
 import { facilitiesHud } from '../data/facilities-hud.js';
 import { servicesHud } from '../data/services-hud.js';
 import { reportsData } from '../data/reports.js';
 import { renderViewTabs } from '../render/scene-view-tabs.js';
+
+export function hydrateSecuritySidebars(mode = 'interior') {
+  const root = document.getElementById('page-security');
+  if (!root) return;
+  const left = root.querySelector('[data-mount="sidebar-left"]');
+  const right = root.querySelector('[data-mount="sidebar-right"]');
+  const legend = root.querySelector('.security-center__legend');
+  if (mode === 'exterior') {
+    if (left) left.innerHTML = renderSecurityExteriorLeft(securityExteriorHud.left);
+    if (right) right.innerHTML = renderSecurityExteriorRight(securityExteriorHud.right);
+  } else {
+    if (left) left.innerHTML = renderSecurityLeft(securityHud.left);
+    if (right) right.innerHTML = renderSecurityRight(securityHud.right);
+  }
+  if (legend) {
+    const items = SECURITY_LEGEND[mode] || SECURITY_LEGEND.interior;
+    legend.innerHTML = items.map((item) =>
+      `<span class="legend-item"><span class="legend-dot" style="background:${item.color}"></span>${item.label}</span>`,
+    ).join('');
+  }
+}
 
 export function hydratePage(pageId) {
   const root = document.getElementById('page-' + pageId);
@@ -30,8 +52,7 @@ export function hydratePage(pageId) {
       if (tabs) tabs.innerHTML = renderViewTabs('overview');
     },
     security: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSecurityLeft(securityHud.left);
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSecurityRight(securityHud.right);
+      hydrateSecuritySidebars('interior');
       const tabs = root.querySelector('[data-mount="view-tabs"]');
       if (tabs) tabs.innerHTML = renderViewTabs('security');
     },

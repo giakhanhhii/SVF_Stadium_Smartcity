@@ -1,9 +1,10 @@
 import { securityHud } from './security-hud.js';
+import { getGateState, getGateSummary } from './security-gates-state.js';
 
 export const securityRoomData = {
   status: {
     camerasOnline: '46/48',
-    gatesActive: securityHud.left.gates.value,
+    gatesActive: getGateSummary(),
     crowdTotal: securityHud.left.crowd.total,
     hotZone: securityHud.right.zones.status,
   },
@@ -12,10 +13,7 @@ export const securityRoomData = {
     label: f.label,
     online: i !== 2,
   })),
-  gates: [
-    { id: 'A1', open: true }, { id: 'A2', open: true }, { id: 'A3', open: true }, { id: 'A4', open: true },
-    { id: 'B1', open: true }, { id: 'B2', open: false }, { id: 'B3', open: true }, { id: 'B4', open: true },
-  ],
+  gates: getGateState(),
   actions: securityHud.right.zones.lanes.map((label, i) => ({
     id: `act-${i}`,
     label,

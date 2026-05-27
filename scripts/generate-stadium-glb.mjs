@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT = path.join(__dirname, '..', 'stadium-ioc', 'assets', 'models', 'pvf-stadium.glb');
+const OUT = path.join(__dirname, '..', 'stadium-ioc', 'assets', 'models', 'pvf-stadium-openroof-v3.glb');
 
 const PITCH_L = 105;
 const PITCH_W = 68;
@@ -42,7 +42,7 @@ function clearedRadii(a, rx, rz) {
 
 /** Scale đồng bộ: khán đài + facade + vòm + quảng trường, giữ sân FIFA cố định */
 const BASE_BOWL = { innerRx: 58, innerRz: 42, outerRx: 92, outerRz: 74 };
-const BASE_FACADE = { rx: 104, rz: 84 };
+const BASE_FACADE = { rx: 132, rz: 108 };
 
 /** Hệ số phóng to tổng thể (2 = gấp đôi khán đài + thân + vòm, sân FIFA giữ nguyên) */
 const SIZE_MULT = 2;
@@ -72,22 +72,38 @@ const YS = STADIUM_SCALE;
 /** Dome: full ellipsoid cap, 360° — chỉ hở lỗ chữ nhật ở đỉnh (mái trượt) */
 export const DOME = {
   R: 100 * STADIUM_SCALE,
-  sx: 1.08,
+  sx: 1.42,
   sy: 0.48,
-  sz: 0.94,
+  sz: 1.24,
   phiLen: Math.PI * 0.405,
   rimY: 30 * YS,
-  holeHalfX: 18 * STADIUM_SCALE,
-  holeHalfZ: 26 * STADIUM_SCALE,
-  openPhiMax: Math.PI * 0.405 * 0.32,
-  panelRestX: 17 * STADIUM_SCALE,
-  panelSlide: 32 * STADIUM_SCALE,
+  holeHalfX: 82 * STADIUM_SCALE,
+  holeHalfZ: 58 * STADIUM_SCALE,
+  cutFeather: 8 * STADIUM_SCALE,
+  openPhiMax: Math.PI * 0.405 * 0.34,
+  panelWidth: 96 * STADIUM_SCALE,
+  panelDepth: 132 * STADIUM_SCALE,
+  panelThickness: 4.8 * YS,
 };
 DOME.cy = DOME.rimY - DOME.R * DOME.sy * Math.cos(DOME.phiLen);
-DOME.panelY = DOME.cy + DOME.R * DOME.sy * Math.cos(0.06 * Math.PI);
-DOME.trussY = DOME.cy + DOME.R * DOME.sy * Math.cos(0.17 * Math.PI);
+DOME.panelOpenY = DOME.cy + DOME.R * DOME.sy * Math.cos(0.145 * Math.PI) - 5.2 * YS;
+DOME.panelClosedY = DOME.cy + DOME.R * DOME.sy * Math.cos(0.07 * Math.PI) - 4.8 * YS;
+DOME.panelY = DOME.panelOpenY;
+DOME.trussOpenY = DOME.panelOpenY + 1.0 * YS;
+DOME.trussClosedY = DOME.panelClosedY + 1.0 * YS;
+DOME.trussY = DOME.trussOpenY;
 DOME.rimRx = DOME.R * DOME.sx * Math.sin(DOME.phiLen);
 DOME.rimRz = DOME.R * DOME.sz * Math.sin(DOME.phiLen);
+DOME.panelClosedX = Math.max(10 * STADIUM_SCALE, DOME.holeHalfX - DOME.panelWidth * 0.5 + 6 * STADIUM_SCALE);
+DOME.panelOpenX = Math.min(
+  DOME.holeHalfX + DOME.panelWidth * 0.5 - 20 * STADIUM_SCALE,
+  DOME.rimRx - DOME.panelWidth * 0.5 - 14 * STADIUM_SCALE,
+);
+DOME.ridgeOffset = DOME.panelWidth * 0.46;
+DOME.panelOpenTilt = 0.23;
+DOME.panelClosedTilt = 0.18;
+DOME.cutHalfX = DOME.holeHalfX + DOME.cutFeather;
+DOME.cutHalfZ = DOME.holeHalfZ + DOME.cutFeather;
 
 const GLASS_BANDS = [
   { y0: 3.6 * YS, y1: 9.0 * YS },
@@ -116,8 +132,15 @@ function domePoint(phi, theta) {
   );
 }
 
-function inDomeOpening(phi, x, z) {
-  return phi < DOME.openPhiMax && Math.abs(x) < DOME.holeHalfX && Math.abs(z) < DOME.holeHalfZ;
+function domeYAt(x, z) {
+  const nx = x / (DOME.R * DOME.sx);
+  const nz = z / (DOME.R * DOME.sz);
+  const inside = Math.max(0, 1 - nx * nx - nz * nz);
+  return DOME.cy + DOME.R * DOME.sy * Math.sqrt(inside);
+}
+
+function inDomeOpening(_phi, x, z) {
+  return Math.abs(x) < DOME.cutHalfX && Math.abs(z) < DOME.cutHalfZ;
 }
 
 /** Liền khối 360°, khoét lỗ trung tâm — không hở 4 góc */
@@ -159,6 +182,50 @@ function buildDomeShellGeometry() {
   return mergeGeometries(geos, false);
 }
 
+function buildOpeningTrimStrip(x0, x1, z0, z1, xSegs = 18, zSegs = 8) {
+  const positions = [];
+  const indices = [];
+  const yLift = 0.42 * YS;
+
+  for (let zi = 0; zi <= zSegs; zi++) {
+    const z = z0 + (zi / zSegs) * (z1 - z0);
+    for (let xi = 0; xi <= xSegs; xi++) {
+      const x = x0 + (xi / xSegs) * (x1 - x0);
+      positions.push(x, domeYAt(x, z) + yLift, z);
+    }
+  }
+
+  const row = xSegs + 1;
+  for (let zi = 0; zi < zSegs; zi++) {
+    for (let xi = 0; xi < xSegs; xi++) {
+      const a = zi * row + xi;
+      const b = a + 1;
+      const c = a + row + 1;
+      const d = a + row;
+      indices.push(a, d, c, a, c, b);
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function buildRectOpeningTrimGeometry() {
+  const trim = DOME.cutFeather * 2.0;
+  const hx = DOME.holeHalfX;
+  const hz = DOME.holeHalfZ;
+  const geos = [
+    buildOpeningTrimStrip(-hx - trim, hx + trim, hz, hz + trim, 32, 6),
+    buildOpeningTrimStrip(-hx - trim, hx + trim, -hz - trim, -hz, 32, 6),
+    buildOpeningTrimStrip(-hx - trim, -hx, -hz, hz, 6, 24),
+    buildOpeningTrimStrip(hx, hx + trim, -hz, hz, 6, 24),
+  ];
+  return mergeGeometries(geos, false);
+}
+
 function facadeEllipseAtY(y) {
   const t = Math.min(1, Math.max(0, y / DOME.rimY));
   return {
@@ -177,6 +244,24 @@ function surfacePoint(a, y, rx, rz, outward = 0) {
     y,
     rz * Math.cos(a) + (nz / nl) * outward,
   );
+}
+
+const STAND_INSET = 0.965; // Keep stepped seating inside the enlarged stadium shell.
+
+/** Điểm trên biên hình chữ nhật axis-aligned (chuẩn vuông): giao ray (sin, cos) với biên rx/rz. */
+function rectR(a, rx, rz) {
+  const s = Math.abs(Math.sin(a));
+  const c = Math.abs(Math.cos(a));
+  const denom = Math.max(s / rx, c / rz) || 1;
+  return 1 / denom;
+}
+
+function surfacePointRect(a, y, rx, rz, outward = 0) {
+  const r = rectR(a, rx, rz);
+  // OUTWARD chỉ để tương thích chữ ký; phần khán đài gọi outward=0.
+  const x = Math.sin(a) * r + (outward ? Math.sign(Math.sin(a)) * outward : 0);
+  const z = Math.cos(a) * r + (outward ? Math.sign(Math.cos(a)) * outward : 0);
+  return new THREE.Vector3(x, y, z);
 }
 
 function buildTaperedFacadeRing(y0, y1, rx0, rz0, rx1, rz1, segs = 72) {
@@ -519,22 +604,24 @@ function pushColoredBox(positions, colors, w, h, d, px, py, pz, rotY, rgb) {
 }
 
 /** Người ngồi — rải đều dọc cung, một ghế/vị trí (không xếp cột dọc) */
-function buildCrowdLayer(a0, a1, tiers = 12) {
+function buildCrowdLayer(a0, a1, tiers = 24) {
   const positions = [];
   const colors = [];
-  const seatH = 0.55;
-  const seatSpacing = 1.35;
+  const seatH = 0.28;
+  const seatSpacing = 0.95;
+  // Thu bước để tránh hở nhỏ giữa các tầng treads/risers.
+  const TIER_F1_OFFSET = 1.85;
 
   for (let t = 0; t < tiers; t++) {
     const f0 = (t + 1.0) / tiers;
-    const f1 = (t + 1.65) / tiers;
+    const f1 = (t + TIER_F1_OFFSET) / tiers;
     const r0 = tierAt(Math.min(f0, 0.98));
     const r1 = tierAt(Math.min(f1, 1));
     const yTop = r1.y + seatH;
     const uSeat = 0.42;
-    const rx = r0.rx + uSeat * (r1.rx - r0.rx);
-    const rz = r0.rz + uSeat * (r1.rz - r0.rz);
-    const midR = (ellipseR(a0, rx, rz) + ellipseR(a1, rx, rz)) * 0.5;
+    const rx = (r0.rx + uSeat * (r1.rx - r0.rx)) * STAND_INSET;
+    const rz = (r0.rz + uSeat * (r1.rz - r0.rz)) * STAND_INSET;
+    const midR = (rectR(a0, rx, rz) + rectR(a1, rx, rz)) * 0.5;
     const arcLen = Math.abs(a1 - a0) * midR;
     const seatsAlong = Math.max(16, Math.min(96, Math.round(arcLen / seatSpacing)));
 
@@ -542,7 +629,7 @@ function buildCrowdLayer(a0, a1, tiers = 12) {
       if ((t * 17 + si * 31) % 11 === 0) continue;
 
       const ang = a0 + ((si + 0.5) / seatsAlong) * (a1 - a0);
-      const pt = surfacePoint(ang, yTop + 0.12, rx, rz, 0);
+      const pt = surfacePointRect(ang, yTop + 0.12, rx, rz, 0);
       const shirt = CROWD_SHIRTS[(t * 7 + si) % CROWD_SHIRTS.length];
       pushColoredBox(positions, colors, 1.05, 1.1, 0.82, pt.x, yTop + 0.72, pt.z, -ang, shirt);
       pushColoredBox(positions, colors, 0.44, 0.44, 0.38, pt.x, yTop + 1.38, pt.z, -ang, SKIN);
@@ -557,16 +644,18 @@ function buildCrowdLayer(a0, a1, tiers = 12) {
 }
 
 /** Khán đài liền khối — mặt bậc + vách kín, không nhìn xuyên thấu */
-function buildSolidBowlSector(a0, a1, tiers = 12, arcSeg = 28) {
+function buildSolidBowlSector(a0, a1, tiers = 24, arcSeg = 28) {
   const treadGeos = [];
   const riserGeos = [];
   const innerGeos = [];
   const ribbonGeos = [];
-  const seatH = 0.55;
+  const seatH = 0.28;
+  // Thu bước để tránh hở nhỏ giữa các tầng treads/risers.
+  const TIER_F1_OFFSET = 1.85;
 
   for (let t = 0; t < tiers; t++) {
     const f0 = (t + 1.0) / tiers;
-    const f1 = (t + 1.65) / tiers;
+    const f1 = (t + TIER_F1_OFFSET) / tiers;
     const r0 = tierAt(Math.min(f0, 0.98));
     const r1 = tierAt(Math.min(f1, 1));
 
@@ -579,32 +668,32 @@ function buildSolidBowlSector(a0, a1, tiers = 12, arcSeg = 28) {
       const yTop = r1.y + seatH;
 
       treadGeos.push(quadGeo([
-        surfacePoint(ang0, yTop, r0.rx, r0.rz),
-        surfacePoint(ang1, yTop, r0.rx, r0.rz),
-        surfacePoint(ang1, yTop, r1.rx, r1.rz),
-        surfacePoint(ang0, yTop, r1.rx, r1.rz),
+        surfacePointRect(ang0, yTop, r0.rx * STAND_INSET, r0.rz * STAND_INSET),
+        surfacePointRect(ang1, yTop, r0.rx * STAND_INSET, r0.rz * STAND_INSET),
+        surfacePointRect(ang1, yTop, r1.rx * STAND_INSET, r1.rz * STAND_INSET),
+        surfacePointRect(ang0, yTop, r1.rx * STAND_INSET, r1.rz * STAND_INSET),
       ]));
 
       ribbonGeos.push(quadGeo([
-        surfacePoint(ang0, yTop + 0.1, r0.rx, r0.rz, -0.12),
-        surfacePoint(ang1, yTop + 0.1, r0.rx, r0.rz, -0.12),
-        surfacePoint(ang1, yTop + 0.38, r0.rx, r0.rz, -0.12),
-        surfacePoint(ang0, yTop + 0.38, r0.rx, r0.rz, -0.12),
+        surfacePointRect(ang0, yTop + 0.1, r0.rx * STAND_INSET, r0.rz * STAND_INSET, 0),
+        surfacePointRect(ang1, yTop + 0.1, r0.rx * STAND_INSET, r0.rz * STAND_INSET, 0),
+        surfacePointRect(ang1, yTop + 0.38, r1.rx * STAND_INSET, r1.rz * STAND_INSET, 0),
+        surfacePointRect(ang0, yTop + 0.38, r1.rx * STAND_INSET, r1.rz * STAND_INSET, 0),
       ]));
 
       riserGeos.push(quadGeo([
-        surfacePoint(ang0, r0.y, r0.rx, r0.rz),
-        surfacePoint(ang1, r0.y, r0.rx, r0.rz),
-        surfacePoint(ang1, yTop, r0.rx, r0.rz),
-        surfacePoint(ang0, yTop, r0.rx, r0.rz),
+        surfacePointRect(ang0, r0.y, r0.rx * STAND_INSET, r0.rz * STAND_INSET),
+        surfacePointRect(ang1, r0.y, r0.rx * STAND_INSET, r0.rz * STAND_INSET),
+        surfacePointRect(ang1, yTop, r1.rx * STAND_INSET, r1.rz * STAND_INSET),
+        surfacePointRect(ang0, yTop, r1.rx * STAND_INSET, r1.rz * STAND_INSET),
       ]));
 
       if (t === 0 && r0.y > 0.5) {
         innerGeos.push(quadGeo([
-          surfacePoint(ang0, 0.12, r0.rx, r0.rz),
-          surfacePoint(ang1, 0.12, r0.rx, r0.rz),
-          surfacePoint(ang1, r0.y - 0.08, r0.rx, r0.rz),
-          surfacePoint(ang0, r0.y - 0.08, r0.rx, r0.rz),
+          surfacePointRect(ang0, 0.12, r0.rx * STAND_INSET, r0.rz * STAND_INSET),
+          surfacePointRect(ang1, 0.12, r0.rx * STAND_INSET, r0.rz * STAND_INSET),
+          surfacePointRect(ang1, r0.y - 0.08, r0.rx * STAND_INSET, r0.rz * STAND_INSET),
+          surfacePointRect(ang0, r0.y - 0.08, r0.rx * STAND_INSET, r0.rz * STAND_INSET),
         ]));
       }
     }
@@ -624,7 +713,7 @@ function buildFacadeRing(y0, y1, rx, rz, segs = 64) {
 
 function createStands(group) {
   const seamOverlap = 0.02;
-  const bowl = buildSolidBowlSector(0, Math.PI * 2 + seamOverlap, 12, 64);
+  const bowl = buildSolidBowlSector(0, Math.PI * 2 + seamOverlap, 24, 120);
 
   const g = new THREE.Group();
   g.name = 'stands';
@@ -722,46 +811,20 @@ function createPitch(group) {
   const g = new THREE.Group();
   g.name = 'pitch';
 
-  const track = new THREE.Mesh(new THREE.RingGeometry(56, 59.5, 48), MAT.concrete);
-  track.rotation.x = -Math.PI / 2;
-  track.position.y = 0.05;
-  track.name = 'pitch_track';
-  g.add(track);
+  const DESIRED_FIELD_SCALE = 3.15;
+  // Cho cỏ “fill” sát mép khán đài trong: tăng margin để không còn mảng nền trắng
+  const FIT_MARGIN = 0.93;
+  const fitScaleX = (BOWL.innerRx * FIT_MARGIN) / PITCH_HALF_L;
+  const fitScaleZ = (BOWL.innerRz * FIT_MARGIN) / PITCH_HALF_W;
+  const FIELD_SCALE = Math.min(DESIRED_FIELD_SCALE, fitScaleX, fitScaleZ);
+  const pitchL = PITCH_L * FIELD_SCALE;
+  const pitchW = PITCH_W * FIELD_SCALE;
 
-  const tech = new THREE.Mesh(new THREE.PlaneGeometry(PITCH_L + 6, PITCH_W + 6), MAT.dark);
-  tech.rotation.x = -Math.PI / 2;
-  tech.position.y = 0.04;
-  tech.name = 'pitch_tech_area';
-  g.add(tech);
-
-  const surf = new THREE.Mesh(new THREE.PlaneGeometry(PITCH_L, PITCH_W, 32, 20), MAT.grass);
+  const surf = new THREE.Mesh(new THREE.PlaneGeometry(pitchL, pitchW, 1, 1), MAT.grass);
   surf.rotation.x = -Math.PI / 2;
-  surf.position.y = 0.08;
+  surf.position.y = 0.05;
   surf.name = 'pitch_surface';
   g.add(surf);
-
-  const lw = 0.11;
-  const pitchLine = (w, d, x, z) => {
-    const geo = new THREE.PlaneGeometry(w, d);
-    geo.rotateX(-Math.PI / 2);
-    geo.translate(x, 0.09, z);
-    return geo;
-  };
-  const lineGeos = [
-    pitchLine(PITCH_L, lw, 0, 0),
-    pitchLine(lw, PITCH_W, -PITCH_L / 2, 0),
-    pitchLine(lw, PITCH_W, PITCH_L / 2, 0),
-    pitchLine(40.32, lw, -PITCH_L / 2 + 16.5, 0),
-    pitchLine(40.32, lw, PITCH_L / 2 - 16.5, 0),
-    pitchLine(18.32, lw, -PITCH_L / 2 + 5.5, 0),
-    pitchLine(18.32, lw, PITCH_L / 2 - 5.5, 0),
-  ];
-  g.add(new THREE.Mesh(mergeGeometries(lineGeos, false), MAT.line));
-
-  const circle = new THREE.Mesh(new THREE.RingGeometry(9.15, 9.15 + lw, 40), MAT.line);
-  circle.rotation.x = -Math.PI / 2;
-  circle.position.y = 0.09;
-  g.add(circle);
 
   group.add(g);
 }
@@ -884,6 +947,10 @@ function createRoof(group) {
   dome.name = 'roof_dome';
   g.add(dome);
 
+  const openingTrim = new THREE.Mesh(buildRectOpeningTrimGeometry(), MAT.ptfe);
+  openingTrim.name = 'roof_rect_opening_trim';
+  g.add(openingTrim);
+
   const e0 = facadeEllipseAtY(COLLAR_Y0);
   const collar = new THREE.Mesh(
     buildTaperedFacadeRing(COLLAR_Y0, ROOF_COLLAR_TOP, e0.rx, e0.rz, DOME.rimRx, DOME.rimRz, 80),
@@ -900,59 +967,67 @@ function createRoof(group) {
   rimFrame.name = 'roof_rim_frame';
   g.add(rimFrame);
 
-  const capY = DOME.cy + DOME.R * DOME.sy * Math.cos(DOME.openPhiMax * 0.92);
-  const cap = new THREE.Mesh(
-    new THREE.BoxGeometry(DOME.holeHalfX * 2.08, 0.65, DOME.holeHalfZ * 2.08),
-    MAT.ptfe,
-  );
-  cap.position.set(0, capY, 0);
+  const cap = new THREE.Group();
   cap.name = 'roof_closed_cap';
+  cap.visible = false;
   g.add(cap);
 
   group.add(g);
+}
+
+function buildRoofPanelGeometry(width, depth, thickness) {
+  const geo = new THREE.BoxGeometry(width, thickness, depth, 24, 3, 24);
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const xNorm = Math.abs(x) / (width * 0.5);
+    const zNorm = Math.abs(z) / (depth * 0.5);
+    const topMask = y > 0 ? 1 : 0.55;
+    const domeArch = (1 - Math.min(1, xNorm ** 1.18)) * 1.55 * STADIUM_SCALE;
+    const endFalloff = (1 - Math.min(1, zNorm ** 1.7)) * 0.24 * STADIUM_SCALE;
+    const shoulderDrop = xNorm * 0.38 * STADIUM_SCALE;
+    const lipDrop = xNorm ** 1.35 * 1.9 * STADIUM_SCALE;
+    pos.setY(i, y + (domeArch + endFalloff - shoulderDrop - lipDrop) * topMask);
+    pos.setZ(i, z * (0.985 + xNorm * 0.015));
+  }
+  geo.computeVertexNormals();
+  return geo;
 }
 
 function createRoofOpen(group) {
   const g = new THREE.Group();
   g.name = 'roof_open';
 
-  const panelGeo = new THREE.BoxGeometry(34, 0.85, 52);
+  const panelGeo = buildRoofPanelGeometry(DOME.panelWidth, DOME.panelDepth, DOME.panelThickness);
   const panelL = new THREE.Mesh(panelGeo, MAT.ptfe);
-  panelL.position.set(-DOME.panelRestX, DOME.panelY, 0);
+  panelL.position.set(-DOME.panelOpenX, DOME.panelOpenY, 0);
+  panelL.rotation.z = DOME.panelOpenTilt;
   panelL.name = 'roof_panel_west';
   g.add(panelL);
 
   const panelR = new THREE.Mesh(panelGeo.clone(), MAT.ptfe);
-  panelR.position.set(DOME.panelRestX, DOME.panelY, 0);
+  panelR.position.set(DOME.panelOpenX, DOME.panelOpenY, 0);
+  panelR.rotation.z = -DOME.panelOpenTilt;
   panelR.name = 'roof_panel_east';
   g.add(panelR);
 
-  const ridgeGeo = new THREE.BoxGeometry(1.1, 0.32, 52);
-  const ridgeL = new THREE.Mesh(ridgeGeo, MAT.ptfe);
-  ridgeL.position.set(-DOME.panelRestX - 17.2, DOME.panelY + 0.55, 0);
-  ridgeL.name = 'roof_ridge_west';
-  g.add(ridgeL);
-
-  const ridgeR = new THREE.Mesh(ridgeGeo.clone(), MAT.ptfe);
-  ridgeR.position.set(DOME.panelRestX + 17.2, DOME.panelY + 0.55, 0);
-  ridgeR.name = 'roof_ridge_east';
-  g.add(ridgeR);
-
   const trussGeos = [];
-  for (let z = -24; z <= 24; z += 4.5) {
-    const geo = new THREE.BoxGeometry(52, 1.2, 0.65);
+  for (let z = -DOME.panelDepth * 0.46; z <= DOME.panelDepth * 0.46; z += 6) {
+    const geo = new THREE.BoxGeometry(DOME.holeHalfX * 2.16, 1.1, 0.75);
     geo.translate(0, DOME.trussY, z);
     trussGeos.push(geo);
   }
-  for (let x = -24; x <= 24; x += 5.5) {
-    const geo = new THREE.BoxGeometry(0.65, 1.2, 48);
+  for (let x = -DOME.holeHalfX * 0.96; x <= DOME.holeHalfX * 0.96; x += 8) {
+    const geo = new THREE.BoxGeometry(0.75, 1.1, DOME.panelDepth * 0.94);
     geo.translate(x, DOME.trussY, 0);
     trussGeos.push(geo);
   }
-  for (let i = -3; i <= 3; i++) {
-    const geo = new THREE.BoxGeometry(0.55, 1.2, 52);
-    geo.rotateY(0.35 * i);
-    geo.translate(i * 4, DOME.trussY, 0);
+  for (let i = -4; i <= 4; i++) {
+    const geo = new THREE.BoxGeometry(0.55, 1.1, DOME.panelDepth * 1.02);
+    geo.rotateY(0.18 * i);
+    geo.translate(i * 8, DOME.trussY, 0);
     trussGeos.push(geo);
   }
   const truss = new THREE.Mesh(mergeGeometries(trussGeos, false), MAT.steel);
@@ -1064,7 +1139,7 @@ function createParking(group) {
   const g = new THREE.Group();
   g.name = 'parking';
   const facadeR = Math.max(FACADE.rx, FACADE.rz);
-  const parkDist = facadeR + OUTER_PAD + 118;
+  const parkDist = facadeR + OUTER_PAD + 72;
   const lotW = 78 * SIZE_MULT;
   const lotD = 58 * SIZE_MULT;
   const lots = [

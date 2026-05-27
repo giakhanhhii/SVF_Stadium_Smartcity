@@ -1,9 +1,15 @@
 export const domeConfig = {
   rimY: 79.2,
-  panelY: 166.4,
-  panelSlide: 84,
-  panelRestX: 45,
-  ridgeOffset: 45.4,
+  panelY: 140.5,
+  panelOpenY: 140.5,
+  panelClosedY: 151.9,
+  trussOpenY: 143.1,
+  trussClosedY: 154.5,
+  panelClosedX: 105.6,
+  panelOpenX: 194.6,
+  ridgeOffset: 116.7,
+  panelOpenTilt: 0.23,
+  panelClosedTilt: 0.18,
 };
 
 /** Vòng đèn pha — ellipse khớp khán đài, lõm vào trong bowl */
@@ -44,9 +50,9 @@ export const stadiumSceneData = {
       { type: 'roof', pos: [0, 100, 0], color: 0xef9f27, label: 'Mái vòm' },
     ],
     services: [
-      { type: 'parking', pos: [-380, 2, -250], color: 0x534ab7, label: 'P1 85%' },
-      { type: 'parking', pos: [380, 2, -250], color: 0x534ab7, label: 'P2 92%' },
-      { type: 'parking', pos: [380, 2, 250], color: 0xba7517, label: 'P4 98%' },
+      { type: 'parking', pos: [-325, 2, -229], color: 0x534ab7, label: 'P1 85%' },
+      { type: 'parking', pos: [325, 2, -229], color: 0x534ab7, label: 'P2 92%' },
+      { type: 'parking', pos: [325, 2, 229], color: 0xba7517, label: 'P4 98%' },
     ],
   },
 };

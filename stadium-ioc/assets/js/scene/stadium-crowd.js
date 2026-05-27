@@ -49,6 +49,7 @@ export function initStadiumCrowd(model, scene) {
   crowdRoot = new THREE.Group();
   crowdRoot.name = 'crowd_system';
   crowdRoot.add(instancedMesh);
+  crowdRoot.visible = false;
   scene.add(crowdRoot);
 
   refreshCrowdInstances();
@@ -100,15 +101,9 @@ export function updateStadiumCrowd(camera, viewingInterior) {
   refreshCrowdInstances();
   const fillRatio = getCrowdFillRatio();
   applyDensityTint(fillRatio);
-
-  const dist = Math.hypot(camera.position.x, camera.position.z);
-  const visible = viewingInterior && dist < NEAR_DIST;
-  const mode = visible ? 'near' : 'far';
-
-  if (mode !== lastMode) {
-    lastMode = mode;
-    instancedMesh.visible = visible;
-  }
+  crowdRoot.visible = false;
+  instancedMesh.visible = false;
+  lastMode = 'off';
 }
 
 export function disposeStadiumCrowd() {

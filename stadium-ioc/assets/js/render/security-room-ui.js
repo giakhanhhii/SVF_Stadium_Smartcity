@@ -1,66 +1,154 @@
 import { SCREEN_VIEWS } from '../data/control-rooms.js';
 import { securityRoomData } from '../data/security-room.js';
+import {
+  getGateState, getGateSummary, resetGateState, setGateOpen, subscribeGateState, toggleGate,
+} from '../data/security-gates-state.js';
 import { feedToViewId } from '../scene/stadium-security-interior.js';
 import { camThumb } from './hud-charts.js';
 
-let gateState = securityRoomData.gates.map((g) => ({ ...g }));
-let alertState = securityRoomData.alerts.map((a) => ({ ...a }));
+let gateState = getGateState();
+let alertState = securityRoomData.alerts.map((alert) => ({ ...alert }));
 let activeMode = 0;
 let statusMsg = 'Sẵn sàng · Giám sát trực tiếp';
+let shellViewSyncHandler = null;
+let gateUnsub = null;
+
+function syncGateState(nextState) {
+  gateState = nextState.map((gate) => ({ ...gate }));
+}
 
 function gatesHtml() {
-  return gateState.map((g) =>
-    `<button type="button" class="sec-room__gate${g.open ? ' sec-room__gate--open' : ' sec-room__gate--locked'}"
-      data-sec-gate="${g.id}" aria-pressed="${g.open}">
-      <i class="ti ${g.open ? 'ti-lock-open' : 'ti-lock'}"></i>${g.id}
+  return gateState.map((gate) =>
+    `<button type="button" class="sec-room__gate${gate.open ? ' sec-room__gate--open' : ' sec-room__gate--locked'}"
+      data-sec-gate="${gate.id}" aria-pressed="${gate.open}">
+      <i class="ti ${gate.open ? 'ti-lock-open' : 'ti-lock'}"></i>${gate.id}
     </button>`,
   ).join('');
 }
 
 function camsHtml() {
-  return securityRoomData.cameras.map((c) =>
-    `<button type="button" class="sec-room__cam${c.online ? '' : ' sec-room__cam--off'}" data-sec-cam="${c.id}">
-      ${camThumb(c.label)}
+  return securityRoomData.cameras.map((cam) =>
+    `<button type="button" class="sec-room__cam${cam.online ? '' : ' sec-room__cam--off'}" data-sec-cam="${cam.id}">
+      ${camThumb(cam.label)}
     </button>`,
   ).join('');
 }
 
 function actionsHtml() {
-  return securityRoomData.actions.map((a) =>
-    `<button type="button" class="sec-room__action" data-sec-action="${a.id}">
-      <i class="ti ${a.icon}"></i>${a.label}
+  return securityRoomData.actions.map((action) =>
+    `<button type="button" class="sec-room__action" data-sec-action="${action.id}">
+      <i class="ti ${action.icon}"></i>${action.label}
     </button>`,
   ).join('');
 }
 
 function alertsHtml() {
-  const live = alertState.filter((a) => !a.ack);
+  const live = alertState.filter((alert) => !alert.ack);
   if (!live.length) return '<p class="sec-room__empty">Không còn cảnh báo chưa xử lý</p>';
-  return live.map((a) =>
+  return live.map((alert) =>
     `<div class="sec-room__alert-item">
       <div class="hud-alert">
-        <span class="hud-alert__tag" style="background:${a.tagBg};color:${a.tagColor}">${a.tag}</span>
-        <div class="hud-alert__title">${a.title}</div>
-        <div class="hud-alert__time">${a.time}</div>
+        <span class="hud-alert__tag" style="background:${alert.tagBg};color:${alert.tagColor}">${alert.tag}</span>
+        <div class="hud-alert__title">${alert.title}</div>
+        <div class="hud-alert__time">${alert.time}</div>
       </div>
-      <button type="button" class="sec-room__ack" data-sec-ack="${a.id}">Xác nhận</button>
+      <button type="button" class="sec-room__ack" data-sec-ack="${alert.id}">Xác nhận</button>
     </div>`,
   ).join('');
 }
 
 function screensHtml() {
-  return SCREEN_VIEWS.map((v) =>
-    `<button type="button" class="voc-room__screen" data-voc-screen="${v.id}">
-      <span class="voc-room__screen-label">${v.label}</span>
+  return SCREEN_VIEWS.map((view) =>
+    `<button type="button" class="voc-room__screen" data-voc-screen="${view.id}">
+      <span class="voc-room__screen-label">${view.label}</span>
       <span class="voc-room__screen-hint">Nhấn để mở sân 3D</span>
     </button>`,
   ).join('');
 }
 
+function setStatus(root, msg) {
+  statusMsg = msg;
+  root.querySelectorAll('.sec-room__status').forEach((el) => {
+    el.textContent = msg;
+  });
+}
+
+function refreshAlerts(root) {
+  const el = root.querySelector('[data-sec-alerts]');
+  if (el) el.innerHTML = alertsHtml();
+}
+
+function refreshGates(root) {
+  root.querySelectorAll('.sec-room__gates').forEach((el) => {
+    el.innerHTML = gatesHtml();
+  });
+  const count = getGateSummary();
+  root.querySelectorAll('[data-sec-gate-count]').forEach((el) => {
+    el.textContent = count;
+  });
+}
+
+function syncMonitorTabs(root, mode) {
+  root.querySelectorAll('[data-sec-monitor-view]').forEach((btn) => {
+    btn.classList.toggle('sec-room-shell__tab--active', btn.dataset.secMonitorView === mode);
+  });
+}
+
+function bindGateButtons(root) {
+  root.querySelectorAll('[data-sec-gate]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const gate = toggleGate(btn.dataset.secGate);
+      if (!gate) return;
+      refreshGates(root);
+      bindGateButtons(root);
+      setStatus(root, `Cổng ${gate.id} · ${gate.open ? 'Đã mở' : 'Đã khóa'}`);
+    });
+  });
+}
+
+function runAction(root, actionId) {
+  const action = securityRoomData.actions.find((item) => item.id === actionId);
+  if (actionId === 'act-0') {
+    setGateOpen('B2', true);
+    refreshGates(root);
+    bindGateButtons(root);
+    setStatus(root, 'Đã gửi lệnh · Mở cổng B2');
+    return;
+  }
+  setStatus(root, `Đã gửi lệnh · ${action?.label || 'Thao tác'}`);
+}
+
+function attachCommonHandlers(root, { openScreen, onExitRoom }) {
+  root.querySelector('[data-voc-exit-room]')?.addEventListener('click', onExitRoom);
+
+  root.querySelectorAll('[data-sec-action]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      runAction(root, btn.dataset.secAction);
+      btn.classList.add('sec-room__action--sent');
+      setTimeout(() => btn.classList.remove('sec-room__action--sent'), 1200);
+    });
+  });
+
+  bindGateButtons(root);
+
+  root.querySelectorAll('[data-sec-cam]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const cam = securityRoomData.cameras.find((item) => item.id === btn.dataset.secCam);
+      setStatus(root, `Live · ${cam?.label || 'Camera'}`);
+      openScreen('security');
+    });
+  });
+
+  root.querySelectorAll('[data-sec-ack]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      alertState = alertState.map((alert) => (alert.id === btn.dataset.secAck ? { ...alert, ack: true } : alert));
+      refreshAlerts(root);
+      setStatus(root, 'Cảnh báo đã xác nhận · Tiếp tục giám sát');
+    });
+  });
+}
+
 export function renderSecurityShell(room) {
-  const d = securityRoomData;
-  const gates = gatesHtml();
-  const actions = actionsHtml();
   return `<div class="sec-room-shell">
     <button type="button" class="sec-room-shell__exit" data-voc-exit-room>
       <i class="ti ti-arrow-left"></i> Ra ngoài
@@ -80,22 +168,21 @@ export function renderSecurityShell(room) {
         <strong>${room.label}</strong>
         <span class="sec-room__status">${statusMsg}</span>
       </div>
-      <div class="sec-room__gates">${gates}</div>
-      <div class="sec-room__actions">${actions}</div>
+      <div class="sec-room__gates">${gatesHtml()}</div>
+      <div class="sec-room__actions">${actionsHtml()}</div>
     </aside>
   </div>`;
 }
 
-function syncMonitorTabs(root, mode) {
-  root.querySelectorAll('[data-sec-monitor-view]').forEach((btn) => {
-    btn.classList.toggle('sec-room-shell__tab--active', btn.dataset.secMonitorView === mode);
-  });
-}
-
-let shellViewSyncHandler = null;
-
 export function bindSecurityShell(root, { onExitRoom, openScreen }) {
-  root.querySelector('[data-voc-exit-room]')?.addEventListener('click', onExitRoom);
+  gateUnsub?.();
+  gateUnsub = subscribeGateState((state) => {
+    syncGateState(state);
+    if (root.isConnected) {
+      refreshGates(root);
+      bindGateButtons(root);
+    }
+  });
 
   if (shellViewSyncHandler) {
     document.removeEventListener('voc-security-view-changed', shellViewSyncHandler);
@@ -105,37 +192,19 @@ export function bindSecurityShell(root, { onExitRoom, openScreen }) {
   };
   document.addEventListener('voc-security-view-changed', shellViewSyncHandler);
 
+  attachCommonHandlers(root, { openScreen, onExitRoom });
+
   root.querySelectorAll('[data-sec-monitor-view]').forEach((btn) => {
     btn.addEventListener('click', () => {
       syncMonitorTabs(root, btn.dataset.secMonitorView);
       openScreen(feedToViewId(btn.dataset.secMonitorView));
     });
   });
-
-  root.querySelectorAll('[data-sec-gate]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.secGate;
-      gateState = gateState.map((g) => (g.id === id ? { ...g, open: !g.open } : g));
-      root.querySelector('.sec-room__gates').innerHTML = gatesHtml();
-      const g = gateState.find((x) => x.id === id);
-      setStatus(root, `Cổng ${id} · ${g.open ? 'Đã mở' : 'Đã khóa'}`);
-    });
-  });
-
-  root.querySelectorAll('[data-sec-action]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const act = securityRoomData.actions.find((a) => a.id === btn.dataset.secAction);
-      setStatus(root, `Đã gửi lệnh · ${act?.label || 'Thao tác'}`);
-      btn.classList.add('sec-room__action--sent');
-      setTimeout(() => btn.classList.remove('sec-room__action--sent'), 1200);
-    });
-  });
 }
 
 export function renderSecurityRoom(room) {
-  const d = securityRoomData;
-  const tabs = d.modeTabs.map((t, i) =>
-    `<button type="button" class="sec-room__tab${i === activeMode ? ' sec-room__tab--active' : ''}" data-sec-mode="${i}">${t}</button>`,
+  const tabs = securityRoomData.modeTabs.map((tab, i) =>
+    `<button type="button" class="sec-room__tab${i === activeMode ? ' sec-room__tab--active' : ''}" data-sec-mode="${i}">${tab}</button>`,
   ).join('');
 
   return `<div class="voc-room voc-room--security" data-voc-room="${room.id}">
@@ -146,9 +215,9 @@ export function renderSecurityRoom(room) {
         <span class="sec-room__status">${statusMsg}</span>
       </div>
       <div class="sec-room__kpis">
-        <span><i class="ti ti-camera"></i> ${d.status.camerasOnline}</span>
-        <span><i class="ti ti-door"></i> ${d.status.gatesActive}</span>
-        <span><i class="ti ti-flame"></i> ${d.status.hotZone}</span>
+        <span><i class="ti ti-camera"></i> ${securityRoomData.status.camerasOnline}</span>
+        <span><i class="ti ti-door"></i> <span data-sec-gate-count>${getGateSummary()}</span></span>
+        <span><i class="ti ti-flame"></i> ${securityRoomData.status.hotZone}</span>
       </div>
       <button type="button" class="voc-room__back" data-voc-exit-room><i class="ti ti-arrow-left"></i> Ra ngoài</button>
     </header>
@@ -160,7 +229,7 @@ export function renderSecurityRoom(room) {
           <div class="sec-room__cams">${camsHtml()}</div>
         </div>
         <div class="sec-room__block">
-          <h3>Khóa cổng · ${gateState.filter((g) => g.open).length}/8 mở</h3>
+          <h3>Khóa cổng · <span data-sec-gate-count>${getGateSummary()}</span> mở</h3>
           <div class="sec-room__gates">${gatesHtml()}</div>
         </div>
         <div class="sec-room__block">
@@ -180,79 +249,36 @@ export function renderSecurityRoom(room) {
   </div>`;
 }
 
-function refreshAlerts(root) {
-  const el = root.querySelector('[data-sec-alerts]');
-  if (el) el.innerHTML = alertsHtml();
-}
-
-function refreshGates(root) {
-  const el = root.querySelector('.sec-room__gates');
-  if (!el) return;
-  el.innerHTML = gatesHtml();
-  const h = root.querySelector('.sec-room__block:nth-child(3) h3');
-  if (h) h.textContent = `Khóa cổng · ${gateState.filter((g) => g.open).length}/8 mở`;
-}
-
-function setStatus(root, msg) {
-  statusMsg = msg;
-  const el = root.querySelector('.sec-room__status');
-  if (el) el.textContent = msg;
-}
-
 export function bindSecurityRoom(root, { openScreen, onExitRoom }) {
-  root.querySelector('[data-voc-exit-room]')?.addEventListener('click', onExitRoom);
+  gateUnsub?.();
+  gateUnsub = subscribeGateState((state) => {
+    syncGateState(state);
+    if (root.isConnected) {
+      refreshGates(root);
+      bindGateButtons(root);
+    }
+  });
+
+  attachCommonHandlers(root, { openScreen, onExitRoom });
+
   root.querySelectorAll('[data-voc-screen]').forEach((btn) => {
     btn.addEventListener('click', () => openScreen(btn.dataset.vocScreen));
-  });
-
-  root.querySelectorAll('[data-sec-gate]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.secGate;
-      gateState = gateState.map((g) => (g.id === id ? { ...g, open: !g.open } : g));
-      refreshGates(root);
-      const g = gateState.find((x) => x.id === id);
-      setStatus(root, `Cổng ${id} · ${g.open ? 'Đã mở' : 'Đã khóa'}`);
-    });
-  });
-
-  root.querySelectorAll('[data-sec-cam]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const cam = securityRoomData.cameras.find((c) => c.id === btn.dataset.secCam);
-      setStatus(root, `Live · ${cam?.label || 'Camera'}`);
-      openScreen('security');
-    });
-  });
-
-  root.querySelectorAll('[data-sec-action]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const act = securityRoomData.actions.find((a) => a.id === btn.dataset.secAction);
-      setStatus(root, `Đã gửi lệnh · ${act?.label || 'Thao tác'}`);
-      btn.classList.add('sec-room__action--sent');
-      setTimeout(() => btn.classList.remove('sec-room__action--sent'), 1200);
-    });
-  });
-
-  root.querySelectorAll('[data-sec-ack]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      alertState = alertState.map((a) => (a.id === btn.dataset.secAck ? { ...a, ack: true } : a));
-      refreshAlerts(root);
-      setStatus(root, 'Cảnh báo đã xác nhận · Tiếp tục giám sát');
-    });
   });
 
   root.querySelectorAll('[data-sec-mode]').forEach((btn) => {
     btn.addEventListener('click', () => {
       activeMode = Number(btn.dataset.secMode);
-      root.querySelectorAll('.sec-room__tab').forEach((t) => t.classList.remove('sec-room__tab--active'));
+      root.querySelectorAll('.sec-room__tab').forEach((tab) => tab.classList.remove('sec-room__tab--active'));
       btn.classList.add('sec-room__tab--active');
-      setStatus(root, securityRoomData.modeTabs[activeMode] + ' · Đang hoạt động');
+      setStatus(root, `${securityRoomData.modeTabs[activeMode]} · Đang hoạt động`);
     });
   });
 }
 
 export function resetSecurityRoomState() {
-  gateState = securityRoomData.gates.map((g) => ({ ...g }));
-  alertState = securityRoomData.alerts.map((a) => ({ ...a }));
+  resetGateState();
+  gateState = getGateState();
+  alertState = securityRoomData.alerts.map((alert) => ({ ...alert }));
   activeMode = 0;
   statusMsg = 'Sẵn sàng · Giám sát trực tiếp';
 }

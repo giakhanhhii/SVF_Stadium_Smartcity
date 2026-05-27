@@ -5,8 +5,11 @@ let roomGroup = null;
 let boundEl = null;
 let boundCam = null;
 let onPick = null;
+let pointerState = null;
 
 const DEFAULT_BUILDING = { height: 22, width: 148, depth: 108 };
+const PICK_MOVE_TOLERANCE = 8;
+const PICK_MAX_DURATION_MS = 450;
 
 function matBody(accent) {
   return new THREE.MeshStandardMaterial({
@@ -107,7 +110,7 @@ function roomMesh(room) {
   return g;
 }
 
-function handleClick(ev) {
+function pickRoom(ev) {
   if (!onPick || !roomGroup?.visible || !boundEl || !boundCam) return;
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -118,6 +121,52 @@ function handleClick(ev) {
   const hits = ray.intersectObjects(roomGroup.children, true);
   const id = hits[0]?.object?.userData?.roomId;
   if (id) onPick(id);
+}
+
+function resetPointerState() {
+  pointerState = null;
+}
+
+function handlePointerDown(ev) {
+  if (ev.button !== 0 || !ev.isTrusted) {
+    resetPointerState();
+    return;
+  }
+
+  pointerState = {
+    pointerId: ev.pointerId,
+    startX: ev.clientX,
+    startY: ev.clientY,
+    startAt: performance.now(),
+    moved: false,
+  };
+}
+
+function handlePointerMove(ev) {
+  if (!pointerState || ev.pointerId !== pointerState.pointerId) return;
+  const dx = ev.clientX - pointerState.startX;
+  const dy = ev.clientY - pointerState.startY;
+  if (Math.hypot(dx, dy) > PICK_MOVE_TOLERANCE) pointerState.moved = true;
+}
+
+function handlePointerUp(ev) {
+  if (!pointerState || ev.pointerId !== pointerState.pointerId) return resetPointerState();
+
+  const duration = performance.now() - pointerState.startAt;
+  const dx = ev.clientX - pointerState.startX;
+  const dy = ev.clientY - pointerState.startY;
+  const moved = pointerState.moved || Math.hypot(dx, dy) > PICK_MOVE_TOLERANCE;
+
+  if (
+    ev.button === 0
+    && ev.isTrusted
+    && !moved
+    && duration <= PICK_MAX_DURATION_MS
+  ) {
+    pickRoom(ev);
+  }
+
+  resetPointerState();
 }
 
 export function buildControlRooms(scene) {
@@ -139,14 +188,25 @@ export function bindControlRoomPick(rendererEl, camera, pickCb) {
   boundEl = rendererEl;
   boundCam = camera;
   onPick = pickCb;
-  boundEl.addEventListener('click', handleClick);
+  boundEl.addEventListener('pointerdown', handlePointerDown);
+  boundEl.addEventListener('pointermove', handlePointerMove);
+  boundEl.addEventListener('pointerup', handlePointerUp);
+  boundEl.addEventListener('pointercancel', resetPointerState);
+  boundEl.addEventListener('pointerleave', resetPointerState);
 }
 
 export function unbindControlRoomPick() {
-  if (boundEl) boundEl.removeEventListener('click', handleClick);
+  if (boundEl) {
+    boundEl.removeEventListener('pointerdown', handlePointerDown);
+    boundEl.removeEventListener('pointermove', handlePointerMove);
+    boundEl.removeEventListener('pointerup', handlePointerUp);
+    boundEl.removeEventListener('pointercancel', resetPointerState);
+    boundEl.removeEventListener('pointerleave', resetPointerState);
+  }
   boundEl = null;
   boundCam = null;
   onPick = null;
+  resetPointerState();
 }
 
 export function disposeControlRooms() {

@@ -10,6 +10,7 @@ import { getMarkerGroup, setMarkers, pulseMarkers } from './stadium-markers.js';
 import { tweenCamera, setSceneHint, showSceneLoading, applyCameraPreset } from './stadium-camera.js';
 import { setupStadiumEnvironment, disposeStadiumEnvironment } from './stadium-environment.js';
 import { initStadiumCrowd, updateStadiumCrowd, disposeStadiumCrowd } from './stadium-crowd.js';
+import { buildStadiumGates, disposeStadiumGates, setStadiumGatesVisible } from './stadium-gates.js';
 import {
   buildControlRooms, bindControlRoomPick, setControlRoomsVisible, disposeControlRooms,
 } from './stadium-control-rooms.js';
@@ -24,7 +25,7 @@ import {
 let activeScene = null;
 let stadiumModel = null;
 let roofOpenGroup = null;
-let roofProgress = 0;
+let roofProgress = 1;
 let rendererEl = null;
 let currentNavPage = 'overview';
 let currentViewId = 'overview';
@@ -34,6 +35,9 @@ let bloomPassRef = null;
 let interiorFloodGroup = null;
 let floodlightsGroup = null;
 let facadeGlassMesh = null;
+let facadeMullionsMesh = null;
+let facadeTopFrameMesh = null;
+let waveRibbonMesh = null;
 let roofClosedCap = null;
 let parkingGroup = null;
 let controlRoomMode = 'exterior';
@@ -71,7 +75,7 @@ function bindVocEvents() {
   });
 }
 
-const MODEL_URL = 'assets/models/pvf-stadium.glb';
+const MODEL_URL = 'assets/models/pvf-stadium-openroof-v3.glb';
 const GLASS_OPAQUE = 0xe8ecf2;
 const GLASS_TRANSPARENT = 0xffffff;
 
@@ -137,6 +141,7 @@ function updateControlRoomVisibility() {
     && controlRoomMode === 'exterior'
     && currentViewId === 'overview';
   setControlRoomsVisible(show);
+  setStadiumGatesVisible(true);
   if (parkingGroup) parkingGroup.visible = !show;
   if (show) {
     document.dispatchEvent(new CustomEvent('voc-room-hint', { detail: true }));
@@ -177,7 +182,7 @@ function updateShellVisibility(camera, controls) {
     }
   }
 
-  if (roofClosedCap) roofClosedCap.visible = !roofOpen;
+  if (roofClosedCap) roofClosedCap.visible = false;
   if (interiorFloodGroup) interiorFloodGroup.visible = viewingInterior;
   if (floodlightsGroup) floodlightsGroup.visible = viewingInterior;
   if (bloomPassRef) {
@@ -279,11 +284,18 @@ function createScene(container, navPageId) {
       floodlightsGroup.traverse((o) => { o.frustumCulled = false; });
     }
     facadeGlassMesh = stadiumModel.getObjectByName('facade_glass');
+    facadeMullionsMesh = stadiumModel.getObjectByName('facade_mullions');
+    facadeTopFrameMesh = stadiumModel.getObjectByName('facade_top_frame');
+    waveRibbonMesh = stadiumModel.getObjectByName('wave_ribbon_south');
+    if (facadeMullionsMesh) facadeMullionsMesh.visible = false;
+    if (facadeTopFrameMesh) facadeTopFrameMesh.visible = false;
+    if (waveRibbonMesh) waveRibbonMesh.visible = false;
     roofClosedCap = stadiumModel.getObjectByName('roof_closed_cap');
     parkingGroup = stadiumModel.getObjectByName('parking');
     initStadiumCrowd(stadiumModel, scene);
     roofOpenGroup = stadiumModel.getObjectByName('roof_open');
     setRoofProgress(roofProgress);
+    buildStadiumGates(scene);
     buildControlRooms(scene);
     buildSecurityInterior(scene);
     setMonitorFeedHooks({ beforeFeedRender: prepareMonitorFeed, afterFeedsRender: restoreAfterMonitorFeeds });
@@ -341,9 +353,13 @@ function createScene(container, navPageId) {
       interiorFloodGroup = null;
       floodlightsGroup = null;
       facadeGlassMesh = null;
+      facadeMullionsMesh = null;
+      facadeTopFrameMesh = null;
+      waveRibbonMesh = null;
       roofClosedCap = null;
       parkingGroup = null;
       disposeControlRooms();
+      disposeStadiumGates();
       disposeSecurityInterior();
       mainScene = null;
       disposeStadiumCrowd();
@@ -386,19 +402,44 @@ export function refreshControlRoomVisibility() {
 }
 
 function applyRoofState(progress) {
-  const roofOpen = progress > 0.02;
-  if (roofOpenGroup) roofOpenGroup.visible = roofOpen;
-  if (roofClosedCap) roofClosedCap.visible = !roofOpen;
+  if (roofOpenGroup) roofOpenGroup.visible = true;
+  if (roofClosedCap) roofClosedCap.visible = false;
   if (!roofOpenGroup) return;
-  const slide = (1 - progress) * domeConfig.panelSlide;
+  const closedX = domeConfig.panelClosedX ?? domeConfig.panelOpenX ?? 0;
+  const openX = domeConfig.panelOpenX ?? closedX;
+  const panelX = closedX + (openX - closedX) * progress;
+  const closeBlend = 1 - progress;
+  const liftT = 1 - ((1 - closeBlend) ** 1.4);
+  const panelOpenY = domeConfig.panelOpenY ?? domeConfig.panelY ?? 0;
+  const panelClosedY = domeConfig.panelClosedY ?? panelOpenY;
+  const panelY = panelOpenY + (panelClosedY - panelOpenY) * liftT;
+  const trussOpenY = domeConfig.trussOpenY ?? panelOpenY;
+  const trussClosedY = domeConfig.trussClosedY ?? trussOpenY;
+  const trussY = trussOpenY + (trussClosedY - trussOpenY) * liftT;
+  const panelOpenTilt = domeConfig.panelOpenTilt ?? 0;
+  const panelClosedTilt = domeConfig.panelClosedTilt ?? 0;
+  const panelTilt = panelOpenTilt + (panelClosedTilt - panelOpenTilt) * liftT;
   const panelW = roofOpenGroup.getObjectByName('roof_panel_west');
   const panelE = roofOpenGroup.getObjectByName('roof_panel_east');
   const ridgeW = roofOpenGroup.getObjectByName('roof_ridge_west');
   const ridgeE = roofOpenGroup.getObjectByName('roof_ridge_east');
-  if (panelW) panelW.position.x = -domeConfig.panelRestX - slide;
-  if (panelE) panelE.position.x = domeConfig.panelRestX + slide;
-  if (ridgeW) ridgeW.position.x = -domeConfig.panelRestX - domeConfig.ridgeOffset - slide;
-  if (ridgeE) ridgeE.position.x = domeConfig.panelRestX + domeConfig.ridgeOffset + slide;
+  const truss = roofOpenGroup.getObjectByName('roof_truss');
+  if (panelW) panelW.position.x = -panelX;
+  if (panelE) panelE.position.x = panelX;
+  if (panelW) panelW.position.y = panelY;
+  if (panelE) panelE.position.y = panelY;
+  if (panelW) panelW.rotation.z = panelTilt;
+  if (panelE) panelE.rotation.z = -panelTilt;
+  if (ridgeW) ridgeW.position.x = -panelX - domeConfig.ridgeOffset;
+  if (ridgeE) ridgeE.position.x = panelX + domeConfig.ridgeOffset;
+  if (ridgeW) ridgeW.position.y = panelY + 1.2;
+  if (ridgeE) ridgeE.position.y = panelY + 1.2;
+  if (ridgeW) ridgeW.rotation.z = panelTilt * 0.92;
+  if (ridgeE) ridgeE.rotation.z = -panelTilt * 0.92;
+  if (truss) {
+    truss.visible = false;
+    truss.position.y = trussY - (domeConfig.trussOpenY ?? 0);
+  }
 }
 
 export function setRoofProgress(p) {

@@ -15,7 +15,7 @@ export const overviewData = {
   ],
   modules: [
     { nav: 'security', icon: 'ti-shield-check', iconBg: '#FCEBEB', iconColor: '#A32D2D', badge: 'ONLINE', badgeClass: 'badge-online', name: 'An ninh & Đám đông', meta: '48 camera AI • 8 cổng kiểm soát' },
-    { nav: 'events', icon: 'ti-calendar-event', iconBg: '#FAEEDA', iconColor: '#854F0B', badge: 'LIVE', badgeClass: 'badge-live', name: 'Vận hành sự kiện', meta: 'Trận đấu • Lễ hội • Biểu diễn' },
+    { nav: 'events', icon: 'ti-speakerphone', iconBg: '#FAEEDA', iconColor: '#854F0B', badge: 'LIVE', badgeClass: 'badge-live', name: 'Truyền thông sân đấu', meta: 'PA • Màn hình LED • Livestream' },
     { nav: 'facilities', icon: 'ti-air-conditioning', iconBg: '#E6F1FB', iconColor: '#185FA5', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Cơ sở hạ tầng', meta: 'HVAC • Chiếu sáng • Thang máy' },
     { nav: 'services', icon: 'ti-parking', iconBg: '#EEEDFE', iconColor: '#534AB7', badge: 'CẢNH BÁO', badgeClass: 'badge-warn', name: 'Bãi đỗ & Giao thông', meta: '2.400 chỗ • 78% đã sử dụng' },
     { nav: 'services', icon: 'ti-tools-kitchen-2', iconBg: '#FBEAF0', iconColor: '#993556', badge: 'ONLINE', badgeClass: 'badge-online', name: 'F&B & Tiện ích', meta: '24 quầy • 6 nhà vệ sinh thông minh' },

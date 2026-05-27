@@ -1,5 +1,7 @@
 /** Vị trí khớp 4 bãi đỗ + 1 phòng mới (công thức generate-stadium-glb.mjs) */
-const PARK_DIST = 464.6;
+const ROOM_X = 700;
+const ROOM_Z = 585;
+const ROOM_Z_FAR = 690;
 
 export const SCREEN_VIEWS = [
   { id: 'overview', label: 'Tổng quan' },
@@ -16,7 +18,7 @@ export const CONTROL_ROOMS = [
     label: 'Tổng quan & Báo cáo',
     badge: 'VOC',
     accent: '#00d4ff',
-    pos: [-PARK_DIST * 0.78, PARK_DIST * 0.55],
+    pos: [-ROOM_X, ROOM_Z],
     utilities: ['Trạng thái sân', 'KPI trận', 'Xuất báo cáo', 'PA System'],
   },
   {
@@ -24,7 +26,7 @@ export const CONTROL_ROOMS = [
     label: 'An ninh',
     badge: 'SEC',
     accent: '#97c459',
-    pos: [PARK_DIST * 0.78, PARK_DIST * 0.55],
+    pos: [ROOM_X, ROOM_Z],
     building: { profile: 'tower', height: 56, width: 148, depth: 108 },
     utilities: ['Camera wall', 'Cảnh báo', 'Khóa cổng', 'Đám đông'],
   },
@@ -33,7 +35,7 @@ export const CONTROL_ROOMS = [
     label: 'Sự kiện',
     badge: 'EVT',
     accent: '#ef9f27',
-    pos: [-PARK_DIST * 0.78, -PARK_DIST * 0.55],
+    pos: [-ROOM_X, -ROOM_Z],
     utilities: ['Timeline', 'Sân cỏ', 'Khán giả', 'Live score'],
   },
   {
@@ -41,7 +43,7 @@ export const CONTROL_ROOMS = [
     label: 'Cơ sở hạ tầng',
     badge: 'INF',
     accent: '#1d9e75',
-    pos: [PARK_DIST * 0.78, -PARK_DIST * 0.55],
+    pos: [ROOM_X, -ROOM_Z],
     utilities: ['Mái vòm', 'HVAC', 'Điện UPS', 'BMS'],
   },
   {
@@ -49,7 +51,7 @@ export const CONTROL_ROOMS = [
     label: 'Dịch vụ',
     badge: 'SVC',
     accent: '#534ab7',
-    pos: [0, -PARK_DIST * 0.55],
+    pos: [0, -ROOM_Z_FAR],
     utilities: ['Bãi đỗ', 'F&B', 'Nhà vệ sinh', 'Lưu thông'],
   },
 ];

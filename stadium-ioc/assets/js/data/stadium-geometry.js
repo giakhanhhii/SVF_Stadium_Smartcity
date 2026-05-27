@@ -16,10 +16,12 @@ export const PITCH_HALF_L = 105 / 2;
 export const PITCH_HALF_W = 68 / 2;
 export const SEAT_AISLE = 11;
 export const SEAT_DEPTH = 0.68;
-export const SEAT_H = 0.55;
+export const SEAT_H = 0.28;
 export const U_SEAT = 0.42;
-export const SEAT_SPACING = 1.35;
-export const CROWD_TIERS = 12;
+export const SEAT_SPACING = 0.95;
+export const CROWD_TIERS = 24;
+export const STAND_INSET = 0.965;
+export const TIER_F1_OFFSET = 1.85;
 
 export const CROWD_SECTORS = [
   { id: 'north', label: 'Khán đài A', a0: -Math.PI * 0.78, a1: -Math.PI * 0.22 },
@@ -45,6 +47,13 @@ export function ellipseR(a, rx, rz) {
   return (rx * rz) / Math.sqrt((rz * c) ** 2 + (rx * s) ** 2);
 }
 
+export function rectR(a, rx, rz) {
+  const s = Math.abs(Math.sin(a));
+  const c = Math.abs(Math.cos(a));
+  const denom = Math.max(s / rx, c / rz) || 1;
+  return 1 / denom;
+}
+
 export function surfacePoint(a, y, rx, rz, outward = 0) {
   const nx = Math.sin(a) / rx;
   const nz = Math.cos(a) / rz;
@@ -56,6 +65,13 @@ export function surfacePoint(a, y, rx, rz, outward = 0) {
   };
 }
 
+export function surfacePointRect(a, y, rx, rz, outward = 0) {
+  const r = rectR(a, rx, rz);
+  const x = Math.sin(a) * r + (outward ? Math.sign(Math.sin(a)) * outward : 0);
+  const z = Math.cos(a) * r + (outward ? Math.sign(Math.cos(a)) * outward : 0);
+  return { x, y, z };
+}
+
 /** Vị trí ghế — cùng công thức buildCrowdLayer / buildSolidBowlSector trong generator */
 export function buildSeatMap() {
   const seats = [];
@@ -64,19 +80,19 @@ export function buildSeatMap() {
   for (const sector of CROWD_SECTORS) {
     for (let t = 0; t < CROWD_TIERS; t++) {
       const f0 = (t + 1.0) / CROWD_TIERS;
-      const f1 = (t + 1.65) / CROWD_TIERS;
+      const f1 = (t + TIER_F1_OFFSET) / CROWD_TIERS;
       const r0 = tierAt(Math.min(f0, 0.98));
       const r1 = tierAt(Math.min(f1, 1));
       const yTop = r1.y + SEAT_H;
-      const rx = r0.rx + U_SEAT * (r1.rx - r0.rx);
-      const rz = r0.rz + U_SEAT * (r1.rz - r0.rz);
-      const midR = (ellipseR(sector.a0, rx, rz) + ellipseR(sector.a1, rx, rz)) * 0.5;
+      const rx = (r0.rx + U_SEAT * (r1.rx - r0.rx)) * STAND_INSET;
+      const rz = (r0.rz + U_SEAT * (r1.rz - r0.rz)) * STAND_INSET;
+      const midR = (rectR(sector.a0, rx, rz) + rectR(sector.a1, rx, rz)) * 0.5;
       const arcLen = Math.abs(sector.a1 - sector.a0) * midR;
       const seatsAlong = Math.max(16, Math.min(96, Math.round(arcLen / SEAT_SPACING)));
 
       for (let si = 0; si < seatsAlong; si++) {
         const ang = sector.a0 + ((si + 0.5) / seatsAlong) * (sector.a1 - sector.a0);
-        const pt = surfacePoint(ang, yTop, rx, rz, 0);
+        const pt = surfacePointRect(ang, yTop, rx, rz, 0);
         seats.push({
           index: globalIndex++,
           sector: sector.id,

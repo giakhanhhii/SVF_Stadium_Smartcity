@@ -5,6 +5,7 @@ import { tweenCameraVectors, setSceneHint } from './stadium-camera.js';
 
 const RT_SIZE = 512;
 const ACCENT = 0x97c459;
+const SECURITY_ROOM_ANCHOR = { x: 0, z: 840, rotY: Math.PI };
 
 let interiorGroup = null;
 let monitorMeshes = [];
@@ -141,8 +142,9 @@ function buildRoomShell() {
 
 /** Điểm local → world theo transform phòng (tránh sai ma trận xoay) */
 function localToWorld(room, lx, ly, lz) {
-  const [bx, bz] = room.pos;
-  const rotY = Math.atan2(-bx, -bz);
+  const bx = SECURITY_ROOM_ANCHOR.x;
+  const bz = SECURITY_ROOM_ANCHOR.z;
+  const rotY = SECURITY_ROOM_ANCHOR.rotY;
   const cos = Math.cos(rotY);
   const sin = Math.sin(rotY);
   return new THREE.Vector3(
@@ -206,9 +208,8 @@ export function buildSecurityInterior(scene) {
   if (!room) return null;
 
   interiorGroup = buildRoomShell();
-  const [bx, bz] = room.pos;
-  interiorGroup.position.set(bx, 0, bz);
-  interiorGroup.rotation.y = Math.atan2(-bx, -bz);
+  interiorGroup.position.set(SECURITY_ROOM_ANCHOR.x, 0, SECURITY_ROOM_ANCHOR.z);
+  interiorGroup.rotation.y = SECURITY_ROOM_ANCHOR.rotY;
   interiorGroup.visible = false;
   scene.add(interiorGroup);
   return interiorGroup;

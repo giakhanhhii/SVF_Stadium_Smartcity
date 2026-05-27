@@ -6,6 +6,7 @@ import {
   initControlRoomUI, activateSecurityTab, deactivateSecurityTab, setNavHandler,
 } from './render/control-room-ui.js';
 import { bindViewTabs } from './render/scene-view-tabs.js';
+import { mountStadiumSideNav } from './render/side-nav.js';
 
 const SCENE_PAGES = new Set(['overview', 'security', 'events', 'facilities', 'services']);
 let currentPage = 'overview';
@@ -30,4 +31,7 @@ createApp({
   shellPath: 'partials/shell/header.html',
   hydrateAllPages,
   onNavigate,
-}).then(() => onNavigate('overview')).catch(console.error);
+}).then(() => {
+  mountStadiumSideNav();
+  onNavigate('overview');
+}).catch(console.error);

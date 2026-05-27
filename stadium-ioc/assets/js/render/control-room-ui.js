@@ -44,7 +44,7 @@ export function activateSecurityTab() {
 export function deactivateSecurityTab() {
   if (activeRoomId !== 'security') return;
   document.dispatchEvent(new CustomEvent('voc-exit-security-interior', { detail: {} }));
-  pageRoot?.classList.remove('voc-security-interior', 'voc-stadium-focus');
+  pageRoot?.classList.remove('voc-security-interior', 'voc-stadium-focus', 'voc-sidebars-lit');
   if (mountEl) mountEl.innerHTML = '';
   activeRoomId = null;
   mode = 'exterior';
@@ -93,9 +93,14 @@ function renderRoom(room) {
 
 function setMode(next) {
   mode = next;
+  const onSecurity = activeRoomId === 'security';
   setControlRoomMode(next === 'stadium-focus' ? 'room' : next);
-  pageRoot?.classList.toggle('voc-room-mode', next === 'room' && activeRoomId !== 'security');
-  pageRoot?.classList.toggle('voc-security-interior', next === 'room' && activeRoomId === 'security');
+  pageRoot?.classList.toggle('voc-room-mode', next === 'room' && !onSecurity);
+  pageRoot?.classList.toggle(
+    'voc-security-interior',
+    onSecurity && (next === 'room' || next === 'stadium-focus'),
+  );
+  pageRoot?.classList.toggle('voc-sidebars-lit', onSecurity && next === 'stadium-focus');
   pageRoot?.classList.toggle('voc-screen-mode', next === 'screen');
   pageRoot?.classList.toggle('voc-stadium-focus', next === 'stadium-focus');
 }
@@ -122,7 +127,7 @@ export function initControlRoomUI(pageId) {
   mountEl.innerHTML = '';
   activeRoomId = null;
   setMode('exterior');
-  pageRoot?.classList.remove('voc-security-interior', 'voc-stadium-focus');
+  pageRoot?.classList.remove('voc-security-interior', 'voc-stadium-focus', 'voc-sidebars-lit');
   showExteriorHint();
 }
 
@@ -153,7 +158,7 @@ export function exitControlRoom() {
     document.dispatchEvent(new CustomEvent('voc-exit-security-interior', {
       detail: { restoreView: onSecurityPage ? 'overview' : 'overview' },
     }));
-    pageRoot?.classList.remove('voc-security-interior', 'voc-stadium-focus');
+    pageRoot?.classList.remove('voc-security-interior', 'voc-stadium-focus', 'voc-sidebars-lit');
   } else {
     const container = sceneMount();
     if (container) applyPageView('overview', container);

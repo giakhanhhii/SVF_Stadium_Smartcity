@@ -1,5 +1,5 @@
 import {
-  renderModules, renderReportTable, renderReportCategories,
+  renderReportTable, renderReportCategories,
 } from '../../../../shared-ioc/assets/js/render/overview.js';
 import { renderDomainBanner, renderDomainKpiRow } from '../../../../shared-ioc/assets/js/render/domain.js';
 import { renderChartSection } from '../../../../shared-ioc/assets/js/render/chart-section.js';
@@ -8,7 +8,6 @@ import { renderSecurityLeft, renderSecurityRight, renderSecurityExteriorLeft, re
 import { renderEventsLeft, renderEventsRight } from '../render/events-hud.js';
 import { renderFacilitiesLeft, renderFacilitiesRight } from '../render/facilities-hud.js';
 import { renderServicesLeft, renderServicesRight } from '../render/services-hud.js';
-import { overviewData } from '../data/overview.js';
 import { overviewHud } from '../data/overview-hud.js';
 import { securityHud } from '../data/security-hud.js';
 import { securityExteriorHud, SECURITY_LEGEND } from '../data/security-exterior-hud.js';
@@ -21,8 +20,8 @@ import { renderViewTabs } from '../render/scene-view-tabs.js';
 export function hydrateSecuritySidebars(mode = 'interior') {
   const root = document.getElementById('page-security');
   if (!root) return;
-  const left = root.querySelector('[data-mount="sidebar-left"]');
-  const right = root.querySelector('[data-mount="sidebar-right"]');
+  const left = root.querySelector('.sidebar-hud[data-mount="sidebar-left"]');
+  const right = root.querySelector('.sidebar-hud[data-mount="sidebar-right"]');
   const legend = root.querySelector('.security-center__legend');
   if (mode === 'exterior') {
     if (left) left.innerHTML = renderSecurityExteriorLeft(securityExteriorHud.left);
@@ -47,7 +46,6 @@ export function hydratePage(pageId) {
     overview: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderOverviewLeft(overviewHud.left);
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderOverviewRight(overviewHud.right);
-      root.querySelector('[data-mount="modules"]').innerHTML = renderModules(overviewData.modules);
       const tabs = root.querySelector('[data-mount="view-tabs"]');
       if (tabs) tabs.innerHTML = renderViewTabs('overview');
     },

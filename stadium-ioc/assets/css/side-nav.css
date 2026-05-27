@@ -1,0 +1,240 @@
+/* Side navigation — thay header trắng, nằm trong panel đen trái/phải */
+.security-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sidebar-hud {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-nav {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 8px 8px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.14);
+  background: linear-gradient(180deg, #081420 0%, #060e1a 100%);
+}
+
+.sidebar-nav--right {
+  border-bottom: 1px solid rgba(0, 212, 255, 0.14);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 2px 10px;
+  margin-bottom: 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.sidebar-brand__logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(15, 110, 86, 0.35);
+  border: 1px solid rgba(29, 158, 117, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5ee0b0;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.sidebar-brand__text { min-width: 0; }
+.sidebar-brand__title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e8f4ff;
+  line-height: 1.2;
+}
+.sidebar-brand__sub {
+  display: block;
+  font-size: 9px;
+  color: #5a8ab0;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.sidebar-nav__items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  color: #7ab0d0;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.sidebar-nav__item i {
+  font-size: 15px;
+  color: #3a6888;
+  flex-shrink: 0;
+}
+
+.sidebar-nav__item:hover {
+  color: #c8e8ff;
+  background: rgba(0, 100, 160, 0.2);
+  border-color: rgba(0, 212, 255, 0.2);
+}
+
+.sidebar-nav__item:hover i { color: #00d4ff; }
+
+.sidebar-nav__item.active {
+  color: #5ee0b0;
+  background: rgba(15, 110, 86, 0.28);
+  border-color: rgba(29, 158, 117, 0.45);
+}
+
+.sidebar-nav__item.active i { color: #5ee0b0; }
+
+.sidebar-nav__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.sidebar-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid rgba(0, 180, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(6, 16, 32, 0.85);
+  color: #7ab0d0;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.sidebar-action:hover {
+  color: #00d4ff;
+  border-color: rgba(0, 212, 255, 0.35);
+  background: rgba(0, 60, 100, 0.35);
+}
+
+.sidebar-action--link { color: #85b7eb; }
+.sidebar-action--link:hover { color: #b5d4f4; }
+
+.sidebar-action__badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: rgba(163, 45, 45, 0.9);
+  color: #fcebeb;
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-action--avatar {
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin-left: auto;
+  border-radius: 50%;
+  background: rgba(15, 110, 86, 0.35);
+  color: #5ee0b0;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: default;
+}
+
+.sidebar-action--avatar:hover {
+  background: rgba(15, 110, 86, 0.35);
+  border-color: rgba(0, 180, 255, 0.18);
+  color: #5ee0b0;
+}
+
+/* Trang báo cáo — layout 3 cột với panel đen */
+.page-view--reports.active {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.stadium-page-shell {
+  display: grid;
+  grid-template-columns: minmax(220px, 250px) minmax(0, 1fr) minmax(220px, 250px);
+  flex: 1;
+  min-height: 0;
+  background: #040810;
+}
+
+.stadium-page-main {
+  overflow-y: auto;
+  background: var(--color-background-primary);
+}
+
+.stadium-page-main [data-mount="banner"] + .report-layout,
+.stadium-page-main > .report-layout:first-child {
+  border-top: none;
+}
+
+.prototype-shell:has(.page-view--reports.active) {
+  max-width: 100%;
+  box-shadow: none;
+}
+
+@media (max-width: 960px) {
+  .sidebar-brand__sub { display: none; }
+  .sidebar-nav__item {
+    justify-content: center;
+    padding: 10px;
+  }
+  .sidebar-nav__item span,
+  .sidebar-action span:not(.sidebar-action__badge) {
+    display: none;
+  }
+}

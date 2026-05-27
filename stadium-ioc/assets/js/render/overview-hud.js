@@ -1,15 +1,29 @@
 import { hudHead, ringSvg, renderAlerts } from './hud-charts.js';
 
-export function renderOverviewLeft(d) {
-  const pills = d.systems.map((s) =>
-    `<div class="hud-pill hud-pill--${s.tone}"><span class="hud-pill__lbl">${s.label}</span><span class="hud-pill__val">${s.value}</span></div>`,
+const BADGE_CLASS = { ok: 'hud-domain__badge--ok', live: 'hud-domain__badge--live', warn: 'hud-domain__badge--warn' };
+
+function renderDomainBlock(domain) {
+  const metrics = domain.metrics.map((m) =>
+    `<div class="hud-domain__metric"><span>${m.label}</span><strong>${m.value}</strong></div>`,
   ).join('');
+  const badgeCls = BADGE_CLASS[domain.badgeTone] || BADGE_CLASS.ok;
+  return `<button type="button" class="hud-block hud-block--domain" data-nav="${domain.nav}">
+    <div class="hud-domain__head">
+      <span class="hud-domain__badge ${badgeCls}">${domain.badge}</span>
+      <span class="hud-domain__title"><i class="ti ${domain.icon}" aria-hidden="true"></i>${domain.name}</span>
+      <i class="ti ti-chevron-right hud-domain__go" aria-hidden="true"></i>
+    </div>
+    <div class="hud-domain__metrics">${metrics}</div>
+  </button>`;
+}
+
+export function renderOverviewLeft(d) {
+  const domains = d.domains.map(renderDomainBlock).join('');
   return `
     <section class="hud-block">${hudHead(d.venue.title)}
       <div class="hud-metric-lbl">${d.venue.capacityLabel}</div>
       <div class="hud-metric-big">${d.venue.capacity}</div>
       <div class="hud-inline-stat"><i class="ti ti-live-photo"></i><span>${d.venue.event}</span><strong>${d.venue.score}</strong></div>
-      <div class="hud-pill-row">${pills}</div>
     </section>
     <section class="hud-block hud-block--roof">${hudHead(d.roof.title)}
       <div class="hud-env-row">${ringSvg(d.roof.pct, 'Mái vòm')}
@@ -19,16 +33,13 @@ export function renderOverviewLeft(d) {
           <div class="hud-bar-track"><div class="hud-bar-fill" data-roof-bar style="width:${d.roof.pct}%"></div></div></div>
         </div>
       </div>
-    </section>`;
+    </section>
+    ${domains}`;
 }
 
 export function renderOverviewRight(d) {
-  const stats = d.ops.map((s) =>
-    `<div class="hud-energy-cell"><div class="hud-energy-lbl">${s.label}</div><div class="hud-energy-val">${s.value}</div></div>`,
-  ).join('');
+  const domains = d.domains.map(renderDomainBlock).join('');
   return `
-    <section class="hud-block">${hudHead('Cảnh báo VOC')}${renderAlerts(d.alerts)}</section>
-    <section class="hud-block hud-block--grow">${hudHead('Chỉ số vận hành')}
-      <div class="hud-energy-grid">${stats}</div>
-    </section>`;
+    ${domains}
+    <section class="hud-block hud-block--alerts">${hudHead('Cảnh báo VOC')}${renderAlerts(d.alerts)}</section>`;
 }

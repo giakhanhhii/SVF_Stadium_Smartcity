@@ -31,8 +31,7 @@
 .voc-room-mode .security-center__legend,
 .voc-screen-mode .security-sidebar,
 .voc-screen-mode .scene-view-tabs,
-.voc-screen-mode .security-center__legend,
-.voc-screen-mode .overview-modules {
+.voc-screen-mode .security-center__legend {
   opacity: 0.15;
   pointer-events: none;
 }
@@ -353,22 +352,66 @@
   color: #5a8ab0;
 }
 
-/* Phòng An ninh 3D — overlay mỏng, không che canvas */
-.voc-security-interior .security-sidebar,
-.voc-security-interior .scene-view-tabs,
-.voc-security-interior .security-center__legend,
-.voc-security-interior .overview-modules {
-  opacity: 0.12;
+/* Phòng An ninh — hai sidebar tối; sáng khi đã nhấn màn hình giám sát */
+#page-security.voc-security-interior:not(.voc-sidebars-lit) .security-sidebar {
+  opacity: 0.14;
+  filter: brightness(0.5) saturate(0.7);
   pointer-events: none;
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
+#page-security.voc-security-interior.voc-sidebars-lit .security-sidebar {
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+}
+
+#page-security.voc-security-interior:not(.voc-sidebars-lit) .scene-view-tabs,
+#page-security.voc-security-interior:not(.voc-sidebars-lit) .security-center__legend {
+  opacity: 0.25;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+#page-security.voc-security-interior.voc-sidebars-lit .scene-view-tabs,
+#page-security.voc-security-interior.voc-sidebars-lit .security-center__legend {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .voc-security-interior .map-container--hero canvas {
   filter: none;
 }
 
-/* Giám sát sân từ phòng An ninh — sidebar sáng, canvas full */
 .voc-stadium-focus .map-container--hero canvas {
   filter: none;
+}
+
+/* Gợi ý nhấn màn hình khi sidebar đang tối */
+#page-security.voc-security-interior:not(.voc-sidebars-lit) .map-container--hero::after {
+  content: 'Nhấn màn hình để bật panel hai bên';
+  position: absolute;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  font-size: 11px;
+  color: #97c459;
+  background: rgba(4, 12, 8, 0.88);
+  border: 1px solid rgba(151, 196, 89, 0.4);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 3;
+  animation: voc-sidebar-hint-pulse 2.2s ease-in-out infinite;
+}
+
+#page-security.voc-security-interior.voc-sidebars-lit .map-container--hero::after {
+  display: none;
+}
+
+@keyframes voc-sidebar-hint-pulse {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
 }
 
 .sec-room-shell {

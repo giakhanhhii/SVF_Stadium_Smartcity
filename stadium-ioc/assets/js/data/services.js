@@ -9,7 +9,7 @@ export const servicesData = {
   },
   kpis: [
     { icon: 'ti-parking', label: 'Bãi đỗ xe', value: '78%', sub: '1.872 / 2.400 chỗ', accent: '#534AB7' },
-    { icon: 'ti-tools-kitchen-2', label: 'F&B', value: '24', suffix: '<span style="font-size:12px;color:var(--color-text-secondary)">/24</span>', sub: 'Quầy mở — Hàng chờ TB 4 phút', accent: '#993556' },
+    { icon: 'ti-tools-kitchen-2', label: 'F&B', value: '24', suffix: '<span class="text-secondary">/24</span>', sub: 'Quầy mở — Hàng chờ TB 4 phút', accent: '#993556' },
     { icon: 'ti-ticket', label: 'Vé điện tử', value: '98,2%', sub: 'Quét thành công', accent: '#0F6E56' },
     { icon: 'ti-wifi', label: 'WiFi khán giả', value: '12.4K', sub: 'Thiết bị kết nối', accent: '#185FA5' },
   ],

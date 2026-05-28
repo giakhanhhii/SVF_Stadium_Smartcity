@@ -8,10 +8,10 @@ export const securityData = {
     ],
   },
   kpis: [
-    { icon: 'ti-camera', label: 'Camera trực tuyến', value: '46', suffix: '<span style="font-size:12px;color:var(--color-text-secondary)">/48</span>', sub: '2 offline — Khán đài B', accent: '#A32D2D' },
-    { icon: 'ti-users', label: 'Mật độ đám đông TB', value: '4,2', suffix: '<span style="font-size:12px;font-weight:400"> ng/m²</span>', sub: 'Khu B: 6,1 ng/m²', subClass: 'color:var(--color-text-warning)', accent: '#BA7517' },
-    { icon: 'ti-door', label: 'Cổng kiểm soát', value: '8', suffix: '<span style="font-size:12px;color:var(--color-text-secondary)">/8</span>', sub: 'Tất cả hoạt động', accent: '#185FA5' },
-    { icon: 'ti-clock', label: 'Thời gian phản ứng', value: '3,5', suffix: '<span style="font-size:12px;font-weight:400"> phút</span>', sub: '▼ 0,8 phút', subClass: 'color:var(--color-text-success)', accent: '#0F6E56' },
+    { icon: 'ti-camera', label: 'Camera trực tuyến', value: '46', suffix: '<span class="text-secondary">/48</span>', sub: '2 offline — Khán đài B', accent: '#A32D2D' },
+    { icon: 'ti-users', label: 'Mật độ đám đông TB', value: '4,2', suffix: '<span class="text-secondary"> ng/m²</span>', sub: 'Khu B: 6,1 ng/m²', subClass: 'color:var(--color-text-warning)', accent: '#BA7517' },
+    { icon: 'ti-door', label: 'Cổng kiểm soát', value: '8', suffix: '<span class="text-secondary">/8</span>', sub: 'Tất cả hoạt động', accent: '#185FA5' },
+    { icon: 'ti-clock', label: 'Thời gian phản ứng', value: '3,5', suffix: '<span class="text-secondary"> phút</span>', sub: '▼ 0,8 phút', subClass: 'color:var(--color-text-success)', accent: '#0F6E56' },
   ],
   severity: [
     { label: 'Khẩn cấp', count: 1, bg: '#FCEBEB', color: '#A32D2D' },

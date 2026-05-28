@@ -1194,25 +1194,34 @@ function createLandscape(group) {
   group.add(g);
 }
 
+/** Bãi đỗ: xoay theo hướng tâm sân, mép trong nằm ngoài quảng trường gạch (plaza) */
 function createParking(group) {
   const g = new THREE.Group();
   g.name = 'parking';
   const facadeR = Math.max(FACADE.rx, FACADE.rz);
-  const parkDist = facadeR + OUTER_PAD + 72;
+  const plazaOuter = facadeR + 42;
   const lotW = 78 * SIZE_MULT;
   const lotD = 58 * SIZE_MULT;
-  const lots = [
-    [-parkDist * 0.78, -parkDist * 0.55, lotW, lotD],
-    [parkDist * 0.78, -parkDist * 0.55, lotW, lotD],
-    [-parkDist * 0.78, parkDist * 0.55, lotW, lotD],
-    [parkDist * 0.78, parkDist * 0.55, lotW, lotD],
+  const plazaGap = 14 * STADIUM_SCALE;
+  const parkRadius = plazaOuter + lotW / 2 + plazaGap;
+
+  const lotAngles = [
+    (5 * Math.PI) / 4,
+    (7 * Math.PI) / 4,
+    (3 * Math.PI) / 4,
+    Math.PI / 4,
   ];
-  const geos = lots.map(([x, z, w, d]) => {
-    const geo = new THREE.PlaneGeometry(w, d);
+
+  const geos = lotAngles.map((angle) => {
+    const cx = Math.sin(angle) * parkRadius;
+    const cz = Math.cos(angle) * parkRadius;
+    const geo = new THREE.PlaneGeometry(lotW, lotD);
     geo.rotateX(-Math.PI / 2);
-    geo.translate(x, 0.02, z);
+    geo.rotateY(-angle + Math.PI / 2);
+    geo.translate(cx, 0.025, cz);
     return geo;
   });
+
   g.add(new THREE.Mesh(mergeGeometries(geos, false), MAT.asphalt));
   group.add(g);
 }

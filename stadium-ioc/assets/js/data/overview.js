@@ -9,8 +9,8 @@ export const overviewData = {
   ],
   kpis: [
     { icon: 'ti-users', label: 'Khán giả trong sân', value: '34.812', delta: '▲ 12% so với trận trước', deltaColor: 'var(--color-text-success)', accent: '#0F6E56' },
-    { icon: 'ti-door-enter', label: 'Lưu lượng vào/ra', value: '2.840<span style="font-size:11px;color:var(--color-text-secondary);font-weight:400"> người/h</span>', delta: '● Cổng A, C bận', deltaColor: 'var(--color-text-warning)', accent: '#185FA5' },
-    { icon: 'ti-temperature', label: 'Nhiệt độ sân', value: '24°C<span style="font-size:11px;color:var(--color-text-secondary);font-weight:400"> — Bình thường</span>', delta: 'Độ ẩm 58%', deltaColor: 'var(--color-text-success)', accent: '#BA7517' },
+    { icon: 'ti-door-enter', label: 'Lưu lượng vào/ra', value: '2.840<span class="text-secondary-sm"> người/h</span>', delta: '● Cổng A, C bận', deltaColor: 'var(--color-text-warning)', accent: '#185FA5' },
+    { icon: 'ti-temperature', label: 'Nhiệt độ sân', value: '24°C<span class="text-secondary-sm"> — Bình thường</span>', delta: 'Độ ẩm 58%', deltaColor: 'var(--color-text-success)', accent: '#BA7517' },
     { icon: 'ti-alert-triangle', label: 'Sự cố đang xử lý', value: '4', delta: '1 khẩn cấp — Khu VIP', deltaColor: 'var(--color-text-danger)', accent: '#A32D2D' },
   ],
   modules: [

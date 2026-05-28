@@ -10,7 +10,7 @@ export const facilitiesData = {
   kpis: [
     { icon: 'ti-temperature', label: 'Nhiệt độ TB', value: '24°C', sub: 'Mục tiêu: 22–26°C', accent: '#0F6E56' },
     { icon: 'ti-bulb', label: 'Chiếu sáng sân', value: '100%', sub: '1.200 lux — Đạt chuẩn', accent: '#185FA5' },
-    { icon: 'ti-elevator', label: 'Thang máy', value: '14', suffix: '<span style="font-size:12px;color:var(--color-text-secondary)">/16</span>', sub: '2 bảo trì', accent: '#BA7517' },
+    { icon: 'ti-elevator', label: 'Thang máy', value: '14', suffix: '<span class="text-secondary">/16</span>', sub: '2 bảo trì', accent: '#BA7517' },
     { icon: 'ti-droplet', label: 'Cấp thoát nước', value: 'OK', sub: 'Áp suất ổn định', accent: '#534AB7' },
   ],
   panels: [

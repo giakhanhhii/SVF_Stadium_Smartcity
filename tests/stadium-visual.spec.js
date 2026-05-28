@@ -43,7 +43,7 @@ test.describe('PVF Stadium 3D visual', () => {
 
   test('facilities — roof view camera', async ({ page }) => {
     await page.goto('/stadium-ioc/index.html');
-    await page.locator('.nav-item[data-nav="facilities"]').click();
+    await page.locator('.page-view.active .nav-item[data-nav="facilities"]').click();
     await page.waitForSelector('#page-facilities.active', { timeout: 15_000 });
     const mount = await waitForStadiumScene(page, 'facilities');
     await mount.screenshot({
@@ -53,11 +53,11 @@ test.describe('PVF Stadium 3D visual', () => {
 
   test('facilities — roof open animation', async ({ page }) => {
     await page.goto('/stadium-ioc/index.html');
-    await page.locator('.nav-item[data-nav="facilities"]').click();
+    await page.locator('.page-view.active .nav-item[data-nav="facilities"]').click();
     await page.waitForSelector('#page-facilities.active', { timeout: 15_000 });
     await waitForStadiumScene(page, 'facilities');
 
-    await page.locator('[data-roof="open"]').click();
+    await page.locator('#page-facilities [data-roof="open"]').click();
     await expect(page.locator('[data-roof-status]').first()).toHaveText(/Đang mở|Đã mở/, {
       timeout: 20_000,
     });

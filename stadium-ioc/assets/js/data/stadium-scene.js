@@ -1,15 +1,15 @@
 export const domeConfig = {
   rimY: 79.2,
-  panelY: 140.5,
-  panelOpenY: 140.5,
-  panelClosedY: 151.9,
+  panelY: 140.4,
+  panelOpenY: 140.4,
+  panelClosedY: 151.4,
   trussOpenY: 143.1,
-  trussClosedY: 154.5,
-  panelClosedX: 105.6,
-  panelOpenX: 194.6,
-  ridgeOffset: 116.7,
-  panelOpenTilt: 0.23,
-  panelClosedTilt: 0.18,
+  trussClosedY: 154.0,
+  panelClosedX: 116.2,
+  panelOpenX: 168.2,
+  ridgeOffset: 106.9,
+  panelOpenTilt: 0,
+  panelClosedTilt: 0,
 };
 
 /** Vòng đèn pha — ellipse khớp khán đài, lõm vào trong bowl */
@@ -22,13 +22,14 @@ export const floodRingConfig = {
 
 export const stadiumSceneData = {
   cameraPresets: {
-    overview: { pos: [320, 120, 280], target: [0, 44, 0], hint: 'VOC Dashboard · PVF Stadium tổng thể' },
+    overview: { pos: [430, 170, 380], target: [0, 42, 0], fov: 58, hint: 'VOC Dashboard · PVF Stadium tổng thể' },
     exteriorLive: { pos: [480, 175, 420], target: [0, 52, 0], fov: 52, hint: 'Ngoài sân · Tổng thể sân vận động' },
     security: { pos: [0, 48, 152], target: [0, 28, 0], fov: 50, hint: 'Trong sân · Live tổng thể sân cỏ' },
     events: { pos: [0, 48, 152], target: [0, 28, 0], hint: 'Vận hành sự kiện · Sân cỏ & khán đài' },
-    facilities: { pos: [-280, 140, -188], target: [0, 76, 0], hint: 'Hạ tầng · Mái vòm PTFE' },
-    services: { pos: [330, 76, -220], target: [0, 8, 0], hint: 'Dịch vụ · Bãi đỗ & lưu thông' },
-    reports: { pos: [280, 160, 320], target: [0, 50, 0], hint: 'Báo cáo · KPI theo trận' },
+    facilitiesOverview: { pos: [0, 300, 430], target: [0, 30, 0], fov: 60, hint: 'Hạ tầng · Tổng thể mái vòm & sân' },
+    facilities: { pos: [0, 300, 430], target: [0, 30, 0], fov: 60, hint: 'Hạ tầng · Mái vòm PTFE' },
+    services: { pos: [430, 170, 380], target: [0, 42, 0], fov: 58, hint: 'Dịch vụ · Bãi đỗ & lưu thông' },
+    reports: { pos: [420, 185, 420], target: [0, 46, 0], fov: 58, hint: 'Báo cáo · KPI theo trận' },
   },
   markers: {
     overview: [

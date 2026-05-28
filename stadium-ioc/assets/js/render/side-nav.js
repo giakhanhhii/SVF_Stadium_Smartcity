@@ -48,11 +48,15 @@ export function renderSideNavRail(side) {
   </nav>`;
 }
 
-export function mountStadiumSideNav() {
+export function mountStadiumSideNav(activePageId = 'overview') {
   document.querySelectorAll('[data-side-nav-rail="left"]').forEach((el) => {
     el.outerHTML = renderSideNavRail('left');
   });
   document.querySelectorAll('[data-side-nav-rail="right"]').forEach((el) => {
     el.outerHTML = renderSideNavRail('right');
+  });
+  document.querySelectorAll(`.nav-item[data-nav="${activePageId}"]`).forEach((el) => {
+    el.classList.add('active');
+    el.setAttribute('aria-current', 'page');
   });
 }

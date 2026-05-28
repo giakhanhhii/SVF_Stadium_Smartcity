@@ -1,10 +1,15 @@
 export function navigateTo(pageId, onAfterNavigate) {
   document.querySelectorAll('.page-view').forEach((el) => el.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach((el) => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach((el) => {
+    el.classList.remove('active');
+    el.removeAttribute('aria-current');
+  });
   const page = document.getElementById('page-' + pageId);
   if (page) page.classList.add('active');
-  const navBtn = document.querySelector(`.nav-item[data-nav="${pageId}"]`);
-  if (navBtn) navBtn.classList.add('active');
+  document.querySelectorAll(`.nav-item[data-nav="${pageId}"]`).forEach((el) => {
+    el.classList.add('active');
+    el.setAttribute('aria-current', 'page');
+  });
   if (onAfterNavigate) onAfterNavigate(pageId);
 }
 

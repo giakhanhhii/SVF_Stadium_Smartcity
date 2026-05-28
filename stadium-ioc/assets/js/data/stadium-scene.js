@@ -51,9 +51,10 @@ export const stadiumSceneData = {
       { type: 'roof', pos: [0, 100, 0], color: 0xef9f27, label: 'Mái vòm' },
     ],
     services: [
-      { type: 'parking', pos: [-325, 2, -229], color: 0x534ab7, label: 'P1 85%' },
-      { type: 'parking', pos: [325, 2, -229], color: 0x534ab7, label: 'P2 92%' },
-      { type: 'parking', pos: [325, 2, 229], color: 0xba7517, label: 'P4 98%' },
+      { type: 'parking', pos: [-357, 2, -357], color: 0x534ab7, label: 'P1 85%' },
+      { type: 'parking', pos: [357, 2, -357], color: 0x534ab7, label: 'P2 92%' },
+      { type: 'parking', pos: [-357, 2, 357], color: 0x534ab7, label: 'P3 88%' },
+      { type: 'parking', pos: [357, 2, 357], color: 0xba7517, label: 'P4 98%' },
     ],
   },
 };

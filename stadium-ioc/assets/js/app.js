@@ -32,6 +32,6 @@ createApp({
   hydrateAllPages,
   onNavigate,
 }).then(() => {
-  mountStadiumSideNav();
+  mountStadiumSideNav('overview');
   onNavigate('overview');
 }).catch(console.error);

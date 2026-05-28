@@ -1,4 +1,7 @@
+import { chartTickFont } from './chart-font.js';
+
 const charts = {};
+const tick = chartTickFont(9);
 
 export function initEventsChart() {
   if (charts.eventsChart) return;
@@ -19,8 +22,8 @@ export function initEventsChart() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#888780' } },
-        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 9 }, color: '#888780' } },
+        x: { grid: { display: false }, ticks: { font: { ...tick }, color: '#888780' } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { ...tick }, color: '#888780' } },
       },
     },
   });

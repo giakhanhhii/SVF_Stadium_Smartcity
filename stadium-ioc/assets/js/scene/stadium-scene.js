@@ -44,6 +44,10 @@ let controlRoomMode = 'exterior';
 let mainScene = null;
 let vocEventsBound = false;
 
+function defaultSceneViewForPage(pageId) {
+  return pageId === 'facilities' ? 'facilitiesOverview' : pageId;
+}
+
 function bindVocEvents() {
   if (vocEventsBound) return;
   vocEventsBound = true;
@@ -75,7 +79,7 @@ function bindVocEvents() {
   });
 }
 
-const MODEL_URL = 'assets/models/pvf-stadium-openroof-v3.glb';
+const MODEL_URL = 'assets/models/pvf-stadium-openroof-v3.glb?v=roof-fit-20260528b';
 const GLASS_OPAQUE = 0xe8ecf2;
 const GLASS_TRANSPARENT = 0xffffff;
 
@@ -256,7 +260,7 @@ function createScene(container, navPageId) {
   controls.maxPolarAngle = Math.PI / 2.05;
   controls.minDistance = 90;
   controls.maxDistance = 680;
-  applyCameraPreset(camera, controls, navPageId);
+  applyCameraPreset(camera, controls, defaultSceneViewForPage(navPageId));
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
@@ -307,7 +311,7 @@ function createScene(container, navPageId) {
     });
     bindVocEvents();
     showSceneLoading(container, false);
-    applyPageView(navPageId, container);
+    applyPageView(defaultSceneViewForPage(navPageId), container);
   });
 
   const clock = new THREE.Clock();
@@ -387,7 +391,7 @@ function createScene(container, navPageId) {
 export function applyPageView(viewId, container) {
   if (!sceneRefs) return;
   currentViewId = viewId;
-  const markerKey = viewId === 'reports' ? 'overview' : viewId;
+  const markerKey = viewId === 'reports' || viewId === 'facilitiesOverview' ? 'overview' : viewId;
   const markers = stadiumSceneData.markers[markerKey] || [];
   setMarkers(markers);
   const camKey = stadiumSceneData.cameraPresets[viewId] ? viewId : 'overview';
@@ -426,6 +430,16 @@ function applyRoofState(progress) {
   const truss = roofOpenGroup.getObjectByName('roof_truss');
   if (panelW) panelW.position.x = -panelX;
   if (panelE) panelE.position.x = panelX;
+  [panelW, panelE].filter(Boolean).forEach((panel) => {
+    panel.renderOrder = 4;
+    if (panel.material) {
+      panel.material.transparent = false;
+      panel.material.opacity = 1;
+      panel.material.depthWrite = true;
+      panel.material.side = THREE.DoubleSide;
+      panel.material.needsUpdate = true;
+    }
+  });
   if (panelW) panelW.position.y = panelY;
   if (panelE) panelE.position.y = panelY;
   if (panelW) panelW.rotation.z = panelTilt;
@@ -470,7 +484,7 @@ export function initStadiumScene(navPageId) {
   if (activeScene) {
     container.appendChild(rendererEl);
     activeScene.onResize?.();
-    if (navPageId !== 'security') applyPageView(navPageId, container);
+    if (navPageId !== 'security') applyPageView(defaultSceneViewForPage(navPageId), container);
     updateControlRoomVisibility();
     return;
   }

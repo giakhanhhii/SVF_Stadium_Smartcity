@@ -15,8 +15,8 @@ const VIEWS = {
     { id: 'overview', label: 'Tổng thể' },
   ],
   facilities: [
+    { id: 'facilitiesOverview', label: 'Tổng thể' },
     { id: 'facilities', label: 'Mái vòm' },
-    { id: 'overview', label: 'Tổng thể' },
   ],
   services: [
     { id: 'services', label: 'Bãi đỗ' },

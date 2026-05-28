@@ -52,6 +52,26 @@ export const servicesHud = {
       status: 'P4 gần đầy',
       lanes: ['Chuyển P3', 'Cập nhật LED', 'Mở làn phụ'],
     },
+    medical: {
+      title: 'Y tế sân vận động',
+      status: 'FIFA Medical: READY',
+      stats: [
+        { label: 'Medical posts', value: '3/3', trend: 'up', change: 'Mở trực' },
+        { label: 'AED points', value: '12/12', trend: 'up', change: 'Online' },
+        { label: 'EMS teams', value: '2 đội', trend: 'up', change: 'Standby' },
+        { label: 'Response SLA', value: '< 4 ph', trend: 'up', change: 'FOP & khán đài' },
+      ],
+    },
+    fire: {
+      title: 'Cứu hỏa & sơ tán',
+      status: 'Fire command: NORMAL',
+      stats: [
+        { label: 'Fire panel', value: 'Normal', trend: 'up', change: '0 alarm' },
+        { label: 'Hydrant / Pump', value: '18/18', trend: 'up', change: 'Áp ổn định' },
+        { label: 'Exit routes', value: '24/24', trend: 'up', change: 'Clear' },
+        { label: 'Drill crew', value: '4 tổ', trend: 'up', change: 'VOC ready' },
+      ],
+    },
     revenue: {
       title: 'Dịch vụ khán giả 24h',
       tabs: ['Doanh thu', 'Phản hồi', 'WiFi'],

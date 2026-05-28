@@ -81,13 +81,13 @@ export const DOME = {
   holeHalfZ: 58 * STADIUM_SCALE,
   cutFeather: 8 * STADIUM_SCALE,
   openPhiMax: Math.PI * 0.405 * 0.34,
-  panelWidth: 96 * STADIUM_SCALE,
-  panelDepth: 132 * STADIUM_SCALE,
-  panelThickness: 4.8 * YS,
+  panelWidth: 88 * STADIUM_SCALE,
+  panelDepth: 120 * STADIUM_SCALE,
+  panelThickness: 8.2 * YS,
 };
 DOME.cy = DOME.rimY - DOME.R * DOME.sy * Math.cos(DOME.phiLen);
-DOME.panelOpenY = DOME.cy + DOME.R * DOME.sy * Math.cos(0.145 * Math.PI) - 5.2 * YS;
-DOME.panelClosedY = DOME.cy + DOME.R * DOME.sy * Math.cos(0.07 * Math.PI) - 4.8 * YS;
+DOME.panelOpenY = DOME.cy + DOME.R * DOME.sy * Math.cos(0.145 * Math.PI) - 5.8 * YS;
+DOME.panelClosedY = DOME.cy + DOME.R * DOME.sy * Math.cos(0.07 * Math.PI) - 5.4 * YS;
 DOME.panelY = DOME.panelOpenY;
 DOME.trussOpenY = DOME.panelOpenY + 1.0 * YS;
 DOME.trussClosedY = DOME.panelClosedY + 1.0 * YS;
@@ -97,11 +97,11 @@ DOME.rimRz = DOME.R * DOME.sz * Math.sin(DOME.phiLen);
 DOME.panelClosedX = Math.max(10 * STADIUM_SCALE, DOME.holeHalfX - DOME.panelWidth * 0.5 + 6 * STADIUM_SCALE);
 DOME.panelOpenX = Math.min(
   DOME.holeHalfX + DOME.panelWidth * 0.5 - 20 * STADIUM_SCALE,
-  DOME.rimRx - DOME.panelWidth * 0.5 - 14 * STADIUM_SCALE,
+  DOME.rimRx - DOME.panelWidth * 0.5 - 28 * STADIUM_SCALE,
 );
 DOME.ridgeOffset = DOME.panelWidth * 0.46;
-DOME.panelOpenTilt = 0.23;
-DOME.panelClosedTilt = 0.18;
+DOME.panelOpenTilt = 0;
+DOME.panelClosedTilt = 0;
 DOME.cutHalfX = DOME.holeHalfX + DOME.cutFeather;
 DOME.cutHalfZ = DOME.holeHalfZ + DOME.cutFeather;
 
@@ -528,6 +528,13 @@ const MAT = {
     side: THREE.DoubleSide,
   }),
   ptfe: new THREE.MeshStandardMaterial({ map: texPtfe, roughness: 0.38, metalness: 0.04, color: 0xf4f6fa }),
+  ptfePanel: new THREE.MeshStandardMaterial({
+    map: texPtfe,
+    roughness: 0.42,
+    metalness: 0.03,
+    color: 0xf4f6fa,
+    side: THREE.DoubleSide,
+  }),
   dark: new THREE.MeshStandardMaterial({ map: texDark, roughness: 0.82, metalness: 0.08, color: 0x2a2e36 }),
   concrete: new THREE.MeshStandardMaterial({
     map: texConcrete,
@@ -975,23 +982,73 @@ function createRoof(group) {
   group.add(g);
 }
 
-function buildRoofPanelGeometry(width, depth, thickness) {
-  const geo = new THREE.BoxGeometry(width, thickness, depth, 24, 3, 24);
-  const pos = geo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const y = pos.getY(i);
-    const z = pos.getZ(i);
+function panelDomeYAt(x, z) {
+  return Math.max(domeYAt(x, z), DOME.rimY + 0.65 * YS);
+}
+
+function buildRoofPanelGeometry(width, depth, thickness, centerX, anchorY) {
+  const xSegs = 38;
+  const zSegs = 34;
+  const positions = [];
+  const indices = [];
+  const gridVerts = (xSegs + 1) * (zSegs + 1);
+  const bottomClearance = 0.55 * YS;
+  const edgeDown = 0.35 * YS;
+
+  const panelY = (x, z, layer) => {
     const xNorm = Math.abs(x) / (width * 0.5);
     const zNorm = Math.abs(z) / (depth * 0.5);
-    const topMask = y > 0 ? 1 : 0.55;
-    const domeArch = (1 - Math.min(1, xNorm ** 1.18)) * 1.55 * STADIUM_SCALE;
-    const endFalloff = (1 - Math.min(1, zNorm ** 1.7)) * 0.24 * STADIUM_SCALE;
-    const shoulderDrop = xNorm * 0.38 * STADIUM_SCALE;
-    const lipDrop = xNorm ** 1.35 * 1.9 * STADIUM_SCALE;
-    pos.setY(i, y + (domeArch + endFalloff - shoulderDrop - lipDrop) * topMask);
-    pos.setZ(i, z * (0.985 + xNorm * 0.015));
+    const globalX = centerX + x;
+    const crown = (1 - Math.min(1, xNorm ** 1.7)) * 1.05 * YS
+      + (1 - Math.min(1, zNorm ** 1.9)) * 0.45 * YS;
+    const edgeSeat = Math.max(xNorm, zNorm) ** 2.4 * edgeDown;
+    return panelDomeYAt(globalX, z) + bottomClearance + crown - edgeSeat + layer * thickness - anchorY;
+  };
+
+  for (let layer = 0; layer <= 1; layer++) {
+    for (let zi = 0; zi <= zSegs; zi++) {
+      const z = -depth * 0.5 + (zi / zSegs) * depth;
+      for (let xi = 0; xi <= xSegs; xi++) {
+        const x = -width * 0.5 + (xi / xSegs) * width;
+        positions.push(x, panelY(x, z, layer), z);
+      }
+    }
   }
+
+  const v = (layer, xi, zi) => layer * gridVerts + zi * (xSegs + 1) + xi;
+  const addBoundaryVertex = (layer, xi, zi) => {
+    const idx = v(layer, xi, zi) * 3;
+    positions.push(positions[idx], positions[idx + 1], positions[idx + 2]);
+    return positions.length / 3 - 1;
+  };
+  const addSideQuad = (a, b, c, d) => {
+    const i0 = addBoundaryVertex(...a);
+    const i1 = addBoundaryVertex(...b);
+    const i2 = addBoundaryVertex(...c);
+    const i3 = addBoundaryVertex(...d);
+    indices.push(i0, i1, i2, i0, i2, i3);
+  };
+
+  for (let zi = 0; zi < zSegs; zi++) {
+    for (let xi = 0; xi < xSegs; xi++) {
+      indices.push(v(1, xi, zi), v(1, xi + 1, zi), v(1, xi + 1, zi + 1), v(1, xi, zi), v(1, xi + 1, zi + 1), v(1, xi, zi + 1));
+      indices.push(v(0, xi, zi), v(0, xi + 1, zi + 1), v(0, xi + 1, zi), v(0, xi, zi), v(0, xi, zi + 1), v(0, xi + 1, zi + 1));
+    }
+  }
+
+  for (let xi = 0; xi < xSegs; xi++) {
+    addSideQuad([0, xi, 0], [0, xi + 1, 0], [1, xi + 1, 0], [1, xi, 0]);
+    addSideQuad([0, xi, zSegs], [1, xi, zSegs], [1, xi + 1, zSegs], [0, xi + 1, zSegs]);
+  }
+
+  for (let zi = 0; zi < zSegs; zi++) {
+    addSideQuad([0, 0, zi], [1, 0, zi], [1, 0, zi + 1], [0, 0, zi + 1]);
+    addSideQuad([0, xSegs, zi], [0, xSegs, zi + 1], [1, xSegs, zi + 1], [1, xSegs, zi]);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setIndex(indices);
   geo.computeVertexNormals();
   return geo;
 }
@@ -1000,16 +1057,17 @@ function createRoofOpen(group) {
   const g = new THREE.Group();
   g.name = 'roof_open';
 
-  const panelGeo = buildRoofPanelGeometry(DOME.panelWidth, DOME.panelDepth, DOME.panelThickness);
-  const panelL = new THREE.Mesh(panelGeo, MAT.ptfe);
+  const panelGeoL = buildRoofPanelGeometry(DOME.panelWidth, DOME.panelDepth, DOME.panelThickness, -DOME.panelOpenX, DOME.panelOpenY);
+  const panelL = new THREE.Mesh(panelGeoL, MAT.ptfePanel);
   panelL.position.set(-DOME.panelOpenX, DOME.panelOpenY, 0);
-  panelL.rotation.z = DOME.panelOpenTilt;
+  panelL.rotation.z = 0;
   panelL.name = 'roof_panel_west';
   g.add(panelL);
 
-  const panelR = new THREE.Mesh(panelGeo.clone(), MAT.ptfe);
+  const panelGeoR = buildRoofPanelGeometry(DOME.panelWidth, DOME.panelDepth, DOME.panelThickness, DOME.panelOpenX, DOME.panelOpenY);
+  const panelR = new THREE.Mesh(panelGeoR, MAT.ptfePanel);
   panelR.position.set(DOME.panelOpenX, DOME.panelOpenY, 0);
-  panelR.rotation.z = -DOME.panelOpenTilt;
+  panelR.rotation.z = 0;
   panelR.name = 'roof_panel_east';
   g.add(panelR);
 

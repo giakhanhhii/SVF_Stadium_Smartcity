@@ -146,10 +146,12 @@ export function bindOpsReports(root) {
       return;
     }
     if (e.target.closest('[data-ops-rereport]') && activeCase) {
-      openDispatchDialog(activeCase.cat.dispatchId, {
-        type: activeCase.cat.dispatchType,
-        note: `[${activeCase.id}] Báo lại: ${activeCase.title}\n${activeCase.zone}\nLý do chưa xử lý: ${activeCase.reason}`,
-        titleSuffix: activeCase.id,
+      const rec = activeCase;
+      detail.hidden = true;
+      openDispatchDialog(rec.cat.dispatchId, {
+        type: rec.cat.dispatchType,
+        note: `[${rec.id}] Báo lại: ${rec.title}\n${rec.zone}\nLý do chưa xử lý: ${rec.reason}`,
+        titleSuffix: rec.id,
       });
       return;
     }

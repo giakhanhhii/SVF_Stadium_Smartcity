@@ -1,13 +1,9 @@
-import {
-  renderReportTable, renderReportCategories,
-} from '../../../../shared-ioc/assets/js/render/overview.js';
-import { renderDomainBanner, renderDomainKpiRow } from '../../../../shared-ioc/assets/js/render/domain.js';
-import { renderChartSection } from '../../../../shared-ioc/assets/js/render/chart-section.js';
 import { renderOverviewLeft, renderOverviewRight, mountOverviewOpsBind } from '../render/overview-hud.js';
 import { renderSecurityLeft, renderSecurityRight, renderSecurityExteriorLeft, renderSecurityExteriorRight } from '../render/security-hud.js';
 import { renderEventsLeft, renderEventsRight } from '../render/events-hud.js';
 import { renderFacilitiesLeft, renderFacilitiesRight } from '../render/facilities-hud.js';
 import { renderServicesLeft, renderServicesRight } from '../render/services-hud.js';
+import { renderReportsLeft, renderReportsRight, bindReportsHistory } from '../render/reports-hud.js';
 import { overviewHud } from '../data/overview-hud.js';
 import { securityHud } from '../data/security-hud.js';
 import { securityExteriorHud, SECURITY_LEGEND } from '../data/security-exterior-hud.js';
@@ -74,13 +70,11 @@ export function hydratePage(pageId) {
       if (tabs) tabs.innerHTML = renderViewTabs('services');
     },
     reports: () => {
-      const banner = root.querySelector('[data-mount="banner"]');
-      if (banner) banner.outerHTML = renderDomainBanner(reportsData.banner);
-      const kpis = root.querySelector('[data-mount="kpis"]');
-      if (kpis) kpis.outerHTML = renderDomainKpiRow(reportsData.kpis);
-      root.querySelector('[data-mount="categories"]').innerHTML = renderReportCategories(reportsData.categories);
-      root.querySelector('[data-mount="table-body"]').innerHTML = renderReportTable(reportsData.rows);
-      root.querySelector('[data-mount="chart"]').outerHTML = renderChartSection(reportsData.chart);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderReportsLeft(reportsData);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderReportsRight(reportsData);
+      bindReportsHistory(root);
+      const tabs = root.querySelector('[data-mount="view-tabs"]');
+      if (tabs) tabs.innerHTML = renderViewTabs('reports');
     },
   };
 

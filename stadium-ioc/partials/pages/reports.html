@@ -1,30 +1,25 @@
-<div class="page-view page-view--reports" id="page-reports" data-frame="06 — Báo cáo">
-  <div class="stadium-page-shell">
+<div class="page-view page-view--reports page-view--stadium-cmd" id="page-reports" data-frame="06 — Báo cáo">
+  <div class="security-command report-command">
     <aside class="security-sidebar security-sidebar--left">
       <div data-side-nav-rail="left"></div>
+      <div class="sidebar-hud" data-mount="sidebar-left"></div>
     </aside>
-    <main class="stadium-page-main">
-      <div data-mount="banner"></div>
-      <div class="report-layout">
-        <div class="report-sidebar">
-          <div class="alerts-header" style="margin-bottom:14px"><div class="alerts-title">Danh mục báo cáo</div></div>
-          <div data-mount="categories"></div>
-        </div>
-        <div class="report-main">
-          <div class="alerts-header">
-            <div class="alerts-title">KPI vận hành — Trận Vòng 12 / 25.05.2026</div>
-            <span class="closed-loop"><i class="ti ti-circle-check"></i> Closed-loop 97%</span>
-          </div>
-          <table class="report-table">
-            <thead><tr><th>Phân hệ</th><th>KPI chính</th><th>Thực tế</th><th>Mục tiêu</th><th>Xu hướng</th></tr></thead>
-            <tbody data-mount="table-body"></tbody>
-          </table>
-        </div>
+    <main class="security-center">
+      <div class="security-center__legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span>Đã xử lý</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#EF9F27"></span>Báo lần 2</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#E24B4A"></span>Vụ việc xấu</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#534AB7"></span>Bãi đỗ</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#185FA5"></span>Hệ thống</span>
       </div>
-      <div data-mount="chart"></div>
+      <div class="scene-view-tabs" data-mount="view-tabs"></div>
+      <div class="map-container map-container--3d map-container--hero" data-mount="stadium-scene">
+        <span class="map-scene-hint">Kéo chuột xoay · Cuộn zoom · Báo cáo vận hành · Sân vận động từ xa</span>
+      </div>
     </main>
     <aside class="security-sidebar security-sidebar--right">
       <div data-side-nav-rail="right"></div>
+      <div class="sidebar-hud" data-mount="sidebar-right"></div>
     </aside>
   </div>
 </div>

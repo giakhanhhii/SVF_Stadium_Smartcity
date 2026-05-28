@@ -305,8 +305,8 @@ function createScene(container, navPageId) {
       document.dispatchEvent(new CustomEvent('voc-open-stadium-screen', { detail: feedToViewId(feedId) }));
     });
     bindVocEvents();
-    showSceneLoading(container, false);
-    applyPageView(defaultSceneViewForPage(navPageId), container);
+    showSceneLoading(sceneRefs?.container || container, false);
+    applyPageView(defaultSceneViewForPage(currentNavPage), sceneRefs?.container || container);
   });
 
   const clock = new THREE.Clock();
@@ -386,7 +386,7 @@ export function applyPageView(viewId, container) {
   setMarkers(resolveMarkersForView(viewId));
   const camKey = stadiumSceneData.cameraPresets[viewId] ? viewId : 'overview';
   tweenCamera(sceneRefs.camera, sceneRefs.controls, camKey).then((hint) => {
-    setSceneHint(container || sceneRefs.container, hint);
+    if (hint && currentViewId === viewId) setSceneHint(container || sceneRefs.container, hint);
   });
   updateControlRoomVisibility();
 }

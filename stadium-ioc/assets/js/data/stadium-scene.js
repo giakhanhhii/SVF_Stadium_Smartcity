@@ -20,6 +20,19 @@ export const floodRingConfig = {
   inset: 2.2,
 };
 
+/** Marker 4 bãi — hiển thị trên mọi góc nhìn ngoài sân */
+export const parkingMarkers = [
+  { type: 'parking', pos: [-357, 2, -357], color: 0x534ab7, label: 'P1 85%' },
+  { type: 'parking', pos: [357, 2, -357], color: 0x534ab7, label: 'P2 92%' },
+  { type: 'parking', pos: [-357, 2, 357], color: 0x534ab7, label: 'P3 88%' },
+  { type: 'parking', pos: [357, 2, 357], color: 0xba7517, label: 'P4 98%' },
+];
+
+/** Góc nhìn thấy được bãi đỗ quanh sân */
+export const exteriorSceneViews = new Set([
+  'overview', 'services', 'reports', 'facilitiesOverview', 'exteriorLive', 'facilities',
+]);
+
 export const stadiumSceneData = {
   cameraPresets: {
     overview: { pos: [430, 170, 380], target: [0, 42, 0], fov: 58, hint: 'VOC Dashboard · PVF Stadium tổng thể' },
@@ -50,12 +63,7 @@ export const stadiumSceneData = {
       { type: 'hvac', pos: [-136, 28, -96], color: 0x1d9e75, label: 'HVAC-A' },
       { type: 'roof', pos: [0, 100, 0], color: 0xef9f27, label: 'Mái vòm' },
     ],
-    services: [
-      { type: 'parking', pos: [-357, 2, -357], color: 0x534ab7, label: 'P1 85%' },
-      { type: 'parking', pos: [357, 2, -357], color: 0x534ab7, label: 'P2 92%' },
-      { type: 'parking', pos: [-357, 2, 357], color: 0x534ab7, label: 'P3 88%' },
-      { type: 'parking', pos: [357, 2, 357], color: 0xba7517, label: 'P4 98%' },
-    ],
+    services: [...parkingMarkers],
   },
 };
 

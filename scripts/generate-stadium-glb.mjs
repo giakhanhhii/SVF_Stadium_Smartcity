@@ -829,7 +829,8 @@ function createPitch(group) {
 
   const surf = new THREE.Mesh(new THREE.PlaneGeometry(pitchL, pitchW, 1, 1), MAT.grass);
   surf.rotation.x = -Math.PI / 2;
-  surf.position.y = 0.05;
+  surf.position.y = 0.42;
+  surf.renderOrder = 8;
   surf.name = 'pitch_surface';
   g.add(surf);
 

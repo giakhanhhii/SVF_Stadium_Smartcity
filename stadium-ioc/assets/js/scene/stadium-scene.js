@@ -149,6 +149,21 @@ function updateControlRoomVisibility() {
   }
 }
 
+function stabilizePitchSurface(model) {
+  const pitch = model.getObjectByName('pitch_surface');
+  if (!pitch) return;
+  pitch.position.y = Math.max(pitch.position.y, 0.42);
+  pitch.renderOrder = 8;
+  if (pitch.material) {
+    pitch.material.depthTest = true;
+    pitch.material.depthWrite = true;
+    pitch.material.polygonOffset = true;
+    pitch.material.polygonOffsetFactor = -8;
+    pitch.material.polygonOffsetUnits = -8;
+    pitch.material.needsUpdate = true;
+  }
+}
+
 export function setControlRoomMode(mode) {
   controlRoomMode = mode;
   updateControlRoomVisibility();
@@ -250,6 +265,7 @@ function createScene(container, navPageId) {
       floodlightsGroup.visible = false;
       floodlightsGroup.traverse((o) => { o.visible = false; });
     }
+    stabilizePitchSurface(stadiumModel);
     facadeGlassMesh = stadiumModel.getObjectByName('facade_glass');
     facadeMullionsMesh = stadiumModel.getObjectByName('facade_mullions');
     facadeTopFrameMesh = stadiumModel.getObjectByName('facade_top_frame');

@@ -404,6 +404,17 @@
   color: #fff0f0;
 }
 
+.svc-emergency__playback {
+  margin: -2px 0 10px;
+}
+
+.svc-emergency__playback audio {
+  width: 100%;
+  height: 32px;
+  display: block;
+  accent-color: #00d4ff;
+}
+
 .svc-emergency__status {
   display: flex;
   gap: 8px;

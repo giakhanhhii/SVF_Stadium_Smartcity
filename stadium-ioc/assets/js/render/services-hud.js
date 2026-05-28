@@ -81,6 +81,9 @@ function emergencyCallDialog() {
         </button>
         <span data-emergency-rec-status>Chưa ghi âm</span>
       </div>
+      <div class="svc-emergency__playback" data-emergency-playback hidden>
+        <audio data-emergency-audio controls></audio>
+      </div>
       <div class="svc-emergency__status" data-emergency-status>
         <i class="ti ti-phone"></i><span>Sẵn sàng kết nối tổng đài VOC.</span>
       </div>
@@ -98,12 +101,107 @@ function bindEmergencyCall() {
   emergencyCallBound = true;
   let selectedType = 'medical';
   let recording = false;
-  let timer = null;
+  let etaTimer = null;
+  let recordTimer = null;
+  let recordSeconds = 0;
+  let mediaRecorder = null;
+  let mediaStream = null;
+  let recordChunks = [];
+  let recordingUrl = null;
 
   const serviceLabel = () => (selectedType === 'fire' ? 'Đội cứu hỏa' : 'Đội y tế');
   const eta = () => (selectedType === 'fire' ? '5 phút' : '3 phút');
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
+  const cleanupStream = () => {
+    mediaStream?.getTracks().forEach((track) => track.stop());
+    mediaStream = null;
+  };
+  const setRecordButton = (dialog, active) => {
+    const record = dialog.querySelector('[data-emergency-record]');
+    record?.classList.toggle('svc-emergency__record--active', active);
+    const recordText = record?.querySelector('span');
+    if (recordText) recordText.textContent = active ? 'Dừng ghi âm' : 'Ghi âm mô tả';
+  };
+  const resetRecorder = (dialog) => {
+    recording = false;
+    if (recordTimer) clearInterval(recordTimer);
+    recordTimer = null;
+    recordSeconds = 0;
+    if (mediaRecorder?.state === 'recording') mediaRecorder.stop();
+    mediaRecorder = null;
+    recordChunks = [];
+    cleanupStream();
+    setRecordButton(dialog, false);
+  };
+  const attachPlayback = (dialog, blob) => {
+    if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+    recordingUrl = URL.createObjectURL(blob);
+    const audio = dialog.querySelector('[data-emergency-audio]');
+    const playback = dialog.querySelector('[data-emergency-playback]');
+    if (audio) audio.src = recordingUrl;
+    if (playback) playback.hidden = false;
+  };
+  const stopRecording = (dialog, recStatus, status) => {
+    if (!recording || !mediaRecorder) return;
+    recording = false;
+    if (recordTimer) clearInterval(recordTimer);
+    recordTimer = null;
+    setRecordButton(dialog, false);
+    if (recStatus) recStatus.textContent = `Đã lưu bản ghi âm ${formatTime(recordSeconds)}`;
+    if (status) status.textContent = 'Bản ghi âm đã sẵn sàng gửi tới đội phản ứng. Bạn có thể nghe lại trước khi gửi.';
+    mediaRecorder.stop();
+  };
+  const startRecording = async (dialog, recStatus, status) => {
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+      if (recStatus) recStatus.textContent = 'Browser không hỗ trợ ghi âm';
+      if (status) status.textContent = 'Không thể truy cập chức năng ghi âm trên trình duyệt này.';
+      return;
+    }
+    try {
+      if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+      recordingUrl = null;
+      const playback = dialog.querySelector('[data-emergency-playback]');
+      const audio = dialog.querySelector('[data-emergency-audio]');
+      if (playback) playback.hidden = true;
+      if (audio) audio.removeAttribute('src');
 
-  document.addEventListener('click', (e) => {
+      recordChunks = [];
+      recordSeconds = 0;
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(mediaStream);
+      mediaRecorder = recorder;
+      recorder.addEventListener('dataavailable', (event) => {
+        if (event.data?.size) recordChunks.push(event.data);
+      });
+      recorder.addEventListener('stop', () => {
+        const blob = new Blob(recordChunks, { type: recorder.mimeType || 'audio/webm' });
+        if (blob.size) attachPlayback(dialog, blob);
+        cleanupStream();
+      }, { once: true });
+      recorder.start();
+      recording = true;
+      setRecordButton(dialog, true);
+      if (recStatus) recStatus.textContent = `Đang ghi âm ${formatTime(recordSeconds)}`;
+      if (status) status.textContent = 'Đang ghi âm mô tả để gửi kèm yêu cầu.';
+      if (recordTimer) clearInterval(recordTimer);
+      recordTimer = setInterval(() => {
+        recordSeconds += 1;
+        if (recStatus) recStatus.textContent = `Đang ghi âm ${formatTime(recordSeconds)}`;
+      }, 1000);
+    } catch (err) {
+      cleanupStream();
+      recording = false;
+      setRecordButton(dialog, false);
+      if (recStatus) recStatus.textContent = 'Không có quyền microphone';
+      if (status) status.textContent = 'Hãy cấp quyền microphone để ghi âm mô tả sự cố.';
+    }
+  };
+
+  document.addEventListener('click', async (e) => {
     const openBtn = e.target.closest('[data-emergency-open]');
     const closeBtn = e.target.closest('[data-emergency-close]');
     const lineBtn = e.target.closest('[data-emergency-type]');
@@ -117,19 +215,22 @@ function bindEmergencyCall() {
 
     if (openBtn) {
       selectedType = 'medical';
-      recording = false;
+      resetRecorder(dialog);
       dialog.hidden = false;
       dialog.querySelectorAll('[data-emergency-type]').forEach((btn) => {
         btn.classList.toggle('svc-emergency__line--active', btn.dataset.emergencyType === selectedType);
       });
       if (status) status.textContent = 'Đang kết nối tổng đài VOC-11 / VOC-12.';
       if (recStatus) recStatus.textContent = 'Chưa ghi âm';
+      const playback = dialog.querySelector('[data-emergency-playback]');
+      if (playback) playback.hidden = true;
       return;
     }
 
     if (closeBtn) {
       dialog.hidden = true;
-      if (timer) clearTimeout(timer);
+      resetRecorder(dialog);
+      if (etaTimer) clearTimeout(etaTimer);
       return;
     }
 
@@ -143,24 +244,16 @@ function bindEmergencyCall() {
     }
 
     if (recordBtn) {
-      recording = !recording;
-      recordBtn.classList.toggle('svc-emergency__record--active', recording);
-      recordBtn.querySelector('span').textContent = recording ? 'Đang ghi âm...' : 'Ghi âm mô tả';
-      if (recStatus) recStatus.textContent = recording ? 'Đang thu âm sự cố' : 'Đã lưu bản ghi âm 00:18';
-      if (status) status.textContent = recording ? 'Đang ghi âm mô tả để gửi kèm yêu cầu.' : 'Bản ghi âm đã sẵn sàng gửi tới đội phản ứng.';
+      if (recording) stopRecording(dialog, recStatus, status);
+      else await startRecording(dialog, recStatus, status);
       return;
     }
 
     if (endBtn) {
-      recording = false;
-      const record = dialog.querySelector('[data-emergency-record]');
-      record?.classList.remove('svc-emergency__record--active');
-      const recordText = record?.querySelector('span');
-      if (recordText) recordText.textContent = 'Ghi âm mô tả';
-      if (recStatus) recStatus.textContent = 'Đã lưu bản ghi âm 00:18';
+      if (recording) stopRecording(dialog, recStatus, status);
       if (status) status.textContent = `Yêu cầu đang được chuyển đến ${serviceLabel().toLowerCase()}.`;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
+      if (etaTimer) clearTimeout(etaTimer);
+      etaTimer = setTimeout(() => {
         if (status) status.textContent = `${serviceLabel()} đã nhận yêu cầu và đang trên đường đến. ETA ${eta()}.`;
       }, 1300);
     }

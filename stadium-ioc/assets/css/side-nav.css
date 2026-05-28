@@ -130,6 +130,7 @@
   flex-direction: column;
   gap: 3px;
   margin-top: 4px;
+  position: relative;
 }
 
 .sidebar-action {
@@ -177,18 +178,157 @@
   justify-content: center;
 }
 
-.sidebar-action--avatar {
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  margin-left: auto;
-  border-radius: 50%;
-  background: rgba(15, 110, 86, 0.35);
+.sidebar-notify__head {
+  padding: 8px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.16);
+  font-size: 10px;
+  font-weight: 700;
+  color: #d8ecff;
+}
+
+.sidebar-notify__list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.sidebar-notify__item {
+  width: 100%;
+  display: block;
+  padding: 8px;
+  border: none;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sidebar-notify__item:last-child {
+  border-bottom: none;
+}
+
+.sidebar-notify__item:hover {
+  background: rgba(0, 60, 100, 0.25);
+}
+
+.sidebar-notify__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sidebar-notify__source {
+  font-size: 9px;
+  font-weight: 700;
   color: #5ee0b0;
+}
+
+.sidebar-notify__time {
+  font-size: 8px;
+  color: #7ab0d0;
+}
+
+.sidebar-notify__title {
   font-size: 10px;
   font-weight: 600;
-  cursor: default;
+  color: #e8f4ff;
+  line-height: 1.35;
+}
+
+.sidebar-notify__detail {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(122, 176, 208, 0.28);
+  font-size: 9px;
+  color: #a9cae2;
+  line-height: 1.4;
+}
+
+.sidebar-notify[hidden] {
+  display: none;
+}
+
+.sidebar-notify-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 36;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(2, 8, 16, 0.64);
+}
+
+.sidebar-notify-modal[hidden] {
+  display: none;
+}
+
+.sidebar-notify-modal__panel {
+  position: relative;
+  width: min(760px, calc(100vw - 40px));
+  min-height: min(380px, calc(100vh - 40px));
+  max-height: calc(100vh - 20px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 212, 255, 0.24);
+  border-radius: 6px;
+  background: rgba(4, 12, 24, 0.97);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.48);
+  overflow: hidden;
+}
+
+.sidebar-notify-modal__panel .sidebar-notify__head {
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.sidebar-notify-modal__panel .sidebar-notify__list {
+  flex: 1;
+  max-height: calc(100vh - 92px);
+}
+
+.sidebar-notify-modal__panel .sidebar-notify__item {
+  padding: 14px 12px;
+}
+
+.sidebar-notify-modal__panel .sidebar-notify__top {
+  margin-bottom: 7px;
+}
+
+.sidebar-notify-modal__panel .sidebar-notify__source {
+  font-size: 12px;
+}
+
+.sidebar-notify-modal__panel .sidebar-notify__time {
+  font-size: 11px;
+}
+
+.sidebar-notify-modal__panel .sidebar-notify__title {
+  font-size: 14px;
+  line-height: 1.42;
+}
+
+.sidebar-notify-modal__panel .sidebar-notify__detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.sidebar-notify-modal__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(122, 176, 208, 0.25);
+  border-radius: 4px;
+  background: rgba(10, 28, 46, 0.8);
+  color: #7ab0d0;
+  font-size: 17px;
+  cursor: pointer;
 }
 
 /* Trang command — ẩn subtitle brand, gọn thêm HUD */
@@ -199,12 +339,6 @@
 .page-view--stadium-cmd .sidebar-hud {
   padding: 6px 5px;
   gap: 6px;
-}
-
-.sidebar-action--avatar:hover {
-  background: rgba(15, 110, 86, 0.35);
-  border-color: rgba(0, 180, 255, 0.18);
-  color: #5ee0b0;
 }
 
 /* Trang báo cáo — layout 3 cột với panel đen */

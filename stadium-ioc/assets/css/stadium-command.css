@@ -12,6 +12,111 @@
   box-shadow: none;
 }
 
+.page-view--stadium-cmd .security-command {
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(240px, 280px);
+}
+
+.page-view--stadium-cmd .security-sidebar {
+  position: relative;
+}
+
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 8;
+  width: 10px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.sidebar-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba(216, 236, 255, 0);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.sidebar-resize-handle:hover::after,
+.sidebar-resizing .sidebar-resize-handle::after {
+  background: rgba(216, 236, 255, 0.35);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.18);
+}
+
+.sidebar-resize-handle--left {
+  right: -5px;
+}
+
+.sidebar-resize-handle--right {
+  left: -5px;
+}
+
+.sidebar-resizing,
+.sidebar-resizing * {
+  cursor: ew-resize !important;
+  user-select: none !important;
+}
+
+.page-view--stadium-cmd .security-sidebar,
+.page-view--stadium-cmd .sidebar-hud,
+.page-view--stadium-cmd .sidebar-notify__list,
+.page-view--stadium-cmd .hud-block--alerts {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 236, 255, 0.42) transparent;
+}
+
+.page-view--stadium-cmd .security-sidebar::-webkit-scrollbar,
+.page-view--stadium-cmd .sidebar-hud::-webkit-scrollbar,
+.page-view--stadium-cmd .sidebar-notify__list::-webkit-scrollbar,
+.page-view--stadium-cmd .hud-block--alerts::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.page-view--stadium-cmd .security-sidebar::-webkit-scrollbar-track,
+.page-view--stadium-cmd .sidebar-hud::-webkit-scrollbar-track,
+.page-view--stadium-cmd .sidebar-notify__list::-webkit-scrollbar-track,
+.page-view--stadium-cmd .hud-block--alerts::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.page-view--stadium-cmd .security-sidebar::-webkit-scrollbar-thumb,
+.page-view--stadium-cmd .sidebar-hud::-webkit-scrollbar-thumb,
+.page-view--stadium-cmd .sidebar-notify__list::-webkit-scrollbar-thumb,
+.page-view--stadium-cmd .hud-block--alerts::-webkit-scrollbar-thumb {
+  border: 0;
+  border-radius: 999px;
+  background: rgba(216, 236, 255, 0.34);
+}
+
+.page-view--stadium-cmd .security-sidebar::-webkit-scrollbar-corner,
+.page-view--stadium-cmd .sidebar-hud::-webkit-scrollbar-corner,
+.page-view--stadium-cmd .sidebar-notify__list::-webkit-scrollbar-corner,
+.page-view--stadium-cmd .hud-block--alerts::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.page-view--stadium-cmd .security-sidebar--left {
+  direction: rtl;
+}
+
+.page-view--stadium-cmd .security-sidebar--left > * {
+  direction: ltr;
+}
+
+.page-view--stadium-cmd .security-sidebar--left .sidebar-hud {
+  direction: rtl;
+}
+
+.page-view--stadium-cmd .security-sidebar--left .sidebar-hud > * {
+  direction: ltr;
+}
+
 .hud-vent-btn--danger {
   border-color: rgba(226, 75, 74, 0.5) !important;
   color: #e24b4a !important;
@@ -617,4 +722,10 @@
   border-color: rgba(226, 75, 74, 0.5);
   background: rgba(80, 18, 24, 0.56);
   color: #fff0f0;
+}
+
+@media (max-width: 960px) {
+  .sidebar-resize-handle {
+    display: none;
+  }
 }

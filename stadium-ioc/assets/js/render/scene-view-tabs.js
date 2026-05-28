@@ -22,6 +22,10 @@ const VIEWS = {
     { id: 'services', label: 'Bãi đỗ' },
     { id: 'overview', label: 'Tổng thể' },
   ],
+  reports: [
+    { id: 'reports', label: 'Sân vận động' },
+    { id: 'overview', label: 'Tổng thể' },
+  ],
 };
 
 export function renderViewTabs(pageId) {

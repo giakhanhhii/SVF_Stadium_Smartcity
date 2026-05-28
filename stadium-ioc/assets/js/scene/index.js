@@ -1,7 +1,7 @@
 import { initStadiumScene, disposeStadiumScene } from './stadium-scene.js';
 
 let currentPage = null;
-const SCENE_PAGES = new Set(['overview', 'security', 'events', 'facilities', 'services']);
+const SCENE_PAGES = new Set(['overview', 'security', 'events', 'facilities', 'services', 'reports']);
 
 export function initPageScenes(pageId) {
   const wasScene = currentPage && SCENE_PAGES.has(currentPage);

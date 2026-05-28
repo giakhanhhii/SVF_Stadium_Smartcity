@@ -7,8 +7,9 @@ import {
 } from './render/control-room-ui.js';
 import { bindViewTabs } from './render/scene-view-tabs.js';
 import { mountStadiumSideNav } from './render/side-nav.js';
+import { initSidebarResize } from './render/sidebar-resize.js';
 
-const SCENE_PAGES = new Set(['overview', 'security', 'events', 'facilities', 'services']);
+const SCENE_PAGES = new Set(['overview', 'security', 'events', 'facilities', 'services', 'reports']);
 let currentPage = 'overview';
 
 function onNavigate(pageId) {
@@ -20,6 +21,7 @@ function onNavigate(pageId) {
   if (pageId === 'overview') initControlRoomUI('overview');
   if (pageId === 'security') activateSecurityTab();
   if (SCENE_PAGES.has(pageId)) bindViewTabs(pageId);
+  if (SCENE_PAGES.has(pageId)) initSidebarResize(pageId);
 
   currentPage = pageId;
 }

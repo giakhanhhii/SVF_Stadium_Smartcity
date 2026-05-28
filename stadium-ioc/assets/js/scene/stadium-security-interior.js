@@ -79,7 +79,8 @@ function makeMonitor(feedId, label, x) {
   namePlate.rotation.y = Math.PI;
   bezel.add(namePlate);
 
-  const cam = new THREE.PerspectiveCamera(42, 16 / 28, 1, 1400);
+  // Match monitor plane ratio (28:16) to avoid stretched feeds.
+  const cam = new THREE.PerspectiveCamera(42, 28 / 16, 1, 1400);
   applyPreset(cam, feedId === 'interior' ? 'security' : 'exteriorLive');
 
   monitorMeshes.push(screen);
@@ -195,7 +196,8 @@ export function applySecurityRoomView(refs, mode = 'dual', options = {}) {
   const { pos, target, fov } = worldCameraPose(room, mode);
   refs.camera.fov = fov;
   refs.camera.updateProjectionMatrix();
-  return tweenCameraVectors(refs.camera, refs.controls, pos, target, 800).then(() => {
+  return tweenCameraVectors(refs.camera, refs.controls, pos, target, 800).then((completed) => {
+    if (!completed) return;
     refs.camera.position.copy(pos);
     refs.controls.target.copy(target);
     refs.controls.update();
@@ -253,7 +255,8 @@ export function enterSecurityInterior(refs) {
   refs.camera.updateProjectionMatrix();
 
   setSceneHint(refs.container, 'Kéo chuột xoay · Cuộn zoom · Nhấn màn hình để giám sát');
-  return tweenCameraVectors(refs.camera, refs.controls, pos, target, 1400).then(() => {
+  return tweenCameraVectors(refs.camera, refs.controls, pos, target, 1400).then((completed) => {
+    if (!completed) return;
     refs.camera.position.copy(pos);
     refs.controls.target.copy(target);
     refs.controls.update();
@@ -279,7 +282,8 @@ export function exitSecurityInterior(refs) {
     new THREE.Vector3(...stadiumSceneData.cameraPresets.overview.pos),
     new THREE.Vector3(...stadiumSceneData.cameraPresets.overview.target),
     1200,
-  ).then(() => {
+  ).then((completed) => {
+    if (!completed) return;
     setSceneHint(refs.container, stadiumSceneData.cameraPresets.overview.hint);
   });
 }

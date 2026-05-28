@@ -3,7 +3,7 @@ import {
 } from '../../../../shared-ioc/assets/js/render/overview.js';
 import { renderDomainBanner, renderDomainKpiRow } from '../../../../shared-ioc/assets/js/render/domain.js';
 import { renderChartSection } from '../../../../shared-ioc/assets/js/render/chart-section.js';
-import { renderOverviewLeft, renderOverviewRight } from '../render/overview-hud.js';
+import { renderOverviewLeft, renderOverviewRight, mountOverviewOpsBind } from '../render/overview-hud.js';
 import { renderSecurityLeft, renderSecurityRight, renderSecurityExteriorLeft, renderSecurityExteriorRight } from '../render/security-hud.js';
 import { renderEventsLeft, renderEventsRight } from '../render/events-hud.js';
 import { renderFacilitiesLeft, renderFacilitiesRight } from '../render/facilities-hud.js';
@@ -46,6 +46,7 @@ export function hydratePage(pageId) {
     overview: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderOverviewLeft(overviewHud.left);
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderOverviewRight(overviewHud.right);
+      mountOverviewOpsBind(root);
       const tabs = root.querySelector('[data-mount="view-tabs"]');
       if (tabs) tabs.innerHTML = renderViewTabs('overview');
     },

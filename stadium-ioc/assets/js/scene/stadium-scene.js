@@ -4,7 +4,10 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { domeConfig, floodRingConfig, getRoofStatusLabel, stadiumSceneData } from '../data/stadium-scene.js';
+import {
+  domeConfig, floodRingConfig, getRoofStatusLabel, stadiumSceneData,
+  parkingMarkers, exteriorSceneViews,
+} from '../data/stadium-scene.js';
 import { getMarkerGroup, setMarkers, pulseMarkers } from './stadium-markers.js';
 import { tweenCamera, setSceneHint, showSceneLoading, applyCameraPreset } from './stadium-camera.js';
 import { setupStadiumEnvironment, disposeStadiumEnvironment } from './stadium-environment.js';
@@ -43,6 +46,19 @@ let vocEventsBound = false;
 
 function defaultSceneViewForPage(pageId) {
   return pageId === 'facilities' ? 'facilitiesOverview' : pageId;
+}
+
+function resolveMarkersForView(viewId) {
+  const markerKey = viewId === 'reports' || viewId === 'facilitiesOverview' ? 'overview' : viewId;
+  const base = stadiumSceneData.markers[markerKey] || [];
+  if (!exteriorSceneViews.has(viewId)) return base;
+  const seen = new Set(base.map((m) => m.label));
+  const extra = parkingMarkers.filter((m) => !seen.has(m.label));
+  return extra.length ? [...base, ...extra] : base;
+}
+
+function setParkingVisible(visible = true) {
+  if (parkingGroup) parkingGroup.visible = visible;
 }
 
 function bindVocEvents() {
@@ -143,7 +159,7 @@ function updateControlRoomVisibility() {
     && currentViewId === 'overview';
   setControlRoomsVisible(show);
   setStadiumGatesVisible(true);
-  if (parkingGroup) parkingGroup.visible = !show;
+  setParkingVisible(true);
   if (show) {
     document.dispatchEvent(new CustomEvent('voc-room-hint', { detail: true }));
   }
@@ -367,9 +383,7 @@ function createScene(container, navPageId) {
 export function applyPageView(viewId, container) {
   if (!sceneRefs) return;
   currentViewId = viewId;
-  const markerKey = viewId === 'reports' || viewId === 'facilitiesOverview' ? 'overview' : viewId;
-  const markers = stadiumSceneData.markers[markerKey] || [];
-  setMarkers(markers);
+  setMarkers(resolveMarkersForView(viewId));
   const camKey = stadiumSceneData.cameraPresets[viewId] ? viewId : 'overview';
   tweenCamera(sceneRefs.camera, sceneRefs.controls, camKey).then((hint) => {
     setSceneHint(container || sceneRefs.container, hint);

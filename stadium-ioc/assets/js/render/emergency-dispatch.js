@@ -98,6 +98,13 @@ function serviceLabel(id, type) {
   return DISPATCH_CFG[id]?.types[type]?.label || '';
 }
 
+function resolveDialogInActivePage(id) {
+  const activePage = document.querySelector('.page-view.active');
+  const inActive = activePage?.querySelector(`[data-dispatch-dialog="${id}"]`);
+  if (inActive) return inActive;
+  return document.querySelector(`[data-dispatch-dialog="${id}"]`);
+}
+
 function bindDispatchDialogs() {
   if (dispatchBound) return;
   dispatchBound = true;
@@ -194,7 +201,8 @@ function bindDispatchDialogs() {
     const endBtn = e.target.closest('[data-dispatch-end]');
 
     const dialog = openBtn
-      ? document.querySelector(`[data-dispatch-dialog="${openBtn.dataset.dispatchOpen}"]`)
+      ? (openBtn.closest('.page-view')?.querySelector(`[data-dispatch-dialog="${openBtn.dataset.dispatchOpen}"]`)
+        || resolveDialogInActivePage(openBtn.dataset.dispatchOpen))
       : (closeBtn || lineBtn || recordBtn || endBtn)?.closest('[data-dispatch-dialog]');
     if (!dialog) return;
 
@@ -249,6 +257,34 @@ function bindDispatchDialogs() {
 }
 
 requestAnimationFrame(bindDispatchDialogs);
+
+/** Mở form dispatch (báo lại từ tab Tổng quan hoặc nơi khác). */
+export function openDispatchDialog(id, opts = {}) {
+  const dialog = resolveDialogInActivePage(id);
+  if (!dialog) return;
+  const cfg = DISPATCH_CFG[id];
+  const rt = getRt(id);
+  const type = opts.type || cfg?.defaultType;
+  rt.selectedType = type;
+  dialog.hidden = false;
+  dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {
+    btn.classList.toggle('svc-emergency__line--active', btn.dataset.dispatchType === type);
+  });
+  const note = dialog.querySelector('[data-dispatch-note]');
+  if (note && opts.note != null) note.value = opts.note;
+  const status = dialog.querySelector('[data-dispatch-status] span');
+  const recStatus = dialog.querySelector('[data-dispatch-rec-status]');
+  if (status) {
+    status.textContent = opts.titleSuffix
+      ? `Báo lại yêu cầu ${opts.titleSuffix}. ${cfg?.openStatus || ''}`
+      : (cfg?.openStatus || 'Sẵn sàng.');
+  }
+  if (recStatus) recStatus.textContent = 'Chưa ghi âm';
+  const playback = dialog.querySelector('[data-dispatch-playback]');
+  if (playback) playback.hidden = true;
+  const audio = dialog.querySelector('[data-dispatch-audio]');
+  if (audio) audio.removeAttribute('src');
+}
 
 export const MEDICAL_DISPATCH = {
   id: 'medical',

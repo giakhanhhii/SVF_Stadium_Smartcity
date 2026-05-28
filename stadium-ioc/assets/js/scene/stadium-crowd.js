@@ -98,9 +98,7 @@ function applyDensityTint(fillRatio) {
 export function updateStadiumCrowd(camera, viewingInterior) {
   if (!crowdRoot || !instancedMesh) return;
 
-  refreshCrowdInstances();
-  const fillRatio = getCrowdFillRatio();
-  applyDensityTint(fillRatio);
+  if (lastMode === 'off') return;
   crowdRoot.visible = false;
   instancedMesh.visible = false;
   lastMode = 'off';

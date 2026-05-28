@@ -4,7 +4,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { domeConfig, floodRingConfig, getRoofStatusLabel, stadiumSceneData } from '../data/stadium-scene.js';
 import { getMarkerGroup, setMarkers, pulseMarkers } from './stadium-markers.js';
 import { tweenCamera, setSceneHint, showSceneLoading, applyCameraPreset } from './stadium-camera.js';
@@ -31,8 +30,6 @@ let currentNavPage = 'overview';
 let currentViewId = 'overview';
 let sceneRefs = null;
 let bloomComposer = null;
-let bloomPassRef = null;
-let interiorFloodGroup = null;
 let floodlightsGroup = null;
 let facadeGlassMesh = null;
 let facadeMullionsMesh = null;
@@ -187,12 +184,7 @@ function updateShellVisibility(camera, controls) {
   }
 
   if (roofClosedCap) roofClosedCap.visible = false;
-  if (interiorFloodGroup) interiorFloodGroup.visible = viewingInterior;
-  if (floodlightsGroup) floodlightsGroup.visible = viewingInterior;
-  if (bloomPassRef) {
-    bloomPassRef.enabled = viewingInterior;
-    bloomPassRef.strength = viewingInterior ? 0.32 : 0;
-  }
+  if (floodlightsGroup) floodlightsGroup.visible = false;
 }
 
 function setupRenderer(container) {
@@ -218,31 +210,6 @@ function setupLighting(scene, renderer) {
   sun.position.set(-90, 140, 70);
   scene.add(sun);
   scene.add(new THREE.AmbientLight(0xffffff, 0.28));
-
-  const ring = new THREE.Group();
-  ring.name = 'interior_flood';
-  const { y, rx, rz, inset } = floodRingConfig;
-  for (let i = 0; i < 48; i++) {
-    const a = (i / 48) * Math.PI * 2;
-    const nx = Math.sin(a) / rx;
-    const nz = Math.cos(a) / rz;
-    const nl = Math.hypot(nx, nz) || 1;
-    const light = new THREE.PointLight(0xfff6e8, 0.55, 280, 1.6);
-    light.position.set(
-      rx * Math.sin(a) - (nx / nl) * inset,
-      y,
-      rz * Math.cos(a) - (nz / nl) * inset,
-    );
-    ring.add(light);
-  }
-  interiorFloodGroup = ring;
-  ring.visible = false;
-  ring.traverse((o) => { o.frustumCulled = false; });
-  scene.add(ring);
-
-  const overhead = new THREE.DirectionalLight(0xfff8f0, 0.45);
-  overhead.position.set(0, 90, 20);
-  scene.add(overhead);
 }
 
 function createScene(container, navPageId) {
@@ -264,10 +231,6 @@ function createScene(container, navPageId) {
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), 0.32, 0.35, 0.92);
-  bloomPass.enabled = false;
-  bloomPassRef = bloomPass;
-  composer.addPass(bloomPass);
   bloomComposer = composer;
 
   scene.add(getMarkerGroup());
@@ -285,7 +248,7 @@ function createScene(container, navPageId) {
     floodlightsGroup = stadiumModel.getObjectByName('floodlights');
     if (floodlightsGroup) {
       floodlightsGroup.visible = false;
-      floodlightsGroup.traverse((o) => { o.frustumCulled = false; });
+      floodlightsGroup.traverse((o) => { o.visible = false; });
     }
     facadeGlassMesh = stadiumModel.getObjectByName('facade_glass');
     facadeMullionsMesh = stadiumModel.getObjectByName('facade_mullions');
@@ -345,7 +308,6 @@ function createScene(container, navPageId) {
       camera.updateProjectionMatrix();
       renderer.setSize(nw, nh);
       composer.setSize(nw, nh);
-      bloomPass.resolution.set(nw, nh);
     },
     dispose() {
       cancelAnimationFrame(frameId);
@@ -353,8 +315,6 @@ function createScene(container, navPageId) {
       controls.dispose();
       bloomComposer?.dispose();
       bloomComposer = null;
-      bloomPassRef = null;
-      interiorFloodGroup = null;
       floodlightsGroup = null;
       facadeGlassMesh = null;
       facadeMullionsMesh = null;

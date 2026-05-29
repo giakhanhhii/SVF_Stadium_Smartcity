@@ -45,6 +45,12 @@ Sau khi server chay, mo mot trong cac URL sau:
 
 Trang mac dinh khi vao `http://localhost:3457/` la Smart City IOC.
 
+Neu gap loi `EADDRINUSE: address already in use :::3457`, port 3457 dang co server khac chay. Co the doi port bang:
+
+```powershell
+$env:PORT=3458; npm.cmd run dev
+```
+
 ## Test
 
 ```powershell

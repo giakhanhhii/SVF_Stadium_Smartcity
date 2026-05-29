@@ -1,0 +1,30 @@
+# Vinsmartcity - setup requirements
+#
+# Du an nay la Node.js frontend/prototype, khong co Python package can cai.
+# Khong can chay: pip install -r requirement.txt
+
+Runtime:
+- Node.js 20 LTS tro len
+- npm 10 tro len
+- PowerShell 5+ hoac PowerShell 7+ neu can export file Excel
+
+Install:
+1. npm ci
+2. npx playwright install chromium
+
+Run app:
+- npm run dev
+- Mo: http://localhost:3457/smartcity-ioc/smartcity-index.html
+- Stadium: http://localhost:3457/stadium-ioc/stadium-index.html
+
+Test:
+- npm run test:stadium
+
+Export Excel:
+- npm run export:ke-hoach
+
+Node dependencies da duoc quan ly trong package.json va package-lock.json:
+- three
+- canvas
+- @playwright/test
+- exceljs

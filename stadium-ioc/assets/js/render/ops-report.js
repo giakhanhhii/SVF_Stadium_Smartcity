@@ -1,37 +1,95 @@
-import { hudHead } from './hud-charts.js';
+import { hudHead, ringSvg, barChartSvg } from './hud-charts.js';
 import {
   renderDispatchDialog, MEDICAL_DISPATCH, SECURITY_DISPATCH, openDispatchDialog,
 } from './emergency-dispatch.js';
 
+function miniPie3d(pct) {
+  const used = Math.max(0, Math.min(100, pct));
+  const free = 100 - used;
+  const items = [
+    { label: 'A', value: used },
+    { label: 'B', value: Math.max(Math.round(free * 0.45), 1) },
+    { label: 'C', value: Math.max(Math.round(free * 0.35), 1) },
+    { label: 'D', value: Math.max(Math.round(free * 0.2), 1) },
+  ];
+  const colors = ['#00d4ff', '#3c8cff', '#7bdcff', '#176f9d'];
+  const polar = (r, deg) => {
+    const rad = (deg - 90) * Math.PI / 180;
+    return { x: 56 + Math.cos(rad) * r, y: 56 + Math.sin(rad) * r };
+  };
+  const sector = (start, end, innerR, outerR) => {
+    const a = polar(outerR, start);
+    const b = polar(outerR, end);
+    const c = polar(innerR, end);
+    const d = polar(innerR, start);
+    const large = end - start > 180 ? 1 : 0;
+    return `M ${a.x.toFixed(1)} ${a.y.toFixed(1)} A ${outerR} ${outerR} 0 ${large} 1 ${b.x.toFixed(1)} ${b.y.toFixed(1)} L ${c.x.toFixed(1)} ${c.y.toFixed(1)} A ${innerR} ${innerR} 0 ${large} 0 ${d.x.toFixed(1)} ${d.y.toFixed(1)} Z`;
+  };
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  let angle = -18;
+  const slices = items.map((item, i) => {
+    const sweep = Math.max(26, (item.value / total) * 318);
+    const start = angle + 3;
+    const end = angle + sweep - 3;
+    angle = end;
+    const pin = polar(41, start + sweep / 2);
+    return `<path class="overview-radial-gauge__slice" d="${sector(start, end, 16, 43)}" fill="${colors[i]}" opacity="${0.96 - i * 0.12}"/>
+      <circle cx="${pin.x.toFixed(1)}" cy="${pin.y.toFixed(1)}" r="2" fill="#bdf7ff" opacity="0.75"/>`;
+  }).join('');
+  const legend = items.map((item, i) =>
+    `<span style="--legend-pct:${Math.round((item.value / total) * 100)}%;--legend-color:${colors[i]}">
+      <i></i><b>${item.label}</b><small></small><em>${Math.round((item.value / total) * 100)}%</em>
+    </span>`,
+  ).join('');
+  return `<div class="overview-pie3d-card overview-radial-card">
+    <div class="overview-radial-card__top">
+      <svg class="overview-radial-gauge" viewBox="0 0 112 112" aria-hidden="true">
+        <circle cx="56" cy="56" r="44" fill="rgba(0,212,255,0.08)"/>
+        ${slices}
+        <circle cx="56" cy="56" r="15" fill="#092064" stroke="#00d4ff" stroke-width="3"/>
+        <circle cx="56" cy="56" r="7" fill="#173cff"/>
+      </svg>
+      <strong>${pct}%</strong>
+    </div>
+    <div class="overview-radial-card__track">${items.map((item, i) =>
+    `<span style="width:${Math.round((item.value / total) * 100)}%;background:${colors[i]}"></span>`,
+  ).join('')}</div>
+    <div class="overview-pie3d-card__legend">${legend}</div>
+  </div>`;
+}
+
 function pendingRow(c, catId) {
-  return `<button type="button" class="ops-report__pending" data-ops-case="${c.id}" data-ops-cat="${catId}">
+  return `<button type="button" class="ops-report__pending" data-ops-case="${c.id}" data-ops-cat="${catId}" title="${c.title}" aria-label="${c.id} ${c.title}">
     <span class="ops-report__pending-id">${c.id}</span>
-    <span class="ops-report__pending-title">${c.title}</span>
-    <span class="ops-report__pending-badge">Chưa xử lý</span>
+    <span class="ops-report__pending-badge">${c.wait}</span>
   </button>`;
 }
 
 function reportCard(cat) {
   const pct = cat.sent ? Math.round((cat.processed / cat.sent) * 100) : 0;
+  const pendingCount = cat.pending?.length || 0;
   const pending = cat.pending?.length
     ? `<div class="ops-report__pending-list">${cat.pending.map((c) => pendingRow(c, cat.id)).join('')}</div>`
     : '';
   const pendingLbl = cat.pending?.length
-    ? `<span class="ops-report__pending-count">${cat.pending.length} chưa xử lý</span>`
-    : '<span class="ops-report__pending-count ops-report__pending-count--clear">Đã xử lý hết</span>';
+    ? `<span class="ops-report__pending-count">${pendingCount}</span>`
+    : '<span class="ops-report__pending-count ops-report__pending-count--clear">0</span>';
   return `<section class="hud-block ops-report" data-ops-cat-card="${cat.id}">
     <div class="ops-report__head">
       <span class="ops-report__icon"><i class="ti ${cat.icon}" aria-hidden="true"></i></span>
       <span class="ops-report__title">${cat.title}</span>
       ${pendingLbl}
     </div>
-    <div class="ops-report__counts">
-      <div><span>Đã gửi</span><strong>${cat.sent}</strong></div>
-      <div><span>Đã xử lý</span><strong class="ops-report__ok">${cat.processed}</strong></div>
-    </div>
-    <div class="hud-bar-item ops-report__bar">
-      <div class="hud-bar-head"><span>Tỷ lệ đóng</span><strong>${pct}%</strong></div>
-      <div class="hud-bar-track"><div class="hud-bar-fill" style="width:${pct}%"></div></div>
+    <div class="ops-report__viz">
+      ${ringSvg(pct, 'SLA')}
+      <div class="ops-report__spark">
+        <div class="ops-report__mini-grid">
+          <span><b>${cat.sent}</b><em>gửi</em></span>
+          <span><b>${cat.processed}</b><em>đóng</em></span>
+          <span><b>${pendingCount}</b><em>chờ</em></span>
+        </div>
+        <div class="hud-bar-track"><div class="hud-bar-fill" style="width:${pct}%"></div></div>
+      </div>
     </div>
     ${pending}
   </section>`;
@@ -39,14 +97,35 @@ function reportCard(cat) {
 
 export function renderOpsReportDashboard(data) {
   const cards = data.categories.map(reportCard).join('');
+  const totalSent = data.categories.reduce((sum, cat) => sum + cat.sent, 0);
+  const totalProcessed = data.categories.reduce((sum, cat) => sum + cat.processed, 0);
+  const totalPending = data.categories.reduce((sum, cat) => sum + (cat.pending?.length || 0), 0);
+  const closePct = totalSent ? Math.round((totalProcessed / totalSent) * 100) : 0;
+  const labelByCat = { medical: 'YT', fire: 'PCCC', crowd: 'AT' };
+  const queueBars = data.categories.map((cat) => ({
+    time: labelByCat[cat.id] || cat.title.slice(0, 4),
+    value: cat.pending?.length || 0,
+  }));
   return `
-    <section class="hud-block">${hudHead(data.venue.title)}
-      <div class="hud-metric-lbl">${data.venue.capacityLabel}</div>
-      <div class="hud-metric-big">${data.venue.capacity}</div>
-      <div class="hud-inline-stat"><i class="ti ti-chart-pie"></i><span>Lấp đầy</span><strong>${data.venue.pct}%</strong></div>
+    <section class="hud-block ops-overview-venue">${hudHead(data.venue.title)}
+      <div class="ops-overview-venue__viz">
+        ${miniPie3d(data.venue.pct)}
+        <div>
+          <strong>${data.venue.capacity}</strong>
+          <span>${data.venue.capacityLabel}</span>
+        </div>
+      </div>
     </section>
-    <section class="hud-block ops-report-summary">${hudHead('Báo cáo xử lý VOC')}
-      <div class="hud-sub">Yêu cầu đã gửi · case đã đóng · theo dõi chưa xử lý</div>
+    <section class="hud-block ops-report-summary">${hudHead('VOC Ops')}
+      <div class="ops-report-summary__viz">
+        ${ringSvg(closePct, 'Close')}
+        <div class="ops-report-summary__nums">
+          <span><b>${totalSent}</b><em>gửi</em></span>
+          <span><b>${totalProcessed}</b><em>đóng</em></span>
+          <span class="ops-report-summary__warn"><b>${totalPending}</b><em>chờ</em></span>
+        </div>
+      </div>
+      ${barChartSvg(queueBars)}
     </section>
     ${cards}
     <div class="ops-case-detail" data-ops-detail hidden>

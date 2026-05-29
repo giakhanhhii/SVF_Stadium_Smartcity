@@ -6,6 +6,7 @@ import {
   initControlRoomUI, activateSecurityTab, deactivateSecurityTab, setNavHandler,
 } from './render/control-room-ui.js';
 import { bindViewTabs } from './render/scene-view-tabs.js';
+import { bindHudTabs } from '../../../shared-ioc/assets/js/render/hud-tabs.js';
 import { mountStadiumSideNav } from './render/side-nav.js';
 import { initSidebarResize } from './render/sidebar-resize.js';
 
@@ -34,6 +35,7 @@ createApp({
   hydrateAllPages,
   onNavigate,
 }).then(() => {
+  bindHudTabs();
   mountStadiumSideNav('overview');
   onNavigate('overview');
 }).catch(console.error);

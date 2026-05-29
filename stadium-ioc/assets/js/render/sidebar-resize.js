@@ -6,6 +6,30 @@ const MIN_CENTER_WIDTH = 520;
 
 let activeDrag = null;
 
+function createDragShield() {
+  const shield = document.createElement('div');
+  shield.className = 'sidebar-resize-shield';
+  const guide = document.createElement('div');
+  guide.className = 'sidebar-resize-guide';
+  shield.appendChild(guide);
+  shield.addEventListener('mousemove', onDragMove);
+  shield.addEventListener('mouseup', stopDrag);
+  shield.addEventListener('mouseleave', preventDragSelection);
+  shield.addEventListener('pointermove', onDragMove);
+  shield.addEventListener('pointerup', stopDrag);
+  shield.addEventListener('mousedown', preventDragSelection);
+  shield.addEventListener('mousemove', preventDragSelection);
+  shield.addEventListener('dragstart', preventDragSelection);
+  document.body.appendChild(shield);
+  return { shield, guide };
+}
+
+function preventDragSelection(event) {
+  if (!activeDrag) return;
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 function readSavedWidths() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -23,9 +47,10 @@ function saveWidths(widths) {
 }
 
 function clampWidth(value, command, otherWidth) {
+  const minWidth = command.closest('#page-overview') ? 340 : MIN_WIDTH;
   const maxByCenter = command.clientWidth - otherWidth - MIN_CENTER_WIDTH;
-  const max = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, maxByCenter));
-  return Math.round(Math.min(Math.max(value, MIN_WIDTH), max));
+  const max = Math.max(minWidth, Math.min(MAX_WIDTH, maxByCenter));
+  return Math.round(Math.min(Math.max(value, minWidth), max));
 }
 
 function applyWidths(command, widths = readSavedWidths()) {
@@ -46,59 +71,103 @@ function createHandle(side) {
   const handle = document.createElement('div');
   handle.className = `sidebar-resize-handle sidebar-resize-handle--${side}`;
   handle.dataset.sidebarResize = side;
+  handle.draggable = false;
   handle.setAttribute('role', 'separator');
   handle.setAttribute('aria-orientation', 'vertical');
   handle.setAttribute('aria-label', side === 'left' ? 'Kéo đổi độ rộng sidebar trái' : 'Kéo đổi độ rộng sidebar phải');
   return handle;
 }
 
-function onPointerMove(event) {
+function onDragMove(event) {
   if (!activeDrag) return;
+  event.preventDefault();
+  event.stopPropagation();
 
   const dx = event.clientX - activeDrag.startX;
   const rawLeft = activeDrag.side === 'left' ? activeDrag.startLeft + dx : activeDrag.startLeft;
   const rawRight = activeDrag.side === 'right' ? activeDrag.startRight - dx : activeDrag.startRight;
   const left = clampWidth(rawLeft, activeDrag.command, rawRight);
   const right = clampWidth(rawRight, activeDrag.command, left);
+  const commandRect = activeDrag.command.getBoundingClientRect();
+  const guideX = activeDrag.side === 'left' ? commandRect.left + left : commandRect.right - right;
 
-  applyWidths(activeDrag.command, { left, right });
+  activeDrag.nextLeft = left;
+  activeDrag.nextRight = right;
+  activeDrag.guide.style.transform = `translateX(${Math.round(guideX)}px)`;
 }
 
 function stopDrag() {
   if (!activeDrag) return;
 
+  const { shield, previousSelectStart, previousDragStart } = activeDrag;
+  const left = activeDrag.nextLeft ?? activeDrag.startLeft;
+  const right = activeDrag.nextRight ?? activeDrag.startRight;
+  applyWidths(activeDrag.command, { left, right });
   const widths = {
     left: Number(activeDrag.command.dataset.sidebarLeftWidth) || DEFAULT_WIDTH,
     right: Number(activeDrag.command.dataset.sidebarRightWidth) || DEFAULT_WIDTH,
   };
   saveWidths(widths);
+  shield?.remove();
+  window.getSelection()?.removeAllRanges();
+  document.onselectstart = previousSelectStart;
+  document.ondragstart = previousDragStart;
+  document.documentElement.classList.remove('sidebar-resizing');
   document.body.classList.remove('sidebar-resizing');
+  document.documentElement.style.userSelect = '';
+  document.body.style.userSelect = '';
   activeDrag = null;
 }
 
 function startDrag(event) {
+  if (activeDrag) return;
+  if (event.button !== undefined && event.button !== 0) return;
+
   const handle = event.currentTarget;
   const command = handle.closest('.security-command');
   if (!command) return;
 
+  event.preventDefault();
+  event.stopPropagation();
+
   const side = handle.dataset.sidebarResize;
+  const { shield, guide } = createDragShield();
+  const startLeft = Number(command.dataset.sidebarLeftWidth) || command.querySelector('.security-sidebar--left')?.getBoundingClientRect().width || DEFAULT_WIDTH;
+  const startRight = Number(command.dataset.sidebarRightWidth) || command.querySelector('.security-sidebar--right')?.getBoundingClientRect().width || DEFAULT_WIDTH;
+  const commandRect = command.getBoundingClientRect();
+  const guideX = side === 'left' ? commandRect.left + startLeft : commandRect.right - startRight;
+  guide.style.transform = `translateX(${Math.round(guideX)}px)`;
+
   activeDrag = {
     side,
     command,
+    handle,
+    shield,
+    guide,
     startX: event.clientX,
-    startLeft: Number(command.dataset.sidebarLeftWidth) || command.querySelector('.security-sidebar--left')?.getBoundingClientRect().width || DEFAULT_WIDTH,
-    startRight: Number(command.dataset.sidebarRightWidth) || command.querySelector('.security-sidebar--right')?.getBoundingClientRect().width || DEFAULT_WIDTH,
+    startLeft,
+    startRight,
+    nextLeft: startLeft,
+    nextRight: startRight,
+    previousSelectStart: document.onselectstart,
+    previousDragStart: document.ondragstart,
   };
 
+  document.onselectstart = () => false;
+  document.ondragstart = () => false;
+  window.getSelection()?.removeAllRanges();
+  document.documentElement.classList.add('sidebar-resizing');
   document.body.classList.add('sidebar-resizing');
-  event.preventDefault();
-  event.stopPropagation();
+  document.documentElement.style.userSelect = 'none';
+  document.body.style.userSelect = 'none';
 }
 
 function ensureHandle(sidebar, side) {
   if (!sidebar || sidebar.querySelector(`.sidebar-resize-handle--${side}`)) return;
   const handle = createHandle(side);
   handle.addEventListener('pointerdown', startDrag);
+  handle.addEventListener('mousedown', startDrag);
+  handle.addEventListener('dragstart', preventDragSelection);
   sidebar.appendChild(handle);
 }
 
@@ -111,9 +180,13 @@ export function initSidebarResize(pageId) {
   });
 }
 
-window.addEventListener('pointermove', onPointerMove);
-window.addEventListener('pointerup', stopDrag);
-window.addEventListener('pointercancel', stopDrag);
+window.addEventListener('mousemove', onDragMove, true);
+window.addEventListener('mouseup', stopDrag, true);
+window.addEventListener('blur', stopDrag);
+window.addEventListener('pointermove', onDragMove, true);
+window.addEventListener('pointerup', stopDrag, true);
+window.addEventListener('selectstart', preventDragSelection, true);
+window.addEventListener('dragstart', preventDragSelection, true);
 window.addEventListener('resize', () => {
   document.querySelectorAll('.page-view--stadium-cmd .security-command').forEach((command) => applyWidths(command));
 });

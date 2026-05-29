@@ -33,23 +33,39 @@ export const eventsHud = {
       ],
     },
     modeTabs: ['Trực tiếp', 'Theo khán đài'],
-    attendance: {
-      title: 'Khán giả trong sân',
-      label: `Sức chứa ${snap.capacityFormatted}`,
-      value: `${snap.fillPercent}%`,
-      tone: venueFill.tone,
-    },
-    entryBars: {
-      title: 'Lưu lượng vào sân',
-      subtitle: 'người/15 phút',
-      bars: [
-        { time: '16h', value: 4 },
-        { time: '17h', value: 7 },
-        { time: '18h', value: 9 },
-        { time: '19h', value: 10 },
-        { time: '19:30', value: 6 },
-        { time: 'HT', value: 3 },
-      ],
+    attendanceViews: {
+      live: {
+        title: 'Khán giả trong sân',
+        label: `Sức chứa ${snap.capacityFormatted}`,
+        value: `${snap.fillPercent}%`,
+        tone: venueFill.tone,
+        barsTitle: 'Lưu lượng vào sân',
+        barsSubtitle: 'người/15 phút',
+        bars: [
+          { time: '16h', value: 4 },
+          { time: '17h', value: 7 },
+          { time: '18h', value: 9 },
+          { time: '19h', value: 10 },
+          { time: '19:30', value: 6 },
+          { time: 'HT', value: 3 },
+        ],
+      },
+      stands: {
+        title: 'Theo khán đài',
+        label: 'Khu đông nhất: Khán đài B',
+        value: '92%',
+        tone: 'danger',
+        barsTitle: 'Lấp đầy theo khán đài',
+        barsSubtitle: '% sức chứa',
+        bars: [
+          { time: 'A', value: 82 },
+          { time: 'B', value: 92 },
+          { time: 'C', value: 78 },
+          { time: 'D', value: 84 },
+          { time: 'VIP', value: 66 },
+          { time: 'Nam', value: 88 },
+        ],
+      },
     },
   },
   right: {
@@ -61,10 +77,24 @@ export const eventsHud = {
     pa: {
       title: 'Điều khiển PA & LED',
       tabs: ['PA', 'LED Info'],
-      metrics: [
-        { label: 'PA System', value: 'ON', pct: 100 },
-        { label: 'LED & Màn hình', value: '12/12', pct: 100 },
-      ],
+      views: {
+        pa: {
+          ringPct: 100,
+          ringLabel: 'PA ON',
+          metrics: [
+            { label: 'PA System', value: 'ON', pct: 100 },
+            { label: 'Vùng phủ âm thanh', value: '8/8', pct: 100 },
+          ],
+        },
+        led: {
+          ringPct: 100,
+          ringLabel: 'LED OK',
+          metrics: [
+            { label: 'LED chính', value: '4/4', pct: 100 },
+            { label: 'Màn hình phụ', value: '8/8', pct: 100 },
+          ],
+        },
+      },
     },
     timeline: {
       title: 'Mốc vận hành',

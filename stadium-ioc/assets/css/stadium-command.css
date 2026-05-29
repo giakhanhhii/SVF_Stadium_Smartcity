@@ -16,6 +16,23 @@
   grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(240px, 280px);
 }
 
+.page-view--overview .security-command {
+  grid-template-columns: minmax(340px, 390px) minmax(0, 1fr) minmax(340px, 390px);
+}
+
+.page-view--stadium-cmd,
+.page-view--stadium-cmd * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.page-view--stadium-cmd input,
+.page-view--stadium-cmd textarea,
+.page-view--stadium-cmd [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 .page-view--stadium-cmd .security-sidebar {
   position: relative;
 }
@@ -25,9 +42,12 @@
   top: 0;
   bottom: 0;
   z-index: 8;
-  width: 10px;
+  width: 16px;
   cursor: ew-resize;
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
 }
 
 .sidebar-resize-handle::after {
@@ -49,17 +69,58 @@
 }
 
 .sidebar-resize-handle--left {
-  right: -5px;
+  right: -8px;
 }
 
 .sidebar-resize-handle--right {
-  left: -5px;
+  left: -8px;
 }
 
 .sidebar-resizing,
 .sidebar-resizing * {
   cursor: ew-resize !important;
   user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+html.sidebar-resizing,
+html.sidebar-resizing body {
+  overflow: hidden;
+}
+
+body.sidebar-resizing::after {
+  display: none;
+}
+
+.sidebar-resize-shield {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  cursor: ew-resize;
+  background: transparent;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sidebar-resize-guide {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: rgba(216, 236, 255, 0.58);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.32);
+  pointer-events: none;
+}
+
+.sidebar-resizing ::selection {
+  background: transparent;
 }
 
 .page-view--stadium-cmd .security-sidebar,
@@ -120,6 +181,413 @@
 .hud-vent-btn--danger {
   border-color: rgba(226, 75, 74, 0.5) !important;
   color: #e24b4a !important;
+}
+
+.page-view--stadium-cmd .stad-sec-total {
+  display: grid;
+  gap: 8px;
+}
+
+.page-view--stadium-cmd .stad-sec-total__top {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.page-view--stadium-cmd .stad-sec-total__top > strong {
+  color: #00d4ff;
+  font-size: 22px;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.28);
+}
+
+.page-view--stadium-cmd .stad-sec-stack {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(216, 236, 255, 0.08);
+}
+
+.page-view--stadium-cmd .stad-sec-stack__seg {
+  min-width: 8px;
+}
+
+.page-view--stadium-cmd .stad-sec-stack__seg {
+  background: #00d4ff;
+  box-shadow: inset -1px 0 0 rgba(4, 8, 16, 0.65);
+}
+
+.page-view--stadium-cmd .stad-sec-stack__seg:nth-child(1) { opacity: 0.95; }
+.page-view--stadium-cmd .stad-sec-stack__seg:nth-child(2) { opacity: 0.74; }
+.page-view--stadium-cmd .stad-sec-stack__seg:nth-child(3) { opacity: 0.58; }
+.page-view--stadium-cmd .stad-sec-stack__seg:nth-child(4) { opacity: 0.42; }
+
+.page-view--stadium-cmd .stad-sec-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.page-view--stadium-cmd .stad-sec-mini {
+  min-width: 0;
+  padding: 5px;
+  border: 1px solid rgba(0, 180, 255, 0.14);
+  border-radius: 3px;
+  background: rgba(0, 30, 60, 0.32);
+}
+
+.page-view--stadium-cmd .stad-sec-mini span {
+  display: block;
+  overflow: hidden;
+  color: #6a9ab8;
+  font-size: 7px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-view--stadium-cmd .stad-sec-mini strong {
+  display: block;
+  margin-top: 2px;
+  color: #e0f0ff;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.page-view--stadium-cmd .stad-sec-camera-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.page-view--stadium-cmd .stad-sec-camera {
+  min-width: 0;
+  padding: 0;
+  border: 1px solid rgba(0, 180, 255, 0.18);
+  border-radius: 3px;
+  background: rgba(5, 18, 32, 0.82);
+  cursor: pointer;
+}
+
+.page-view--stadium-cmd .stad-sec-camera svg {
+  display: block;
+  width: 100%;
+}
+
+.page-view--stadium-cmd .stad-sec-camera span {
+  display: block;
+  width: 24px;
+  height: 3px;
+  margin: 3px auto 4px;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, 0.68);
+}
+
+.page-view--stadium-cmd .stad-sec-donut {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.16));
+}
+
+.page-view--stadium-cmd .stad-sec-radial3d {
+  display: block;
+  width: 86px;
+  height: 86px;
+  overflow: visible;
+  filter: drop-shadow(0 8px 14px rgba(0, 12, 28, 0.55));
+}
+
+.page-view--stadium-cmd .stad-sec-radial3d__depth {
+  fill: rgba(0, 86, 128, 0.58);
+}
+
+.page-view--stadium-cmd .stad-sec-radial3d__slice {
+  stroke: rgba(230, 250, 255, 0.22);
+  stroke-width: 0.8;
+}
+
+.page-view--stadium-cmd .stad-sec-gauge {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 2px 10px;
+  align-items: center;
+}
+
+.page-view--stadium-cmd .stad-sec-gauge i {
+  grid-row: span 2;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid rgba(0, 212, 255, 0.28);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.18), rgba(0, 212, 255, 0.04));
+  color: #00d4ff;
+  font-size: 17px;
+}
+
+.page-view--stadium-cmd .stad-sec-gauge strong {
+  color: #e0f0ff;
+  font-size: 19px;
+  line-height: 1;
+}
+
+.page-view--stadium-cmd .stad-sec-gauge span {
+  overflow: hidden;
+  color: #6a9ab8;
+  font-size: 8px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-view--stadium-cmd .stad-sec-bars {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.page-view--stadium-cmd .stad-sec-bar {
+  position: relative;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(0, 180, 255, 0.1);
+}
+
+.page-view--stadium-cmd .stad-sec-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 4px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #0060a0, #00d4ff);
+}
+
+.page-view--stadium-cmd .stad-sec-bar strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  padding: 3px 6px;
+  color: #e8f4ff;
+  font-size: 9px;
+  line-height: 1.3;
+  text-align: right;
+}
+
+.page-view--stadium-cmd .stad-sec-alert-chart {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  height: 72px;
+}
+
+.page-view--stadium-cmd .stad-sec-alert-bar {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  flex-direction: column;
+  justify-content: end;
+  gap: 4px;
+}
+
+.page-view--stadium-cmd .stad-sec-alert-bar span {
+  display: block;
+  width: 100%;
+  min-height: 12px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #00d4ff, rgba(0, 128, 170, 0.72));
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+}
+
+.page-view--stadium-cmd .stad-sec-alert-bar i {
+  overflow: hidden;
+  font-size: 7px;
+  font-style: normal;
+  line-height: 1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #7ab0d0;
+}
+
+.page-view--stadium-cmd .stad-sec-zone-chart {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.page-view--stadium-cmd .stad-sec-zone-total {
+  display: grid;
+  gap: 3px;
+  place-items: center;
+  color: #00d4ff;
+}
+
+.page-view--stadium-cmd .stad-sec-zone-total i {
+  font-size: 15px;
+}
+
+.page-view--stadium-cmd .stad-sec-zone-total strong {
+  color: #e8f4ff;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.page-view--stadium-cmd .stad-sec-matrix {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+}
+
+.page-view--stadium-cmd .stad-sec-matrix--patrol {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.page-view--stadium-cmd .stad-sec-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: rgba(90, 138, 176, 0.24);
+}
+
+.page-view--stadium-cmd .stad-sec-cell--ok {
+  background: rgba(0, 212, 255, 0.62);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+}
+
+.page-view--stadium-cmd .stad-sec-cell--warn {
+  background: rgba(0, 212, 255, 0.82);
+}
+
+.page-view--stadium-cmd .stad-sec-cell--hot {
+  background: #00d4ff;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.38);
+}
+
+.page-view--stadium-cmd .stad-sec-cell--idle {
+  background: rgba(90, 138, 176, 0.18);
+}
+
+#page-security.security-exterior-mode .sidebar-hud {
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
+}
+
+#page-security.security-exterior-mode .security-sidebar,
+#page-security.security-exterior-mode .scene-view-tabs,
+#page-security.security-exterior-mode .security-center__legend {
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+}
+
+#page-security.security-exterior-mode .sidebar-hud[data-mount="sidebar-left"],
+#page-security.security-exterior-mode .sidebar-hud[data-mount="sidebar-right"] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#page-security.security-exterior-mode .sidebar-hud > .hud-block {
+  min-height: 0;
+  flex: 1 1 0;
+}
+
+#page-security.security-exterior-mode .sidebar-hud > .hud-tabs {
+  flex: 0 0 auto;
+}
+
+#page-security.security-exterior-mode [data-security-exterior-mode-panel] {
+  flex: 1.35 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#page-security.security-exterior-mode [data-security-exterior-mode-panel] > .hud-block {
+  min-height: 0;
+  flex: 1 1 0;
+}
+
+#page-security.security-exterior-mode .sidebar-hud[data-mount="sidebar-left"] > .hud-block:first-child {
+  flex: 1.25 1 0;
+}
+
+#page-security.security-exterior-mode .sidebar-hud[data-mount="sidebar-left"] > .hud-block:nth-child(2) {
+  flex: 1.1 1 0;
+}
+
+#page-security.security-exterior-mode .sidebar-hud[data-mount="sidebar-right"] > .hud-block:first-child {
+  flex: 0.95 1 0;
+}
+
+#page-security.security-exterior-mode .sidebar-hud[data-mount="sidebar-right"] > .hud-block:last-child {
+  flex: 1.25 1 0;
+}
+
+#page-security.security-exterior-mode .stad-sec-total,
+#page-security.security-exterior-mode .stad-sec-camera-grid,
+#page-security.security-exterior-mode .stad-sec-alert-chart,
+#page-security.security-exterior-mode .stad-sec-zone-chart {
+  flex: 1;
+  min-height: 0;
+}
+
+#page-security.security-exterior-mode .stad-sec-total {
+  align-content: space-between;
+}
+
+#page-security.security-exterior-mode .stad-sec-camera-grid {
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+#page-security.security-exterior-mode .stad-sec-camera {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#page-security.security-exterior-mode .stad-sec-camera svg {
+  flex: 1;
+  min-height: 0;
+}
+
+#page-security.security-exterior-mode .hud-chart,
+#page-security.security-exterior-mode .hud-area-chart {
+  flex: 1;
+  min-height: 86px;
+}
+
+#page-security.security-exterior-mode .hud-block--grow .hud-area-chart {
+  min-height: 112px;
+}
+
+#page-security.security-exterior-mode .stad-sec-alert-chart {
+  height: auto;
+  min-height: 96px;
+}
+
+#page-security.security-exterior-mode .stad-sec-matrix {
+  height: 100%;
+  align-content: center;
+}
+
+#page-security.security-exterior-mode .hud-energy-trend,
+#page-security.security-exterior-mode .hud-energy-trend--up,
+#page-security.security-exterior-mode .hud-energy-trend--down {
+  color: #7ab0d0;
+}
+
+#page-security.security-exterior-mode .hud-bar-fill {
+  background: linear-gradient(90deg, rgba(0, 128, 170, 0.75), #00d4ff);
 }
 
 .hud-block--roof .hud-vent-row {

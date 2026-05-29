@@ -1,8 +1,11 @@
 import { renderOverviewLeft, renderOverviewRight, mountOverviewOpsBind } from '../render/overview-hud.js';
-import { renderSecurityLeft, renderSecurityRight, renderSecurityExteriorLeft, renderSecurityExteriorRight } from '../render/security-hud.js';
-import { renderEventsLeft, renderEventsRight } from '../render/events-hud.js';
+import {
+  renderSecurityLeft, renderSecurityRight, renderSecurityExteriorLeft, renderSecurityExteriorRight,
+  bindSecurityHudTabs, bindSecurityExteriorHudTabs,
+} from '../render/security-hud.js';
+import { renderEventsLeft, renderEventsRight, bindEventsHudTabs } from '../render/events-hud.js';
 import { renderFacilitiesLeft, renderFacilitiesRight } from '../render/facilities-hud.js';
-import { renderServicesLeft, renderServicesRight } from '../render/services-hud.js';
+import { renderServicesLeft, renderServicesRight, bindServicesHudTabs } from '../render/services-hud.js';
 import { renderReportsLeft, renderReportsRight, bindReportsHistory } from '../render/reports-hud.js';
 import { overviewHud } from '../data/overview-hud.js';
 import { securityHud } from '../data/security-hud.js';
@@ -19,12 +22,16 @@ export function hydrateSecuritySidebars(mode = 'interior') {
   const left = root.querySelector('.sidebar-hud[data-mount="sidebar-left"]');
   const right = root.querySelector('.sidebar-hud[data-mount="sidebar-right"]');
   const legend = root.querySelector('.security-center__legend');
+  root.classList.toggle('security-exterior-mode', mode === 'exterior');
+  root.classList.toggle('security-interior-mode', mode !== 'exterior');
   if (mode === 'exterior') {
     if (left) left.innerHTML = renderSecurityExteriorLeft(securityExteriorHud.left);
     if (right) right.innerHTML = renderSecurityExteriorRight(securityExteriorHud.right);
+    bindSecurityExteriorHudTabs(root, securityExteriorHud);
   } else {
     if (left) left.innerHTML = renderSecurityLeft(securityHud.left);
     if (right) right.innerHTML = renderSecurityRight(securityHud.right);
+    bindSecurityHudTabs(root, securityHud);
   }
   if (legend) {
     const items = SECURITY_LEGEND[mode] || SECURITY_LEGEND.interior;
@@ -54,6 +61,7 @@ export function hydratePage(pageId) {
     events: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderEventsLeft(eventsHud.left);
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderEventsRight(eventsHud.right);
+      bindEventsHudTabs(root, eventsHud);
       const tabs = root.querySelector('[data-mount="view-tabs"]');
       if (tabs) tabs.innerHTML = renderViewTabs('events');
     },
@@ -66,6 +74,7 @@ export function hydratePage(pageId) {
     services: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderServicesLeft(servicesHud.left);
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderServicesRight(servicesHud.right);
+      bindServicesHudTabs(root, servicesHud);
       const tabs = root.querySelector('[data-mount="view-tabs"]');
       if (tabs) tabs.innerHTML = renderViewTabs('services');
     },
@@ -84,3 +93,9 @@ export function hydratePage(pageId) {
 export function hydrateAllPages() {
   ['overview', 'security', 'events', 'facilities', 'services', 'reports'].forEach(hydratePage);
 }
+
+document.addEventListener('voc-security-view-changed', (event) => {
+  const root = document.getElementById('page-security');
+  if (!root?.classList.contains('active')) return;
+  hydrateSecuritySidebars(event.detail === 'exterior' ? 'exterior' : 'interior');
+});

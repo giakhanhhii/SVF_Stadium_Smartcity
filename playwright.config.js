@@ -16,7 +16,7 @@ export default defineConfig({
   },
   webServer: {
     command: 'node scripts/dev-server.mjs',
-    url: 'http://localhost:3457/stadium-ioc/index.html',
+    url: 'http://localhost:3457/stadium-ioc/stadium-index.html',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },

@@ -1,5 +1,4 @@
-import { hudHead, ringSvg, barChartSvg, areaChartSvg } from './hud-charts.js';
-import { distributionChart } from './radial3d-chart.js';
+import { hudHead, areaChartSvg } from './hud-charts.js';
 import {
   renderOpsReportDashboard, indexOpsCases, bindOpsReports,
 } from './ops-report.js';
@@ -80,44 +79,36 @@ function vocAlertViz(alerts, closePct) {
   </div>`;
 }
 
-function lineDonutCombo(lineValues, donutItems, footerHtml = '') {
+function shiftTrendChart(lineValues) {
   const max = Math.max(...lineValues);
   const min = Math.min(...lineValues);
   const avg = Math.round(lineValues.reduce((sum, value) => sum + value, 0) / lineValues.length);
   const points = lineValues.map((value, i) => {
-    const x = 8 + i * 10;
-    const y = 52 - (value / max) * 38;
+    const x = 14 + i * 20;
+    const y = 86 - (value / max) * 60;
     return `${x},${y}`;
   }).join(' ');
   const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const groups = [
-    { label: 'OK', value: donutItems[0]?.value || 0 },
-    { label: 'Wait', value: donutItems[1]?.value || 0 },
-    { label: 'Other', value: donutItems[2]?.value || 1 },
-  ];
-  const caseTotal = groups.reduce((sum, g) => sum + g.value, 0);
   return `<div class="overview-combo-wrap">
     <div class="overview-combo-kpis">
-      <span><b>${max}</b><em>peak</em></span>
-      <span><b>${avg}</b><em>avg</em></span>
-      <span><b>${min}</b><em>low</em></span>
+      <span><b>${max}</b><em>Đỉnh</em></span>
+      <span><b>${avg}</b><em>Trung bình</em></span>
+      <span><b>${min}</b><em>Thấp</em></span>
     </div>
-    <div class="overview-combo-row">
-      <svg class="overview-combo" viewBox="0 0 88 72" aria-hidden="true">
+    <div class="overview-combo-row overview-combo-row--trend">
+      <svg class="overview-combo overview-combo--large" viewBox="0 0 148 104" aria-hidden="true">
         <g class="overview-combo__grid">
-          ${[14, 24, 34, 44, 54].map((y) => `<line x1="4" y1="${y}" x2="78" y2="${y}"/>`).join('')}
-          ${labels.map((label, i) => `<text x="${8 + i * 10}" y="68" text-anchor="middle">${label}</text>`).join('')}
+          ${[24, 38, 52, 66, 80].map((y) => `<line x1="8" y1="${y}" x2="140" y2="${y}"/>`).join('')}
+          ${labels.map((label, i) => `<text x="${14 + i * 20}" y="100" text-anchor="middle">${label}</text>`).join('')}
         </g>
         <polyline class="overview-combo__line" points="${points}"/>
         ${lineValues.map((value, i) => {
-    const x = 8 + i * 10;
-    const y = 52 - (value / max) * 38;
-    return `<circle class="overview-combo__dot" cx="${x}" cy="${y}" r="1.8"/><text class="overview-combo__point-val" x="${x}" y="${y - 5}">${value}</text>`;
+    const x = 14 + i * 20;
+    const y = 86 - (value / max) * 60;
+    return `<circle class="overview-combo__dot" cx="${x}" cy="${y}" r="2.5"/><text class="overview-combo__point-val" x="${x}" y="${y - 7}">${value}</text>`;
   }).join('')}
       </svg>
-      ${distributionChart(caseTotal, groups, { idSuffix: 'Rollup' })}
     </div>
-    ${footerHtml}
   </div>`;
 }
 
@@ -129,13 +120,7 @@ export function renderOverviewLeft(d) {
 export function renderOverviewRight(d) {
   const total = Number(d.rollup[0]?.value || 0);
   const closed = Number(d.rollup[1]?.value || 0);
-  const pending = Number(d.rollup[2]?.value || 0);
   const closePct = total ? Math.round((closed / total) * 100) : 0;
-  const rollupBars = [
-    { time: 'All', value: total },
-    { time: 'OK', value: closed },
-    { time: 'Wait', value: pending },
-  ];
   const alertDots = d.alerts.map((alert) =>
     `<button type="button" class="ops-alert-dot" title="${alert.title}" aria-label="${alert.tag}: ${alert.title}">
       <span style="background:${alert.tagColor}"></span><b>${alert.time}</b>
@@ -144,17 +129,8 @@ export function renderOverviewRight(d) {
   return `
     <section class="hud-block ops-rollup ops-rollup--visual">${hudHead('Tổng hợp ca')}
       <div class="ops-rollup__visual">
-        ${lineDonutCombo([22, 31, 28, 35, 48, 44, 38], [
-          { value: closed },
-          { value: pending },
-          { value: Math.max(total - closed - pending, 1) },
-        ], `<div class="overview-combo-kpis">
-          <span><b>${total}</b><em>all</em></span>
-          <span><b>${closed}</b><em>ok</em></span>
-          <span class="ops-rollup__warn"><b>${pending}</b><em>wait</em></span>
-        </div>`)}
+        ${shiftTrendChart([22, 31, 28, 35, 48, 44, 38])}
       </div>
-      <div class="ops-rollup__bars">${barChartSvg(rollupBars)}</div>
     </section>
     <section class="hud-block ops-rollup__alerts ops-alert-viz">${hudHead('Cảnh báo VOC')}
       ${vocAlertViz(d.alerts, closePct)}

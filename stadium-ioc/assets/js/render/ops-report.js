@@ -30,9 +30,9 @@ function reportCard(cat) {
       ${ringSvg(pct, 'SLA')}
       <div class="ops-report__spark">
         <div class="ops-report__mini-grid">
-          <span><b>${cat.sent}</b><em>gửi</em></span>
-          <span><b>${cat.processed}</b><em>đóng</em></span>
-          <span><b>${pendingCount}</b><em>chờ</em></span>
+          <span><b>${cat.sent}</b><em>Gửi</em></span>
+          <span><b>${cat.processed}</b><em>Đóng</em></span>
+          <span><b>${pendingCount}</b><em>Chờ</em></span>
         </div>
         <div class="hud-bar-track"><div class="hud-bar-fill" style="width:${pct}%"></div></div>
       </div>
@@ -41,21 +41,53 @@ function reportCard(cat) {
   </section>`;
 }
 
+function opsStatusChart(items) {
+  const total = items.reduce((sum, item) => sum + item.value, 0) || 1;
+  const colors = ['#00d4ff', '#2aa8e8', '#e24b4a'];
+  const maxValue = Math.max(...items.map((item) => item.value), 1);
+  const chartW = 320;
+  const railStart = 42;
+  const railEnd = chartW - 16;
+  const railLen = railEnd - railStart;
+  const gridXs = [railStart, railStart + railLen * 0.33, railStart + railLen * 0.66, railEnd];
+  const lanes = items.map((item, i) => {
+    const y = 26 + i * 30;
+    const fillLen = (item.value / maxValue) * railLen;
+    const xEnd = railStart + fillLen;
+    const pct = Math.round((item.value / total) * 100);
+    const color = colors[i];
+    const valueX = Math.min(railEnd + 4, xEnd + 10);
+    const pctX = Math.min(railEnd + 6, xEnd + 12);
+    return `<g class="ops-status-flow__lane" style="--flow-color:${color}">
+      <line class="ops-status-flow__rail" x1="${railStart}" y1="${y}" x2="${railEnd}" y2="${y}"/>
+      <line class="ops-status-flow__fill" x1="${railStart}" y1="${y}" x2="${xEnd.toFixed(1)}" y2="${y}"/>
+      <circle class="ops-status-flow__node" cx="${xEnd.toFixed(1)}" cy="${y}" r="5.2"/>
+      <text class="ops-status-flow__value" x="${valueX.toFixed(1)}" y="${y - 8}">${item.value}</text>
+      <text class="ops-status-flow__pct" x="${pctX.toFixed(1)}" y="${y + 15}">${pct}%</text>
+      <text class="ops-status-flow__label" x="4" y="${y + 3}">${item.time}</text>
+    </g>`;
+  }).join('');
+  const gridLines = gridXs.map((x) =>
+    `<line x1="${x.toFixed(1)}" y1="14" x2="${x.toFixed(1)}" y2="92"/>`,
+  ).join('');
+  return `<div class="ops-status-chart">
+    <svg class="ops-status-flow" viewBox="0 0 ${chartW} 104" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <g class="ops-status-flow__grid">${gridLines}</g>
+      ${lanes}
+    </svg>
+  </div>`;
+}
+
 export function renderOpsReportDashboard(data) {
   const cards = data.categories.map(reportCard).join('');
   const totalSent = data.categories.reduce((sum, cat) => sum + cat.sent, 0);
   const totalProcessed = data.categories.reduce((sum, cat) => sum + cat.processed, 0);
   const totalPending = data.categories.reduce((sum, cat) => sum + (cat.pending?.length || 0), 0);
   const closePct = totalSent ? Math.round((totalProcessed / totalSent) * 100) : 0;
-  const labelByCat = { medical: 'YT', fire: 'PCCC', crowd: 'AT' };
   const queueBars = [
-    ...data.categories.map((cat) => ({
-      time: labelByCat[cat.id] || cat.title.slice(0, 4),
-      value: cat.pending?.length || 0,
-    })),
-    { time: 'F&B', value: 4 },
-    { time: 'IT', value: 2 },
-    { time: 'VIP', value: 1 },
+    { time: 'Gửi', value: totalSent },
+    { time: 'Đóng', value: totalProcessed },
+    { time: 'Chờ', value: totalPending },
   ];
   return `
     <section class="hud-block ops-overview-venue">${hudHead(data.venue.title)}
@@ -65,12 +97,12 @@ export function renderOpsReportDashboard(data) {
       <div class="ops-report-summary__viz">
         ${ringSvg(closePct, 'Close')}
         <div class="ops-report-summary__nums">
-          <span><b>${totalSent}</b><em>gửi</em></span>
-          <span><b>${totalProcessed}</b><em>đóng</em></span>
-          <span class="ops-report-summary__warn"><b>${totalPending}</b><em>chờ</em></span>
+          <span><b>${totalSent}</b><em>Gửi</em></span>
+          <span><b>${totalProcessed}</b><em>Đóng</em></span>
+          <span class="ops-report-summary__warn"><b>${totalPending}</b><em>Chờ</em></span>
         </div>
       </div>
-      ${barChartSvg(queueBars)}
+      ${opsStatusChart(queueBars)}
     </section>
     ${cards}
     <div class="ops-case-detail" data-ops-detail hidden>

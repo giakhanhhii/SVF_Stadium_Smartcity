@@ -1,7 +1,7 @@
 import { createApp } from '../../../shared-ioc/assets/js/bootstrap.js';
-import { hydrateAllPages } from './pages/init.js';
-import { initPageCharts } from './charts/index.js';
-import { initPageScenes } from './scene/index.js';
+import { hydrateAllPages } from './pages/stadium-page-hydration.js';
+import { initPageCharts } from './charts/stadium-chart-registry.js';
+import { initPageScenes } from './scene/stadium-scene-registry.js';
 import {
   initControlRoomUI, activateSecurityTab, deactivateSecurityTab, setNavHandler,
 } from './render/control-room-ui.js';
@@ -31,7 +31,12 @@ setNavHandler(onNavigate);
 
 createApp({
   pageIds: ['overview', 'security', 'events', 'facilities', 'services', 'reports'],
-  shellPath: 'partials/shell/header.html',
+  shellPath: 'partials/shell/stadium-header.html',
+  pagePaths: {
+    overview: 'partials/pages/stadium-overview-page.html',
+    security: 'partials/pages/stadium-security-page.html',
+    reports: 'partials/pages/stadium-reports-page.html',
+  },
   hydrateAllPages,
   onNavigate,
 }).then(() => {

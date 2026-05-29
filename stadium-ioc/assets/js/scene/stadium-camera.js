@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { stadiumSceneData } from '../data/stadium-scene.js';
+import { stadiumSceneData } from '../data/stadium-scene-data.js';
 
 const tweenTokens = new WeakMap();
 

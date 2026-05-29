@@ -7,7 +7,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import {
   domeConfig, floodRingConfig, getRoofStatusLabel, stadiumSceneData,
   parkingMarkers, exteriorSceneViews,
-} from '../data/stadium-scene.js';
+} from '../data/stadium-scene-data.js';
 import { getMarkerGroup, setMarkers, pulseMarkers } from './stadium-markers.js';
 import { tweenCamera, setSceneHint, showSceneLoading, applyCameraPreset } from './stadium-camera.js';
 import { setupStadiumEnvironment, disposeStadiumEnvironment } from './stadium-environment.js';

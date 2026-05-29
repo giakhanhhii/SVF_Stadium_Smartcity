@@ -1,4 +1,4 @@
-import { applyPageView } from '../scene/index.js';
+import { applyPageView } from '../scene/stadium-scene-registry.js';
 import { isSecurityInteriorActive, feedToViewId } from '../scene/stadium-security-interior.js';
 const VIEWS = {
   overview: [

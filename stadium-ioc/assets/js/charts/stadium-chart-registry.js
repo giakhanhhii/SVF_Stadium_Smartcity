@@ -1,5 +1,5 @@
 import { initEventsChart } from './events-chart.js';
-import { initReportsChart } from './reports-chart.js';
+import { initReportsChart } from './stadium-reports-chart.js';
 
 export const chartRegistry = {
   events: initEventsChart,

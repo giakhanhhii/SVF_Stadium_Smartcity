@@ -24,7 +24,7 @@ const MIME = {
 
 function resolvePath(urlPath) {
   const clean = decodeURIComponent((urlPath || '/').split('?')[0]);
-  const rel = clean === '/' ? '/index.html' : clean;
+  const rel = clean === '/' || clean === '/index.html' ? '/stadium-index.html' : clean;
   const abs = path.normalize(path.join(root, rel));
   if (!abs.startsWith(root)) return null;
   return abs;
@@ -42,7 +42,7 @@ const server = http.createServer(async (req, res) => {
     let stat = await fs.stat(filePath);
     let target = filePath;
     if (stat.isDirectory()) {
-      target = path.join(filePath, 'index.html');
+      target = path.join(filePath, 'stadium-index.html');
       stat = await fs.stat(target);
     }
     const ext = path.extname(target).toLowerCase();

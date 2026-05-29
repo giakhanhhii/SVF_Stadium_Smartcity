@@ -1,4 +1,4 @@
-import { initStadiumScene, disposeStadiumScene } from './stadium-scene.js';
+import { initStadiumScene, disposeStadiumScene } from './stadium-scene-runtime.js';
 
 let currentPage = null;
 const SCENE_PAGES = new Set(['overview', 'security', 'events', 'facilities', 'services', 'reports']);
@@ -13,6 +13,6 @@ export function initPageScenes(pageId) {
   currentPage = pageId;
 }
 
-export { setRoofProgress, getRoofProgress, applyPageView } from './stadium-scene.js';
+export { setRoofProgress, getRoofProgress, applyPageView } from './stadium-scene-runtime.js';
 export { setCrowdFillPercent } from './stadium-crowd.js';
 export { getCrowdSnapshot, setFillPercent, setCrowdTotal } from '../data/crowd-state.js';

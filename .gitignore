@@ -10,3 +10,14 @@ Thumbs.db
 .env
 .env.*
 ~$*
+
+# Local reports / spreadsheet exports
+*.xlsx
+*.xls
+*.xlsm
+*.csv
+xlsx-extract-*.txt
+
+# Generated visual QA artifacts
+roof-*-check.png
+tests/screenshots/*.png

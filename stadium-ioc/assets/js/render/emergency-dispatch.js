@@ -105,6 +105,14 @@ function resolveDialogInActivePage(id) {
   return document.querySelector(`[data-dispatch-dialog="${id}"]`);
 }
 
+function showDispatchDialog(dialog) {
+  if (!dialog) return;
+  if (dialog.parentElement !== document.body) {
+    document.body.appendChild(dialog);
+  }
+  dialog.hidden = false;
+}
+
 function bindDispatchDialogs() {
   if (dispatchBound) return;
   dispatchBound = true;
@@ -215,7 +223,7 @@ function bindDispatchDialogs() {
     if (openBtn) {
       rt.selectedType = openBtn.dataset.dispatchTypePreset || cfg.defaultType;
       resetRecorder(dialog, rt);
-      dialog.hidden = false;
+      showDispatchDialog(dialog);
       dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {
         btn.classList.toggle('svc-emergency__line--active', btn.dataset.dispatchType === rt.selectedType);
       });
@@ -266,7 +274,7 @@ export function openDispatchDialog(id, opts = {}) {
   const rt = getRt(id);
   const type = opts.type || cfg?.defaultType;
   rt.selectedType = type;
-  dialog.hidden = false;
+  showDispatchDialog(dialog);
   dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {
     btn.classList.toggle('svc-emergency__line--active', btn.dataset.dispatchType === type);
   });

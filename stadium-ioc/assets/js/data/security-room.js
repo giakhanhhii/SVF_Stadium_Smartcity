@@ -1,4 +1,4 @@
-import { securityHud } from './security-hud.js';
+import { securityHud } from './stadium-security-hud-data.js';
 import { getGateState, getGateSummary } from './security-gates-state.js';
 
 const liveZone = securityHud.right.zones.views.live;

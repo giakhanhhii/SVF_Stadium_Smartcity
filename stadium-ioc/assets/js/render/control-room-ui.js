@@ -1,10 +1,10 @@
 import { SCREEN_VIEWS, getRoomById } from '../data/control-rooms.js';
-import { applyPageView, refreshControlRoomVisibility, setControlRoomMode, setRoofProgress } from '../scene/stadium-scene.js';
+import { applyPageView, refreshControlRoomVisibility, setControlRoomMode, setRoofProgress } from '../scene/stadium-scene-runtime.js';
 import { setControlRoomsVisible } from '../scene/stadium-control-rooms.js';
 import {
   renderSecurityShell, bindSecurityShell, resetSecurityRoomState,
 } from './security-room-ui.js';
-import { hydrateSecuritySidebars } from '../pages/init.js';
+import { hydrateSecuritySidebars } from '../pages/stadium-page-hydration.js';
 import { navigateTo } from '../../../../shared-ioc/assets/js/router.js';
 
 let mountEl = null;

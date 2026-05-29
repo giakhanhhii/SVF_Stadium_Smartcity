@@ -20,7 +20,7 @@ test.describe('PVF Stadium 3D visual', () => {
   });
 
   test('overview — dome on top, scene loaded', async ({ page }) => {
-    await page.goto('/stadium-ioc/index.html');
+    await page.goto('/stadium-ioc/stadium-index.html');
     await page.waitForSelector('#page-overview.active', { timeout: 15_000 });
     const mount = await waitForStadiumScene(page, 'overview');
     await mount.screenshot({
@@ -42,7 +42,7 @@ test.describe('PVF Stadium 3D visual', () => {
   });
 
   test('facilities — roof view camera', async ({ page }) => {
-    await page.goto('/stadium-ioc/index.html');
+    await page.goto('/stadium-ioc/stadium-index.html');
     await page.locator('.page-view.active .nav-item[data-nav="facilities"]').click();
     await page.waitForSelector('#page-facilities.active', { timeout: 15_000 });
     const mount = await waitForStadiumScene(page, 'facilities');
@@ -52,7 +52,7 @@ test.describe('PVF Stadium 3D visual', () => {
   });
 
   test('facilities — roof open animation', async ({ page }) => {
-    await page.goto('/stadium-ioc/index.html');
+    await page.goto('/stadium-ioc/stadium-index.html');
     await page.locator('.page-view.active .nav-item[data-nav="facilities"]').click();
     await page.waitForSelector('#page-facilities.active', { timeout: 15_000 });
     await waitForStadiumScene(page, 'facilities');

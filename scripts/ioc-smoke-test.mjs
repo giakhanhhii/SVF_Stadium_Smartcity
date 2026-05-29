@@ -8,8 +8,8 @@ import { setTimeout as sleep } from 'node:timers/promises';
 const EDGE = `${process.env['ProgramFiles(x86)']}\\Microsoft\\Edge\\Application\\msedge.exe`;
 const BASE = process.env.IOC_BASE || 'http://localhost:3457';
 const PAGES = [
-  { name: 'stadium', url: `${BASE}/stadium-ioc/index.html`, expect: 'IOC Sân vận động' },
-  { name: 'smartcity', url: `${BASE}/smartcity-ioc/index.html`, expect: 'IOC Smart City' },
+  { name: 'stadium', url: `${BASE}/stadium-ioc/stadium-index.html`, expect: 'IOC Sân vận động' },
+  { name: 'smartcity', url: `${BASE}/smartcity-ioc/smartcity-index.html`, expect: 'IOC Smart City' },
 ];
 
 async function cdp(port, method, params = {}) {

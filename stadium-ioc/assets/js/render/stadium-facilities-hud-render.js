@@ -1,5 +1,5 @@
 import { hudHead, barChartSvg, ringSvg, areaChartSvg, renderAlerts, camThumb } from './hud-charts.js';
-import { setRoofProgress, getRoofProgress } from '../scene/index.js';
+import { setRoofProgress, getRoofProgress } from '../scene/stadium-scene-registry.js';
 
 let roofAnim = null;
 

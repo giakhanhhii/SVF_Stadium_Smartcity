@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { getRoomById } from '../data/control-rooms.js';
-import { stadiumSceneData } from '../data/stadium-scene.js';
+import { stadiumSceneData } from '../data/stadium-scene-data.js';
 import { tweenCameraVectors, setSceneHint } from './stadium-camera.js';
 
 const RT_SIZE = 512;

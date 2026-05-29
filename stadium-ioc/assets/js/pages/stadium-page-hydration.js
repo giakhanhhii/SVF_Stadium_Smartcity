@@ -1,19 +1,19 @@
-import { renderOverviewLeft, renderOverviewRight, mountOverviewOpsBind } from '../render/overview-hud.js';
+import { renderOverviewLeft, renderOverviewRight, mountOverviewOpsBind } from '../render/stadium-overview-hud-render.js';
 import {
   renderSecurityLeft, renderSecurityRight, renderSecurityExteriorLeft, renderSecurityExteriorRight,
   bindSecurityHudTabs, bindSecurityExteriorHudTabs,
-} from '../render/security-hud.js';
-import { renderEventsLeft, renderEventsRight, bindEventsHudTabs } from '../render/events-hud.js';
-import { renderFacilitiesLeft, renderFacilitiesRight } from '../render/facilities-hud.js';
-import { renderServicesLeft, renderServicesRight, bindServicesHudTabs } from '../render/services-hud.js';
+} from '../render/stadium-security-hud-render.js';
+import { renderEventsLeft, renderEventsRight, bindEventsHudTabs } from '../render/stadium-events-hud-render.js';
+import { renderFacilitiesLeft, renderFacilitiesRight } from '../render/stadium-facilities-hud-render.js';
+import { renderServicesLeft, renderServicesRight, bindServicesHudTabs } from '../render/stadium-services-hud-render.js';
 import { renderReportsLeft, renderReportsRight, bindReportsHistory } from '../render/reports-hud.js';
-import { overviewHud } from '../data/overview-hud.js';
-import { securityHud } from '../data/security-hud.js';
+import { overviewHud } from '../data/stadium-overview-hud-data.js';
+import { securityHud } from '../data/stadium-security-hud-data.js';
 import { securityExteriorHud, SECURITY_LEGEND } from '../data/security-exterior-hud.js';
-import { eventsHud } from '../data/events-hud.js';
-import { facilitiesHud } from '../data/facilities-hud.js';
-import { servicesHud } from '../data/services-hud.js';
-import { reportsData } from '../data/reports.js';
+import { eventsHud } from '../data/stadium-events-hud-data.js';
+import { facilitiesHud } from '../data/stadium-facilities-hud-data.js';
+import { servicesHud } from '../data/stadium-services-hud-data.js';
+import { reportsData } from '../data/stadium-reports-data.js';
 import { renderViewTabs } from '../render/scene-view-tabs.js';
 
 export function hydrateSecuritySidebars(mode = 'interior') {

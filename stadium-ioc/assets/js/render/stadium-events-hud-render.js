@@ -168,17 +168,17 @@ function fireSensorTrendPanel() {
     ${hudHead('Cảm biến cháy nổ')}
     <div class="event-fire-bars">${bars.map((b) =>
     `<div class="event-fire-bar event-fire-bar--${b.value > 70 ? 'hot' : b.value > 45 ? 'warn' : 'ok'}">
-      <span>${b.label}</span><i style="height:${b.value}%"></i><b>${b.value}%</b>
+      <span>${b.label}</span><div class="event-fire-bar__track"><i style="height:${b.value}%"></i></div><b>${b.value}%</b>
     </div>`,
   ).join('')}</div>
     <div class="event-risk__actions">
-      <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="medical" data-dispatch-type-preset="fire">
+      <button type="button" class="event-risk__btn" data-dispatch-open="medical" data-dispatch-type-preset="fire">
         <i class="ti ti-flame"></i><span>Báo cháy</span>
       </button>
-      <button type="button" class="event-risk__btn">
+      <button type="button" class="event-risk__btn" data-fire-action="smoke">
         <i class="ti ti-wind"></i><span>Hút khói</span>
       </button>
-      <button type="button" class="event-risk__btn">
+      <button type="button" class="event-risk__btn" data-fire-action="power">
         <i class="ti ti-power"></i><span>Cắt điện</span>
       </button>
     </div>
@@ -204,7 +204,7 @@ function overloadPressurePanel(crowd) {
       ${eventRadarChart([0.86, 0.92, 0.74, 0.68, 0.81, 0.58], ['B12', 'DEN', 'FLOW', 'EXIT', 'PA', 'SEC'])}
       <div class="event-overload__meter">
         <strong>92%</strong>
-        <span>điểm nóng B12</span>
+        <span>Điểm nóng B12</span>
       </div>
     </div>
     <div class="event-overload__lanes">${sectors.map((s) =>
@@ -345,10 +345,121 @@ function renderPaPanel(d, key) {
     ${paDistributionPanel(view, key)}`;
 }
 
+const EVENT_ACTIONS = {
+  split: {
+    tag: 'FLOW OPS',
+    title: 'Chia luồng khán giả',
+    icon: 'ti-arrows-split',
+    summary: 'Kích hoạt phân luồng từ B12 sang B2/C1, giảm áp lực điểm nóng trong 4 phút.',
+    steps: ['Mở barrier mềm B2', 'Điều 2 tổ an ninh', 'Theo dõi heatmap B12'],
+    primary: 'Kích hoạt chia luồng',
+  },
+  reverse: {
+    tag: 'ROUTE OPS',
+    title: 'Đảo luồng B12',
+    icon: 'ti-arrow-guide',
+    summary: 'Đảo chiều luồng phụ, ưu tiên thoát qua C1 và khóa nhánh quay lại B12.',
+    steps: ['Đảo biển chỉ dẫn', 'Chặn nhánh B12', 'Giữ hành lang C1 thông thoáng'],
+    primary: 'Kích hoạt đảo luồng',
+  },
+  paGuide: {
+    tag: 'PA LIVE',
+    title: 'PA hướng dẫn thoát tuyến',
+    icon: 'ti-speakerphone',
+    summary: 'Phát thông báo hướng dẫn khán giả rời khu B12 theo tuyến B2/C1.',
+    steps: ['Kênh PA khán đài B', 'Lặp 3 lần / 45 giây', 'Đồng bộ màn LED cổng'],
+    primary: 'Phát PA hướng dẫn',
+  },
+  paSplit: {
+    tag: 'PA FLOW',
+    title: 'PA phân luồng đám đông',
+    icon: 'ti-volume',
+    summary: 'Phát kịch bản phân luồng ngắn, ưu tiên trấn an và chia đều khán giả sang hai cửa.',
+    steps: ['Giọng đọc khẩn cấp', 'Chỉ hướng B2/C1', 'Nhắc không dừng tại lối hẹp'],
+    primary: 'Phát PA phân luồng',
+  },
+};
+
+function eventActionModal() {
+  return `<div class="event-action-modal" data-event-action-modal hidden>
+    <div class="event-action-modal__panel" role="dialog" aria-modal="true" aria-label="Điều phối sự kiện">
+      <button type="button" class="event-action-modal__close" data-event-action-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="event-action-modal__head">
+        <span class="event-action-modal__icon"><i class="ti ti-arrows-split" data-event-action-icon></i></span>
+        <div><small data-event-action-tag>FLOW OPS</small><h3 data-event-action-title>Chia luồng khán giả</h3></div>
+      </div>
+      <p data-event-action-summary></p>
+      <div class="event-action-modal__route">
+        <span>B12</span><i></i><span>B2</span><i></i><span>C1</span>
+      </div>
+      <div class="event-action-modal__steps" data-event-action-steps></div>
+      <div class="event-action-modal__status"><i class="ti ti-broadcast"></i><span data-event-action-status>Chờ xác nhận điều phối.</span></div>
+      <button type="button" class="event-action-modal__primary" data-event-action-confirm>
+        <i class="ti ti-send"></i><span data-event-action-primary>Kích hoạt</span>
+      </button>
+    </div>
+  </div>`;
+}
+
+const FIRE_POWER_ZONES = ['Khán đài A', 'Khán đài B', 'F&B', 'VIP', 'LED', 'PA', 'Cổng B2', 'Cổng C1'];
+
+const fireSystemController = {
+  powerOn: true,
+  smokePct: 0,
+  powerZones: FIRE_POWER_ZONES.map((name) => ({ name, on: true })),
+  emit(type, detail) {
+    document.dispatchEvent(new CustomEvent('stadium-fire-system-command', { detail: { type, ...detail } }));
+  },
+};
+
+function fireControlModals() {
+  const zoneItems = FIRE_POWER_ZONES.map((name) =>
+    `<span class="event-power-zone event-power-zone--on" data-power-zone="${name}"><i></i><b>${name}</b></span>`,
+  ).join('');
+  return `<div class="event-smoke-modal" data-smoke-modal hidden>
+    <div class="event-smoke-modal__panel" role="dialog" aria-modal="true" aria-label="Hút khói">
+      <button type="button" class="event-action-modal__close" data-smoke-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="event-action-modal__head">
+        <span class="event-action-modal__icon"><i class="ti ti-wind"></i></span>
+        <div><small>SMOKE EXTRACT</small><h3>Hút khói khu nguy cơ</h3></div>
+      </div>
+      <div class="event-smoke-gauge">
+        <svg viewBox="0 0 140 140" aria-hidden="true">
+          <circle cx="70" cy="70" r="52"></circle>
+          <circle data-smoke-ring cx="70" cy="70" r="52"></circle>
+        </svg>
+        <strong><span data-smoke-pct>0</span>%</strong>
+      </div>
+      <p data-smoke-status>Đang khởi động quạt hút khói và mở tuyến thoát khí.</p>
+      <div class="event-action-modal__steps">
+        <span><b>01</b>F&B B hút khói</span><span><b>02</b>Áp âm hành lang</span><span><b>03</b>Theo dõi cảm biến</span>
+      </div>
+    </div>
+  </div>
+  <div class="event-power-modal" data-power-modal hidden>
+    <div class="event-power-modal__panel" role="dialog" aria-modal="true" aria-label="Cắt điện sân vận động">
+      <button type="button" class="event-action-modal__close" data-power-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="event-action-modal__head">
+        <span class="event-power-button" data-power-toggle><i class="ti ti-power"></i></span>
+        <div><small data-power-tag>POWER CONTROL</small><h3 data-power-title>Cắt điện toàn bộ SVĐ</h3></div>
+      </div>
+      <p data-power-message>Điều này sẽ cắt điện hoàn toàn hệ thống sân vận động. Bạn có chắc chắn muốn tiếp tục?</p>
+      <div class="event-power-zones">${zoneItems}</div>
+      <div class="event-action-modal__status"><i class="ti ti-bolt"></i><span data-power-status>Chờ xác nhận thao tác nguồn.</span></div>
+      <div class="event-power-confirm" data-power-confirm>
+        <button type="button" class="event-power-confirm__no" data-power-cancel>Không</button>
+        <button type="button" class="event-power-confirm__yes" data-power-accept>Có, cắt điện</button>
+      </div>
+    </div>
+  </div>`;
+}
+
 export function renderEventsRight(d) {
   return `
     ${stampedeDetailPanel(d.stampede)}
     ${fireRiskPanel()}
+    ${eventActionModal()}
+    ${fireControlModals()}
     ${renderDispatchDialog(SECURITY_DISPATCH)}
     ${renderDispatchDialog(MEDICAL_DISPATCH)}`;
 
@@ -387,5 +498,169 @@ export function bindEventsHudTabs(root, data) {
     if (!tab) return;
     const panel = root.querySelector('[data-events-pa-panel]');
     if (panel) panel.innerHTML = renderPaPanel(data.right, tab.dataset.eventsPa);
+  });
+
+  const modal = root.querySelector('[data-event-action-modal]');
+  const fillAction = (action) => {
+    if (!modal || !action) return;
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+    modal.querySelector('[data-event-action-icon]').className = `ti ${action.icon}`;
+    modal.querySelector('[data-event-action-tag]').textContent = action.tag;
+    modal.querySelector('[data-event-action-title]').textContent = action.title;
+    modal.querySelector('[data-event-action-summary]').textContent = action.summary;
+    modal.querySelector('[data-event-action-primary]').textContent = action.primary;
+    modal.querySelector('[data-event-action-status]').textContent = 'Chờ xác nhận điều phối.';
+    modal.querySelector('[data-event-action-steps]').innerHTML = action.steps
+      .map((step, i) => `<span><b>${String(i + 1).padStart(2, '0')}</b>${step}</span>`)
+      .join('');
+    modal.hidden = false;
+  };
+
+  root.addEventListener('click', (event) => {
+    const btn = event.target.closest('.event-risk__btn');
+    if (!btn || btn.dataset.dispatchOpen) return;
+    const icon = btn.querySelector('.ti');
+    const cls = icon?.className || '';
+    if (cls.includes('ti-arrows-split')) fillAction(EVENT_ACTIONS.split);
+    else if (cls.includes('ti-arrow-guide')) fillAction(EVENT_ACTIONS.reverse);
+    else if (cls.includes('ti-speakerphone')) fillAction(EVENT_ACTIONS.paGuide);
+    else if (cls.includes('ti-volume')) fillAction(EVENT_ACTIONS.paSplit);
+  });
+
+  document.addEventListener('click', (event) => {
+    const activeModal = document.querySelector('[data-event-action-modal]:not([hidden])');
+    if (!activeModal) return;
+    if (event.target.closest('[data-event-action-close]') || event.target === activeModal) {
+      activeModal.hidden = true;
+      return;
+    }
+    if (event.target.closest('[data-event-action-confirm]')) {
+      activeModal.querySelector('[data-event-action-status]').textContent = 'Đã gửi lệnh điều phối tới PA, an ninh và đội cổng.';
+    }
+  });
+
+  const smokeModal = root.querySelector('[data-smoke-modal]');
+  const powerModal = root.querySelector('[data-power-modal]');
+  let smokeTimer = null;
+  let powerTimer = null;
+
+  const showModal = (modal) => {
+    if (!modal) return;
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+    modal.hidden = false;
+  };
+
+  const setSmokePct = (pct) => {
+    fireSystemController.smokePct = Math.max(0, Math.min(100, pct));
+    const pctNode = smokeModal?.querySelector('[data-smoke-pct]');
+    const ring = smokeModal?.querySelector('[data-smoke-ring]');
+    const status = smokeModal?.querySelector('[data-smoke-status]');
+    if (pctNode) pctNode.textContent = String(Math.round(fireSystemController.smokePct));
+    if (ring) {
+      const circumference = 327;
+      ring.style.strokeDashoffset = String(circumference * (1 - fireSystemController.smokePct / 100));
+    }
+    if (status) {
+      status.textContent = fireSystemController.smokePct >= 100
+        ? 'Đã hút khói xong. Cảm biến khói về ngưỡng an toàn.'
+        : 'Đang hút khói, quạt áp lực và cảm biến khói đang cập nhật theo thời gian thực.';
+    }
+  };
+
+  const startSmokeExtraction = () => {
+    showModal(smokeModal);
+    if (smokeTimer) clearInterval(smokeTimer);
+    setSmokePct(0);
+    fireSystemController.emit('smoke-extract-start', { zone: 'F&B B' });
+    smokeTimer = setInterval(() => {
+      const next = fireSystemController.smokePct + 4 + Math.random() * 7;
+      setSmokePct(next);
+      if (fireSystemController.smokePct >= 100) {
+        clearInterval(smokeTimer);
+        smokeTimer = null;
+        fireSystemController.emit('smoke-extract-complete', { zone: 'F&B B' });
+      }
+    }, 220);
+  };
+
+  const renderPowerZones = () => {
+    powerModal?.querySelectorAll('[data-power-zone]').forEach((node) => {
+      const zone = fireSystemController.powerZones.find((item) => item.name === node.dataset.powerZone);
+      node.classList.toggle('event-power-zone--on', !!zone?.on);
+      node.classList.toggle('event-power-zone--off', !zone?.on);
+    });
+  };
+
+  const preparePowerConfirm = (turnOn) => {
+    showModal(powerModal);
+    powerModal.querySelector('[data-power-title]').textContent = turnOn ? 'Mở điện toàn bộ SVĐ' : 'Cắt điện toàn bộ SVĐ';
+    powerModal.querySelector('[data-power-message]').textContent = turnOn
+      ? 'Bạn có chắc muốn mở điện toàn bộ hệ thống sân vận động? Các khu sẽ được cấp điện lại theo từng bước.'
+      : 'Bạn có chắc chắn muốn cắt điện? Điều này sẽ cắt điện hoàn toàn hệ thống sân vận động.';
+    powerModal.querySelector('[data-power-status]').textContent = 'Chờ xác nhận thao tác nguồn.';
+    powerModal.querySelector('[data-power-accept]').textContent = turnOn ? 'Có, mở điện' : 'Có, cắt điện';
+    powerModal.dataset.powerIntent = turnOn ? 'on' : 'off';
+    powerModal.querySelector('[data-power-confirm]').hidden = false;
+    renderPowerZones();
+  };
+
+  const runPowerSequence = (turnOn) => {
+    if (powerTimer) clearInterval(powerTimer);
+    const status = powerModal.querySelector('[data-power-status]');
+    const confirm = powerModal.querySelector('[data-power-confirm]');
+    confirm.hidden = true;
+    if (status) status.textContent = turnOn ? 'Đang mở điện từng khu...' : 'Đang cắt điện từng khu...';
+    fireSystemController.emit(turnOn ? 'power-restore-start' : 'power-cut-start', {
+      zones: fireSystemController.powerZones.map((z) => z.name),
+    });
+    const order = [...fireSystemController.powerZones.keys()].sort(() => Math.random() - 0.5);
+    let index = 0;
+    powerTimer = setInterval(() => {
+      const zoneIndex = order[index];
+      if (zoneIndex != null) fireSystemController.powerZones[zoneIndex].on = turnOn;
+      renderPowerZones();
+      index += 1;
+      if (index >= order.length) {
+        clearInterval(powerTimer);
+        powerTimer = null;
+        fireSystemController.powerOn = turnOn;
+        if (status) status.textContent = turnOn
+          ? 'Đã mở điện lại toàn bộ hệ thống SVĐ.'
+          : 'Đã cắt điện toàn bộ hệ thống SVĐ. Nhấn nút nguồn để mở lại.';
+        fireSystemController.emit(turnOn ? 'power-restore-complete' : 'power-cut-complete', {
+          zones: fireSystemController.powerZones.map((z) => ({ ...z })),
+        });
+      }
+    }, 260);
+  };
+
+  root.addEventListener('click', (event) => {
+    const fireBtn = event.target.closest('[data-fire-action]');
+    if (!fireBtn) return;
+    if (fireBtn.dataset.fireAction === 'smoke') startSmokeExtraction();
+    if (fireBtn.dataset.fireAction === 'power') preparePowerConfirm(false);
+  });
+
+  document.addEventListener('click', (event) => {
+    const activeSmokeModal = document.querySelector('[data-smoke-modal]:not([hidden])');
+    const activePowerModal = document.querySelector('[data-power-modal]:not([hidden])');
+    if (activeSmokeModal && (event.target.closest('[data-smoke-close]') || event.target === activeSmokeModal)) {
+      activeSmokeModal.hidden = true;
+      if (smokeTimer) clearInterval(smokeTimer);
+      smokeTimer = null;
+      return;
+    }
+    if (!activePowerModal) return;
+    if (event.target.closest('[data-power-close]') || event.target.closest('[data-power-cancel]') || event.target === activePowerModal) {
+      activePowerModal.hidden = true;
+      return;
+    }
+    if (event.target.closest('[data-power-toggle]')) {
+      preparePowerConfirm(!fireSystemController.powerOn);
+      return;
+    }
+    if (event.target.closest('[data-power-accept]')) {
+      runPowerSequence(activePowerModal.dataset.powerIntent === 'on');
+    }
   });
 }

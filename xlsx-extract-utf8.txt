@@ -1,0 +1,379 @@
+﻿=== SHEET NAMES ===
+ChartData
+Tß╗òng quan dß╗▒ ├ín
+IOC S├ón vß║¡n ─æß╗Öng PVF
+IOC Smart City
+
+=== SHEET: ChartData ===
+R1C1: Tuß║ºn
+R1C2: PVF
+R1C3: Smart City
+R1C5: Tab
+R1C6: Sß╗æ tab
+R1C8: Tuß║ºn
+R1C9: C├┤ng viß╗çc
+R1C11: Layout
+R1C12: Sß╗æ tab
+R1C14: Tuß║ºn
+R1C15: C├┤ng viß╗çc
+R2C1: T1
+R2C2: 1
+R2C3: 0
+R2C5: Tß╗òng quan
+R2C6: 1
+R2C8: Tuß║ºn 1
+R2C9: 5
+R2C11: Ops classic
+R2C12: 4
+R2C14: Tuß║ºn 4
+R2C15: 3
+R3C1: T2
+R3C2: 1
+R3C3: 0
+R3C5: An ninh
+R3C6: 1
+R3C8: Tuß║ºn 2
+R3C9: 4
+R3C11: Command 3D
+R3C12: 2
+R3C14: Tuß║ºn 5
+R3C15: 4
+R4C1: T3
+R4C2: 1
+R4C3: 0
+R4C5: Sß╗▒ kiß╗çn
+R4C6: 1
+R4C8: Tuß║ºn 3
+R4C9: 3
+R4C14: Tuß║ºn 6
+R4C15: 3
+R5C1: T4
+R5C2: 0
+R5C3: 1
+R5C5: C╞í sß╗ƒ HT
+R5C6: 1
+R6C1: T5
+R6C2: 0
+R6C3: 1
+R6C5: Dß╗ïch vß╗Ñ
+R6C6: 1
+R7C1: T6
+R7C2: 0
+R7C3: 1
+R7C5: B├ío c├ío
+R7C6: 1
+
+=== SHEET: Tß╗òng quan dß╗▒ ├ín ===
+R1C1: B├üO C├üO Kß║╛ HOß║áCH 6 TUß║ªN ΓÇö IOC PVF & SMART CITY
+R2C1: Vinsmartcity  |  25/05 ΓÇô 05/07/2026  |  Nguyß╗àn Triß╗çu Gia Kh├ính  |  Trß║íng th├íi: Tuß║ºn 1 ΓÇö PVF
+R4C1: Lß╗ÿ TR├îNH 6 TUß║ªN (PVF tr╞░ß╗¢c ΓåÆ Smart City sau)
+R5C1: Giai ─æoß║ín
+R5C2: Tuß║ºn
+R5C3: Thß╗¥i gian
+R5C4: Trß╗ìng t├óm
+R5C5: Nghiß╗çm thu
+R6C1: PVF
+R6C2: 1
+R6C3: 25/05 ΓÇô 31/05
+R6C4: Kickoff; BRD/SRS; prototype 6 tab; model 3D s├ón; VOCΓÇôFIFA
+R7C1: PVF
+R7C2: 2
+R7C3: 01/06 ΓÇô 07/06
+R7C4: M├┤ phß╗Ång m├íi v├▓m; kiß║┐n tr├║c; kiß╗âm thß╗¡ VOC
+R8C1: PVF
+R8C2: 3
+R8C3: 08/06 ΓÇô 14/06
+R8C4: UAT PVF; b├án giao t├ái liß╗çu PVF
+ΓåÆ Nghiß╗çm thu PVF
+R9C1: Smart City
+R9C2: 4
+R9C3: 15/06 ΓÇô 21/06
+R9C4: BRD/SRS SC; An ninh & Giao th├┤ng 3D
+R10C1: Smart City
+R10C2: 5
+R10C3: 22/06 ΓÇô 28/06
+R10C4: 4 tab c├▓n lß║íi; kiß║┐n tr├║c dual IOC; link PVF
+R11C1: Smart City
+R11C2: 6
+R11C3: 29/06 ΓÇô 05/07
+R11C4: UAT tß╗òng; b├án giao full pack
+ΓåÆ Nghiß╗çm thu tß╗òng
+R13C1: Y├èU Cß║ªU PHß╗ÉI Hß╗óP BAN L├âNH ─Éß║áO
+R14C1: Hß║íng mß╗Ñc
+R14C2: Cß║ºn l├ám g├¼
+R14C4: Thß╗¥i ─æiß╗âm
+R15C1: X├íc nhß║¡n ╞░u ti├¬n PVF & VOCΓÇôFIFA
+R15C2: ─Éß╗ông ├╜ phß║ím vi VOC tr├¬n 6 tab PVF
+R15C4: Tuß║ºn 1
+R16C1: Duyß╗çt BRD/SRS
+R16C2: Ph├¬ duyß╗çt phß║ím vi tr╞░ß╗¢c nghiß╗çm thu
+R16C4: Tuß║ºn 2ΓÇô3 / 5ΓÇô6
+R17C1: ─Éß║íi diß╗çn nghiß╗çm thu PVF
+R17C2: 1 ng╞░ß╗¥i vß║¡n h├ánh s├ón ΓÇö UAT
+R17C4: Tuß║ºn 3
+R18C1: ─Éß║íi diß╗çn nghiß╗çm thu Smart City
+R18C2: 1ΓÇô2 ng╞░ß╗¥i ban quß║ún l├╜ ─æ├┤ thß╗ï
+R18C4: Tuß║ºn 6
+R19C1: Phß║ún hß╗ôi ─æß╗ïnh kß╗│
+R19C2: Xem demo cuß╗æi tuß║ºn
+R19C4: H├áng tuß║ºn
+R20C1: M├┤i tr╞░ß╗¥ng demo
+R20C2: M├án h├¼nh ph├▓ng ─æiß╗üu h├ánh / VOC
+R20C4: Tuß║ºn 2 trß╗ƒ ─æi
+R22C1: Rß╗ªI RO & GIß║óI PH├üP
+R23C1: Rß╗ºi ro
+R23C2: C├ích xß╗¡ l├╜
+R24C1: PVF ch╞░a nghiß╗çm thu kß╗ïp tuß║ºn 3
+R24C2: Smart City chß╗ë bß║»t ─æß║ºu tuß║ºn 4 khi PVF ─æ├ú k├╜ duyß╗çt
+R25C1: VOCΓÇôFIFA ch╞░a thß╗æng nhß║Ñt sß╗¢m
+R25C2: R├á so├ít BRD tuß║ºn 1; chß╗æt phß║ím vi tr╞░ß╗¢c tuß║ºn 2
+R26C1: Ch╞░a c├│ API hß╗ç thß╗æng thß║¡t
+R26C2: 6 tuß║ºn: prototype + t├ái liß╗çu; t├¡ch hß╗úp VOC sau
+R27C1: Thay ─æß╗òi y├¬u cß║ºu giß╗»a chß╗½ng
+R27C2: Cß║¡p nhß║¡t BRD/SRS; ─æiß╗üu chß╗ënh lß╗Ö tr├¼nh
+R28C1: Tab 3D Smart City nß║╖ng m├íy c┼⌐
+R28C2: Tß╗æi ╞░u tuß║ºn 5ΓÇô6
+
+=== SHEET: IOC S├ón vß║¡n ─æß╗Öng PVF ===
+R1C1: Kß║╛ HOß║áCH TRIß╗éN KHAI ΓÇö IOC S├éN Vß║¼N ─Éß╗ÿNG PVF (Giai ─æoß║ín 1: Tuß║ºn 1ΓÇô3)
+R2C1: Dß╗▒ ├ín Vinsmartcity  |  25/05 ΓÇô 14/06/2026  |  Nguyß╗àn Triß╗çu Gia Kh├ính  |  Chuß║⌐n VOCΓÇôFIFA
+R4C1: T├ôM Tß║«T CHUNG
+R5C1: ΓÇó ╞»u ti├¬n triß╗ân khai tr╞░ß╗¢c Smart City ΓÇö phß╗Ñc vß╗Ñ ban vß║¡n h├ánh s├ón / an ninh sß╗▒ kiß╗çn.
+R6C1: ΓÇó Phß║ím vi 6 tuß║ºn: prototype web 6 tab + BRD/SRS/Kiß║┐n tr├║c + m├┤ phß╗Ång m├íi v├▓m (ch╞░a nß╗æi BMS/SCADA thß║¡t).
+R7C1: ΓÇó T├¡ch hß╗úp VOC theo khung vß║¡n h├ánh venue FIFA; nghiß╗çm thu cuß╗æi tuß║ºn 3.
+R8C1: ΓÇó Nguß╗ôn th├┤ng sß╗æ s├ón: VnExpress (video nh├║ng trong b├ái) ΓÇö 60.000 chß╗ù, m├íi v├▓m 12ΓÇô20 ph├║t, H╞░ng Y├¬n.
+R10C1: #
+R10C2: ─Éß║ºu mß╗Ñc c├┤ng viß╗çc
+R10C3: M├┤ tß║ú / Kß║┐t quß║ú ─æß║ít ─æ╞░ß╗úc
+R10C5: Tiß║┐n ─æß╗Ö
+R10C6: Minh chß╗⌐ng
+R11C1: TUß║ªN 1 (25/05 ΓÇô 31/05) ΓÇö Kickoff, BRD/SRS, prototype 6 tab, model 3D s├ón, c─ân VOCΓÇôFIFA
+R12C1: 1.1
+R12C2: Kickoff PVF & x├íc nhß║¡n phß║ím vi VOCΓÇôFIFA
+R12C3: Hß╗ìp mß╗ƒ ─æß║ºu; chß╗æt phß║ím vi 6 tab PVF vß╗¢i ban l├únh ─æß║ío
+ΓåÆ Kß║┐t quß║ú: Bi├¬n bß║ún kickoff + phß║ím vi VOC thß╗æng nhß║Ñt
+R12C5: Ho├án th├ánh
+R12C6: https://github.com/giakhanhhii/SVF_Stadium_Smartcity
+R13C1: 1.2
+R13C2: Soß║ín BRD/SRS PVF
+R13C3: Soß║ín BRD/SRS PVF bß║ún 1 ΓÇö M├┤ ph├▓ng sß╗⌐c chß╗⌐a 60.000 chß╗ù bß║▒ng 3D m├┤ phß╗Ång 2.000ΓÇô3.000 ghß║┐ ─æß║íi diß╗çn, KPI t├¡nh theo % lß║Ñp ─æß║ºy (vd. 80% ΓåÆ 48.000 kh├ín giß║ú); m├┤ phß╗Ång m├íi v├▓m PTFE (12ΓÇô20 ph├║t); c─ân VOCΓÇôFIFA tr├¬n 5 ph├ón hß╗ç.
+R13C5: Ho├án th├ánh
+R14C1: 1.3
+R14C2: Branding & prototype 6 tab
+R14C3: Thiß║┐t kß║┐ giao diß╗çn PVF v├á dß╗▒ng trang web demo 6 tab (Tß╗òng quan, An ninh, Sß╗▒ kiß╗çn, C╞í sß╗ƒ hß║í tß║ºng, Dß╗ïch vß╗Ñ, B├ío c├ío) tß║íi stadium-ioc/ ΓÇö dß╗» liß╗çu mß║½u, ch╞░a nß╗æi hß╗ç thß╗æng thß║¡t.
+ΓåÆ Kß║┐t quß║ú: Prototype demo ph├▓ng ─æiß╗üu h├ánh s├ón (VOC) ─æß╗â tr├¼nh l├únh ─æß║ío xem tr╞░ß╗¢c.
+R14C5: Ho├án th├ánh
+R15C1: 1.4
+R15C2: X├óy dß╗▒ng model 3D s├ón vß║¡n ─æß╗Öng PVF
+R15C3: Three.js + GLB (pvf-stadium.glb): giß║ú lß║¡p kh├ín ─æ├ái 60.000 chß╗ù, m├íi v├▓m, s├ón cß╗Å ΓÇö phß╗Ñc vß╗Ñ tab An ninh, Tß╗òng quan, sß╗▒ kiß╗çn, c╞í sß╗ƒ hß║í tß║ºng v├á dß╗ïch vß╗Ñ
+ΓåÆ Kß║┐t quß║ú: Model 3D s├ón PVF t├¡ch hß╗úp prototype
+R15C5: Ho├án th├ánh
+R16C1: 1.5
+R16C2: C─ân th├┤ng sß╗æ s├ón PVF
+R16C3: Tham chiß║┐u VnExpress (video): quy m├┤, m├íi v├▓m, cß╗Å hybrid
+ΓåÆ Kß║┐t quß║ú: Bß║úng th├┤ng sß╗æ ─æß╗æi chiß║┐u nguß╗ôn
+R16C5: Ho├án th├ánh
+R17C1: 1.6
+R17C2: Thiß║┐t lß║¡p 5 tab vß║¡n h├ánh (An ninh ┬╖ Sß╗▒ kiß╗çn ┬╖ Hß║í tß║ºng ┬╖ Dß╗ïch vß╗Ñ ┬╖ B├ío c├ío)
+R17C3: Mß╗ùi tab vß║¡n h├ánh theo tß╗½ng ph├▓ng ban v├á chß╗⌐c n─âng cß╗ºa ph├▓ng ─æ├│: HUD + KPI + cß║únh b├ío demo tr├¬n 3D PVF; ghi phß║ím vi tß╗½ng ph├▓ng trong BRD/SRS. ΓåÆ Kß║┐t quß║ú: 5 tab c├│ dß╗» liß╗çu mock, ─æß╗ìc ─æ╞░ß╗úc tr├¬n ph├▓ng ─æiß╗üu h├ánh.
+
+R17C5: Ho├án th├ánh
+R18C1: 1.7
+R18C2: Cß║úi tiß║┐n dashboard ΓÇö biß╗âu ─æß╗ô thay cho text
+R18C3: Thay KPI/m├┤ tß║ú dß║íng chß╗» bß║▒ng biß╗âu ─æß╗ô (donut, bar, line, radarΓÇª) tr├¬n 6 tab, mß╗ùi chß╗⌐c n─âng c├│ chart mock data. Kß║┐t quß║ú: HUD chart-first, ─æß╗ìc nhanh bß║▒ng biß╗âu ─æß╗ô
+R18C5: Ho├án th├ánh
+R19C1: 1.8
+R19C2: Tinh chß╗ënh t├¡nh n─âng theo chß╗ë ─æß║ío cß║Ñp tr├¬n v├á theo logic VOC-FIFA / BRD
+R19C3: C─ân chß╗ënh widget/KPI theo BRD/VOC v├á chß╗ë ─æß║ío cß║Ñp tr├¬n. Tab Sß╗▒ kiß╗çn tß║¡p trung kß╗ïch bß║ún vß║¡n h├ánh: dß║½m ─æß║íp / chen lß║Ñn ─æ├ím ─æ├┤ng v├á nguy c╞í ch├íy nß╗ò (cß║únh b├ío, mß╗⌐c ─æß╗Ö, khu vß╗▒c, luß╗ông s╞í t├ín mock). C├íc tab kh├íc giß╗» vai tr├▓ ri├¬ng, bß╗Å KPI tr├╣ng. Kß║┐t quß║ú: ma trß║¡n y├¬u cß║ºu ΓåÆ tab ΓåÆ widget + prototype ph├╣ hß╗úp nghiß╗çp vß╗Ñ.
+R19C5: Ho├án th├ánh
+R20C1: TUß║ªN 2 (01/06 ΓÇô 07/06) ΓÇö M├┤ phß╗Ång m├íi v├▓m, kiß║┐n tr├║c, kiß╗âm thß╗¡ ph├▓ng ─æiß╗üu h├ánh
+R21C1: 2.1
+R21C2: M├┤ phß╗Ång ─æ├│ng/mß╗ƒ m├íi v├▓m
+R21C3: Tab C╞í sß╗ƒ hß║í tß║ºng: trß║íng th├íi, tiß║┐n tr├¼nh 12ΓÇô20 ph├║t, phanh khß║⌐n cß║Ñp
+ΓåÆ Kß║┐t quß║ú: Luß╗ông vß║¡n h├ánh m├íi tr├¬n prototype
+R21C5: Ch╞░a l├ám
+R21C6: Demo
+R22C1: 2.2
+R22C2: T├ái liß╗çu kiß║┐n tr├║c PVF
+R22C3: X├óy dß╗▒ng kiß║┐n tr├║c hß╗ç thß╗æng PVF: IOC s├ón li├¬n kß║┐t Smart City; thiß║┐t lß║¡p cß║Ñu tr├║c module v├á ─æiß╗âm t├¡ch hß╗úp VOC (camera, BMS m├íi/HVAC, v├⌐ ─æiß╗çn tß╗¡) ΓÇö prototype d├╣ng dß╗» liß╗çu mß║½u, c├│ thß╗â nß╗æi hß╗ç thß╗æng thß║¡t sau.
+ΓåÆ Kß║┐t quß║ú: Kiß║┐n tr├║c bß║ún 1.
+R22C5: Ch╞░a l├ám
+R23C1: 2.3
+R23C2: Kiß╗âm thß╗¡ ph├▓ng ─æiß╗üu h├ánh / VOC
+R23C3: Demo tr├¬n m├án h├¼nh ph├▓ng ─æiß╗üu h├ánh; thu feedback
+ΓåÆ Kß║┐t quß║ú: Bi├¬n bß║ún kiß╗âm thß╗¡ nß╗Öi bß╗Ö
+R23C5: Ch╞░a l├ám
+R23C6: Cß║ºn m├┤i tr╞░ß╗¥ng demo
+R24C1: 2.4
+R24C2: Duyß╗çt BRD/SRS (l├únh ─æß║ío)
+R24C3: Ph├¬ duyß╗çt phß║ím vi tr╞░ß╗¢c nghiß╗çm thu tuß║ºn 3
+ΓåÆ Kß║┐t quß║ú: BRD/SRS ─æ├ú k├╜ duyß╗çt
+R24C5: Ch╞░a l├ám
+R24C6: Theo y├¬u cß║ºu cß╗ºa l├únh ─æß║ío
+R25C1: TUß║ªN 3 (08/06 ΓÇô 14/06) ΓÇö UAT & nghiß╗çm thu PVF
+R26C1: 3.1
+R26C2: UAT PVF
+R26C3: 1 ─æß║íi diß╗çn ban vß║¡n h├ánh s├ón ΓÇö kiß╗âm thß╗¡ 6 tab + m├┤ phß╗Ång m├íi
+ΓåÆ Kß║┐t quß║ú: Bi├¬n bß║ún UAT PVF
+R26C5: Ch╞░a l├ám
+R26C6: Tuß║ºn 3
+R27C1: 3.2
+R27C2:  B├ío c├ío tß╗òng hß╗úp KPI 4 ph├ón hß╗ç + UAT PVF
+R27C3: Tab B├ío c├ío gom KPI An ninh/Sß╗▒ kiß╗çn/Hß║í tß║ºng/Dß╗ïch vß╗Ñ; ─æß╗ông bß╗Ö sß╗æ liß╗çu 1 kß╗ïch bß║ún; checklist UAT 5 ph├▓ng ΓåÆ k├╜ nghiß╗çm thu PVF. ΓåÆ Kß║┐t quß║ú: G├│i PVF ho├án th├ánh (prototype + t├ái liß╗çu).
+R27C5: Ch╞░a l├ám
+R28C1: 3.2
+R28C2: Cß║¡p nhß║¡t t├ái liß╗çu sau UAT
+R28C3: BRD, SRS, Kiß║┐n tr├║c PVF (60k chß╗ù, m├íi v├▓m, VOC)
+ΓåÆ Kß║┐t quß║ú: Bß╗Ö t├ái liß╗çu PVF ho├án chß╗ënh
+R28C5: Ch╞░a l├ám
+R28C6: Tuß║ºn 3
+R29C1: 3.3
+R29C2: Nghiß╗çm thu & b├án giao g├│i PVF
+R29C3: K├╜ checklist; b├án giao prototype + t├ái liß╗çu
+ΓåÆ Kß║┐t quß║ú: PVF nghiß╗çm thu ΓÇö mß╗ƒ SC tuß║ºn 4
+R29C5: Ch╞░a l├ám
+R29C6: Mß╗æc quan trß╗ìng
+R30C1: 3.4
+R30C2:  Ho├án thiß╗çn luß╗ông vß║¡n h├ánh 5 ph├▓ng + m├┤ phß╗Ång m├íi v├▓m
+R30C3: Hß║í tß║ºng: ─æ├│ng/mß╗ƒ m├íi 12ΓÇô20 ph├║t; An ninh/Sß╗▒ kiß╗çn/Dß╗ïch vß╗Ñ: 1 kß╗ïch bß║ún ch├⌐o (mß║¡t ─æß╗Ö B ΓåÆ timeline ΓåÆ b├úi/F&B); kiß╗âm thß╗¡ nß╗Öi bß╗Ö 5 tab. ΓåÆ Kß║┐t quß║ú: Demo closed-loop 1 trß║¡n; kiß║┐n tr├║c VOC bß║ún 1.
+R30C5: Ch╞░a l├ám
+R31C1: PHß║áM VI 6 TAB PVF (├ính xß║í VOCΓÇôFIFA)
+R32C1: STT
+R32C2: Tab
+R32C3: Nß╗Öi dung ch├¡nh
+R32C5: Nh├│m VOC
+R33C1: 1
+R33C2: Tß╗òng quan
+R33C3: Trß║íng th├íi s├ón, 60.000 chß╗ù, sß╗▒ kiß╗çn, icon m├íi v├▓m
+R33C5: Dashboard VOC tß╗òng
+R34C1: 2
+R34C2: An ninh
+R34C3: Camera + s╞í ─æß╗ô s├ón, mß║¡t ─æß╗Ö kh├ín giß║ú
+R34C5: Safety & security
+R35C1: 3
+R35C2: Sß╗▒ kiß╗çn
+R35C3: Timeline trß║¡n ─æß║Ñu / sß╗▒ kiß╗çn
+R35C5: Event operations
+R36C1: 4
+R36C2: C╞í sß╗ƒ hß║í tß║ºng
+R36C3: ─Éiß╗çn, HVAC, m├┤ phß╗Ång m├íi v├▓m
+R36C5: Technical operations
+R37C1: 5
+R37C2: Dß╗ïch vß╗Ñ
+R37C3: F&B, b├úi xe, VIP
+R37C5: Spectator services
+R38C1: 6
+R38C2: B├ío c├ío
+R38C3: KPI vß║¡n h├ánh theo trß║¡n
+R38C5: Reporting
+
+=== SHEET: IOC Smart City ===
+R1C1: Kß║╛ HOß║áCH TRIß╗éN KHAI ΓÇö IOC SMART CITY (Giai ─æoß║ín 2: Tuß║ºn 4ΓÇô6)
+R2C1: Dß╗▒ ├ín Vinsmartcity  |  15/06 ΓÇô 05/07/2026  |  Nguyß╗àn Triß╗çu Gia Kh├ính  |  Bß║»t ─æß║ºu sau nghiß╗çm thu PVF
+R4C1: T├ôM Tß║«T CHUNG
+R5C1: ΓÇó Triß╗ân khai sau khi PVF nghiß╗çm thu tuß║ºn 3 ΓÇö phß╗Ñc vß╗Ñ ban quß║ún l├╜ ─æ├┤ thß╗ï / khu th├┤ng minh.
+R6C1: ΓÇó Phß║ím vi: prototype 6 tab (2 tab Command Center 3D: Giao th├┤ng & An ninh).
+R7C1: ΓÇó Li├¬n kß║┐t ch├⌐o Smart City Γåö PVF tr├¬n header (1 click).
+R8C1: ΓÇó Nghiß╗çm thu tß╗òng thß╗â & b├án giao full pack cuß╗æi tuß║ºn 6.
+R10C1: #
+R10C2: ─Éß║ºu mß╗Ñc c├┤ng viß╗çc
+R10C3: M├┤ tß║ú / Kß║┐t quß║ú ─æß║ít ─æ╞░ß╗úc
+R10C5: Tiß║┐n ─æß╗Ö
+R10C6: Ghi ch├║
+R11C1: TUß║ªN 4 (15/06 ΓÇô 21/06) ΓÇö BRD/SRS Smart City & 2 tab cß╗æt l├╡i 3D
+R12C1: 4.1
+R12C2: Soß║ín BRD/SRS Smart City
+R12C3: Phß║ím vi 6 tab, ng╞░ß╗¥i d├╣ng mß╗Ñc ti├¬u ban quß║ún l├╜ ─æ├┤ thß╗ï
+ΓåÆ Kß║┐t quß║ú: BRD/SRS SC bß║ún 1
+R12C5: Ch╞░a l├ám
+R12C6: Tuß║ºn 4
+R13C1: 4,2
+R13C2: X├óy dß╗▒ng model 3D cho 4 tab vß║¡n h├ánh Smart City (Giao th├┤ng ┬╖ An ninh ┬╖ M├┤i tr╞░ß╗¥ng ┬╖ Tiß╗çn ├¡ch)
+R13C3: X├óy dß╗▒ng scene Three.js cho Giao th├┤ng, An ninh, M├┤i tr╞░ß╗¥ng, Tiß╗çn ├¡ch ΓÇö mß╗ùi tab c├│ model 3D + HUD hai b├¬n ΓåÆ Kß║┐t quß║ú: 4 tab Smart City c├│ m├┤ h├¼nh 3D t╞░╞íng t├íc ho├án chß╗ënh
+R13C5: Ch╞░a l├ám
+R14C1: 4.2
+R14C2: Prototype An ninh & Giao th├┤ng 3D
+R14C3: Command Center: scene Three.js + HUD hai b├¬n
+ΓåÆ Kß║┐t quß║ú: 2 tab cß╗æt l├╡i ho├án chß╗ënh
+R14C5: Ch╞░a l├ám
+R14C6: smartcity-ioc/
+R15C1: 4.3
+R15C2: Tham chiß║┐u mockup nguß╗ôn
+R15C3: ioc_smartcity_homepage_mockup.html, ioc_realtime_dashboard.html
+ΓåÆ Kß║┐t quß║ú: UI ─æß╗ông bß╗Ö mockup
+R15C5: Ch╞░a l├ám
+R15C6: Tuß║ºn 4
+R16C1: TUß║ªN 5 (22/06 ΓÇô 28/06) ΓÇö 4 tab c├▓n lß║íi, kiß║┐n tr├║c dual IOC, li├¬n kß║┐t PVF
+R17C1: 5.1
+R17C2: Ho├án thiß╗çn 4 tab c├▓n lß║íi
+R17C3: Tß╗òng quan, M├┤i tr╞░ß╗¥ng, Tiß╗çn ├¡ch, B├ío c├ío
+ΓåÆ Kß║┐t quß║ú: 6 tab Smart City ─æß║ºy ─æß╗º
+R17C5: Ch╞░a l├ám
+R17C6: Tuß║ºn 5
+R18C1: 5.2
+R18C2: T├ái liß╗çu kiß║┐n tr├║c dual IOC
+R18C3: Cß║Ñu tr├║c shared-ioc, cross-link, t├¡ch hß╗úp t╞░╞íng lai
+ΓåÆ Kß║┐t quß║ú: Kiß║┐n tr├║c tß╗òng bß║ún 1
+R18C5: Ch╞░a l├ám
+R18C6: Tuß║ºn 5
+R19C1: 5.3
+R19C2: Li├¬n kß║┐t Smart City Γåö PVF
+R19C3: Center-switch tr├¬n header; deep link tß╗½ overview
+ΓåÆ Kß║┐t quß║ú: Chuyß╗ân IOC 1 click
+R19C5: Ch╞░a l├ám
+R19C6: Tuß║ºn 5ΓÇô6
+R20C1: 5.4
+R20C2: Duyß╗çt BRD/SRS Smart City
+R20C3: Ph├¬ duyß╗çt phß║ím vi tr╞░ß╗¢c UAT tuß║ºn 6
+ΓåÆ Kß║┐t quß║ú: BRD/SRS SC ─æ├ú duyß╗çt
+R20C5: Ch╞░a l├ám
+R20C6: Y├¬u cß║ºu l├únh ─æß║ío
+R21C1: TUß║ªN 6 (29/06 ΓÇô 05/07) ΓÇö UAT tß╗òng & b├án giao full pack
+R22C1: 6.1
+R22C2: UAT Smart City
+R22C3: 1ΓÇô2 ─æß║íi diß╗çn ban quß║ún l├╜ ─æ├┤ thß╗ï ΓÇö kiß╗âm thß╗¡ 6 tab
+ΓåÆ Kß║┐t quß║ú: Bi├¬n bß║ún UAT SC
+R22C5: Ch╞░a l├ám
+R22C6: Tuß║ºn 6
+R23C1: 6.2
+R23C2: Ho├án thiß╗çn to├án bß╗Ö t├ái liß╗çu
+R23C3: BRD, SRS, Kiß║┐n tr├║c SC + nghi├¬n cß╗⌐u UI
+ΓåÆ Kß║┐t quß║ú: Full bß╗Ö t├ái liß╗çu sß║ún phß║⌐m
+R23C5: Ch╞░a l├ám
+R23C6: Tuß║ºn 6
+R24C1: 6.3
+R24C2: Demo / training & nghiß╗çm thu tß╗òng
+R24C3: Buß╗òi tß╗òng kß║┐t; b├án giao prototype + t├ái liß╗çu
+ΓåÆ Kß║┐t quß║ú: Dß╗▒ ├ín ho├án th├ánh
+R24C5: Ch╞░a l├ám
+R24C6: Mß╗æc cuß╗æi
+R26C1: PHß║áM VI 6 TAB SMART CITY
+R27C1: STT
+R27C2: Tab
+R27C3: Nß╗Öi dung ch├¡nh
+R27C5: Layout
+R28C1: 1
+R28C2: Tß╗òng quan
+R28C3: Chß╗ë sß╗æ tß╗òng thß╗â, cß╗òng ph├ón hß╗ç (link PVF)
+R28C5: Ops classic
+R29C1: 2
+R29C2: Giao th├┤ng
+R29C3: Ng├ú t╞░ 3D + bß║úng ─æiß╗üu khiß╗ân
+R29C5: Command Center 3D
+R30C1: 3
+R30C2: An ninh
+R30C3: Khu ─æ├┤ thß╗ï 3D + camera, cß║únh b├ío
+R30C5: Command Center 3D
+R31C1: 4
+R31C2: M├┤i tr╞░ß╗¥ng
+R31C3: AQI, trß║ím ─æo, biß╗âu ─æß╗ô
+R31C5: Ops classic
+R32C1: 5
+R32C2: Tiß╗çn ├¡ch
+R32C3: ─Éiß╗çn, n╞░ß╗¢c, chiß║┐u s├íng
+R32C5: Ops classic
+R33C1: 6
+R33C2: B├ío c├ío
+R33C3: Bß║úng sß╗æ liß╗çu, biß╗âu ─æß╗ô tß╗òng hß╗úp
+R33C5: Ops classic
+

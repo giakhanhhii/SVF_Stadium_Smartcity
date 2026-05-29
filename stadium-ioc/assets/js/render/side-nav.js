@@ -68,7 +68,7 @@ export function renderSideNavRail(side) {
   return `<nav class="sidebar-nav sidebar-nav--right" aria-label="Điều hướng phụ">
     <div class="sidebar-nav__items">${navButtons(NAV_RIGHT)}</div>
     <div class="sidebar-nav__actions">
-      <a href="../smartcity-ioc/index.html" class="sidebar-action sidebar-action--link" title="Quay về Trung tâm điều hành Smart City">
+      <a href="../smartcity-ioc/smartcity-index.html" class="sidebar-action sidebar-action--link" title="Quay về Trung tâm điều hành Smart City">
         <i class="ti ti-building-broadcast-tower" aria-hidden="true"></i>
         <span>Smart City</span>
       </a>

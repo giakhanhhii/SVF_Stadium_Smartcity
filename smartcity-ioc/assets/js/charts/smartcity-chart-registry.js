@@ -1,6 +1,6 @@
 import { initTrafficChart } from './traffic-chart.js';
 import { initEnvChart } from './env-chart.js';
-import { initReportsChart } from './reports-chart.js';
+import { initReportsChart } from './smartcity-reports-chart.js';
 
 export const chartRegistry = {
   traffic: initTrafficChart,

@@ -20,6 +20,6 @@ export const overviewData = {
     { nav: 'utilities', icon: 'ti-bolt', iconBg: '#FAEEDA', iconColor: '#854F0B', badge: 'CẢNH BÁO', badgeClass: 'badge-warn', name: 'Năng lượng — Chiếu sáng', meta: '3.840 đèn LED • 18 trạm điện' },
     { nav: 'utilities', icon: 'ti-droplet', iconBg: '#EEEDFE', iconColor: '#534AB7', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Cấp thoát nước', meta: '24 trạm bơm • 156 cảm biến' },
     { nav: 'utilities', icon: 'ti-headset', iconBg: '#FBEAF0', iconColor: '#993556', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Dịch vụ cư dân', meta: 'Phản ánh • Tổng đài • Tiện ích' },
-    { href: '../stadium-ioc/index.html', icon: 'ti-ball-football', iconBg: '#E1F5EE', iconColor: '#0F6E56', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Sân vận động', meta: 'Trung tâm điều hành sự kiện • 48 camera • 40.000 chỗ', linkText: 'Chuyển sang IOC Sân vận động →', borderStyle: 'border-color:#0F6E56' },
+    { href: '../stadium-ioc/stadium-index.html', icon: 'ti-ball-football', iconBg: '#E1F5EE', iconColor: '#0F6E56', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Sân vận động', meta: 'Trung tâm điều hành sự kiện • 48 camera • 40.000 chỗ', linkText: 'Chuyển sang IOC Sân vận động →', borderStyle: 'border-color:#0F6E56' },
   ],
 };

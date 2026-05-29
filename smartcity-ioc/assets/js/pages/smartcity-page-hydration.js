@@ -5,17 +5,17 @@ import { renderTeamList, renderStationList } from '../../../../shared-ioc/assets
 import {
   renderVitals, renderKpiGrid, renderModules, renderMiniStats,
   renderReportTable, renderReportCategories,
-} from '../../../../shared-ioc/assets/js/render/overview.js';
+} from '../../../../shared-ioc/assets/js/render/shared-overview-render.js';
 import { renderTrafficLeftSidebar } from '../render/traffic-panels-left.js';
 import { renderTrafficRightSidebar } from '../render/traffic-panels-right.js';
 import { renderLeftSidebar } from '../render/security-panels-left.js';
 import { renderRightSidebar } from '../render/security-panels-right.js';
-import { overviewData } from '../data/overview.js';
+import { overviewData } from '../data/smartcity-overview-data.js';
 import { trafficData } from '../data/traffic.js';
-import { securityData } from '../data/security.js';
+import { securityData } from '../data/smartcity-security-data.js';
 import { environmentData } from '../data/environment.js';
 import { utilitiesData } from '../data/utilities.js';
-import { reportsData } from '../data/reports.js';
+import { reportsData } from '../data/smartcity-reports-data.js';
 
 export function hydratePage(pageId) {
   const root = document.getElementById('page-' + pageId);

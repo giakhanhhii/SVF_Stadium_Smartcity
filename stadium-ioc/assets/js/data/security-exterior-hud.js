@@ -108,9 +108,9 @@ export const securityExteriorHud = {
       chart: [0.15, 0.22, 0.38, 0.62, 0.88, 0.95, 0.82, 0.68, 0.55, 0.42, 0.28, 0.18],
     },
     alerts: [
-      { tag: 'CẢNH BÁO', tagBg: '#3d3010', tagColor: '#BA7517', title: 'Bãi P4 gần đầy — 98%', time: '5 phút' },
-      { tag: 'GIAO THÔNG', tagBg: '#0a2840', tagColor: '#00d4ff', title: 'Tắc cổng B — Hàng chờ 7 phút', time: '8 phút' },
-      { tag: 'PERIMETER', tagBg: '#1a1840', tagColor: '#534AB7', title: 'Xe dừng bất thường — Đường vào A', time: '14 phút' },
+      { tag: 'CẢNH BÁO', label: 'Cảnh báo', tagBg: '#3d3010', tagColor: '#BA7517', title: 'Bãi P4 gần đầy — 98%', time: '5 phút' },
+      { tag: 'GIAO THÔNG', label: 'Giao thông', tagBg: '#0a2840', tagColor: '#00d4ff', title: 'Tắc cổng B — Hàng chờ 7 phút', time: '8 phút' },
+      { tag: 'NGOẠI VI', label: 'Ngoại vi', tagBg: '#1a1840', tagColor: '#534AB7', title: 'Xe dừng bất thường — Đường vào A', time: '14 phút' },
     ],
   },
 };
@@ -126,6 +126,6 @@ export const SECURITY_LEGEND = {
     { color: '#97C459', label: 'Camera ngoại vi' },
     { color: '#534AB7', label: 'Bãi đỗ' },
     { color: '#EF9F27', label: 'Giao thông' },
-    { color: '#00d4ff', label: 'Perimeter' },
+    { color: '#00d4ff', label: 'Ngoại vi' },
   ],
 };

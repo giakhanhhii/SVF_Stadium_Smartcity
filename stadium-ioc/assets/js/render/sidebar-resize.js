@@ -5,6 +5,15 @@ const MAX_WIDTH = 460;
 const MIN_CENTER_WIDTH = 520;
 
 let activeDrag = null;
+let pendingFrame = null;
+
+function setLiveWidths(command, left, right) {
+  command.style.gridTemplateColumns = `${left}px minmax(0, 1fr) ${right}px`;
+  command.style.setProperty('--sidebar-left-width', `${left}px`);
+  command.style.setProperty('--sidebar-right-width', `${right}px`);
+  command.dataset.sidebarLeftWidth = String(left);
+  command.dataset.sidebarRightWidth = String(right);
+}
 
 function createDragShield() {
   const shield = document.createElement('div');
@@ -62,9 +71,7 @@ function applyWidths(command, widths = readSavedWidths()) {
 
   const left = clampWidth(widths.left, command, widths.right);
   const right = clampWidth(widths.right, command, left);
-  command.style.gridTemplateColumns = `${left}px minmax(0, 1fr) ${right}px`;
-  command.dataset.sidebarLeftWidth = String(left);
-  command.dataset.sidebarRightWidth = String(right);
+  setLiveWidths(command, left, right);
 }
 
 function createHandle(side) {
@@ -93,7 +100,15 @@ function onDragMove(event) {
 
   activeDrag.nextLeft = left;
   activeDrag.nextRight = right;
-  activeDrag.guide.style.transform = `translateX(${Math.round(guideX)}px)`;
+  activeDrag.nextGuideX = guideX;
+
+  if (pendingFrame) return;
+  pendingFrame = requestAnimationFrame(() => {
+    pendingFrame = null;
+    if (!activeDrag) return;
+    setLiveWidths(activeDrag.command, activeDrag.nextLeft, activeDrag.nextRight);
+    activeDrag.guide.style.transform = `translateX(${Math.round(activeDrag.nextGuideX)}px)`;
+  });
 }
 
 function stopDrag() {
@@ -102,6 +117,10 @@ function stopDrag() {
   const { shield, previousSelectStart, previousDragStart } = activeDrag;
   const left = activeDrag.nextLeft ?? activeDrag.startLeft;
   const right = activeDrag.nextRight ?? activeDrag.startRight;
+  if (pendingFrame) {
+    cancelAnimationFrame(pendingFrame);
+    pendingFrame = null;
+  }
   applyWidths(activeDrag.command, { left, right });
   const widths = {
     left: Number(activeDrag.command.dataset.sidebarLeftWidth) || DEFAULT_WIDTH,

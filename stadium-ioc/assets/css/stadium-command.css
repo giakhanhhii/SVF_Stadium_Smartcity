@@ -20,6 +20,83 @@
   grid-template-columns: minmax(340px, 390px) minmax(0, 1fr) minmax(340px, 390px);
 }
 
+.page-view--stadium-cmd .security-command,
+.page-view--overview .security-command {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #040810;
+  --sidebar-left-width: 280px;
+  --sidebar-right-width: 280px;
+}
+
+.page-view--overview .security-command {
+  --sidebar-left-width: 340px;
+  --sidebar-right-width: 340px;
+}
+
+.page-view--stadium-cmd .security-center,
+.page-view--overview .security-center {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  background: transparent;
+}
+
+.page-view--stadium-cmd .map-container--hero,
+.page-view--overview .map-container--hero {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+}
+
+.page-view--stadium-cmd .map-container--hero canvas,
+.page-view--overview .map-container--hero canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.page-view--stadium-cmd .security-sidebar,
+.page-view--overview .security-sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 4;
+  width: var(--sidebar-left-width);
+  max-width: calc(100% - 520px);
+  background: linear-gradient(180deg, rgba(6, 14, 26, 0.96) 0%, rgba(6, 12, 22, 0.96) 100%);
+  backdrop-filter: blur(2px);
+}
+
+.page-view--stadium-cmd .security-sidebar--left,
+.page-view--overview .security-sidebar--left {
+  left: 0;
+  border-right: 1px solid rgba(0, 212, 255, 0.16);
+}
+
+.page-view--stadium-cmd .security-sidebar--right,
+.page-view--overview .security-sidebar--right {
+  right: 0;
+  width: var(--sidebar-right-width);
+  border-left: 1px solid rgba(0, 212, 255, 0.16);
+}
+
+.page-view--stadium-cmd .scene-view-tabs,
+.page-view--stadium-cmd .security-center__legend,
+.page-view--overview .scene-view-tabs,
+.page-view--overview .security-center__legend,
+.page-view--stadium-cmd [data-mount="control-room"],
+.page-view--overview [data-mount="control-room"] {
+  z-index: 5;
+}
+
 .page-view--stadium-cmd,
 .page-view--stadium-cmd * {
   user-select: none;
@@ -34,7 +111,7 @@
 }
 
 .page-view--stadium-cmd .security-sidebar {
-  position: relative;
+  min-width: 0;
 }
 
 .sidebar-resize-handle {
@@ -381,38 +458,48 @@ body.sidebar-resizing::after {
 .page-view--stadium-cmd .stad-sec-alert-chart {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: end;
-  gap: 8px;
-  height: 72px;
+  align-items: stretch;
+  gap: 10px;
+  min-height: 116px;
+  padding: 4px 0 14px;
+  overflow: visible;
 }
 
 .page-view--stadium-cmd .stad-sec-alert-bar {
-  display: flex;
+  display: grid;
+  grid-template-rows: minmax(52px, 1fr) auto;
+  gap: 10px;
+  align-content: end;
   min-width: 0;
-  height: 100%;
-  flex-direction: column;
-  justify-content: end;
-  gap: 4px;
+  min-height: 100%;
+  overflow: visible;
 }
 
 .page-view--stadium-cmd .stad-sec-alert-bar span {
+  align-self: end;
   display: block;
   width: 100%;
-  min-height: 12px;
+  min-height: 28px;
+  max-height: 100%;
   border-radius: 3px 3px 0 0;
   background: linear-gradient(180deg, #00d4ff, rgba(0, 128, 170, 0.72));
   box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
 }
 
 .page-view--stadium-cmd .stad-sec-alert-bar i {
-  overflow: hidden;
-  font-size: 7px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 24px;
+  overflow: visible;
+  font-size: 8px;
   font-style: normal;
-  line-height: 1;
+  line-height: 1.35;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #7ab0d0;
+  white-space: normal;
+  word-break: break-word;
+  color: #9ec5e0;
+  padding: 2px 2px 5px;
 }
 
 .page-view--stadium-cmd .stad-sec-zone-chart {
@@ -525,7 +612,9 @@ body.sidebar-resizing::after {
 }
 
 #page-security.security-exterior-mode .sidebar-hud[data-mount="sidebar-right"] > .hud-block:first-child {
-  flex: 0.95 1 0;
+  flex: 1.15 1 0;
+  overflow: visible;
+  padding-bottom: 4px;
 }
 
 #page-security.security-exterior-mode .sidebar-hud[data-mount="sidebar-right"] > .hud-block:last-child {
@@ -572,7 +661,23 @@ body.sidebar-resizing::after {
 
 #page-security.security-exterior-mode .stad-sec-alert-chart {
   height: auto;
-  min-height: 96px;
+  min-height: 136px;
+  padding: 6px 0 20px;
+  overflow: visible;
+}
+
+#page-security.security-exterior-mode .stad-sec-alert-bar {
+  grid-template-rows: minmax(56px, 1fr) auto;
+  gap: 12px;
+}
+
+#page-security.security-exterior-mode .stad-sec-alert-bar i {
+  min-height: 28px;
+  font-size: 9px;
+  line-height: 1.4;
+  color: #b8d8f0;
+  padding: 2px 3px 7px;
+  align-items: flex-end;
 }
 
 #page-security.security-exterior-mode .stad-sec-matrix {
@@ -791,7 +896,7 @@ body.sidebar-resizing::after {
 
 /* Tab + legend nổi trên map — không chiếm chiều cao cột giữa */
 .page-view--stadium-cmd .security-center {
-  position: relative;
+  position: absolute;
 }
 
 .page-view--stadium-cmd .scene-view-tabs {

@@ -98,9 +98,9 @@ export const securityHud = {
       chart: [0.2, 0.15, 0.35, 0.55, 0.72, 0.68, 0.85, 0.92, 0.78, 0.45, 0.3, 0.22],
     },
     alerts: [
-      { tag: 'KHẨN CẤP', tagBg: '#401818', tagColor: '#E24B4A', title: 'Mật độ vượt ngưỡng — Khán đài B', time: '3 phút' },
-      { tag: 'CẢNH BÁO', tagBg: '#3d3010', tagColor: '#BA7517', title: 'Vật thể lạ — Hậu trường C', time: '12 phút' },
-      { tag: 'XỬ LÝ', tagBg: '#0a3020', tagColor: '#1D9E75', title: 'Tranh cãi cổng A — Đã giải quyết', time: '28 phút' },
+      { tag: 'KHẨN CẤP', label: 'Khẩn cấp', tagBg: '#401818', tagColor: '#E24B4A', title: 'Mật độ vượt ngưỡng — Khán đài B', time: '3 phút' },
+      { tag: 'CẢNH BÁO', label: 'Cảnh báo', tagBg: '#3d3010', tagColor: '#BA7517', title: 'Vật thể lạ — Hậu trường C', time: '12 phút' },
+      { tag: 'XỬ LÝ', label: 'Xử lý', tagBg: '#0a3020', tagColor: '#1D9E75', title: 'Tranh cãi cổng A — Đã giải quyết', time: '28 phút' },
     ],
   },
 };

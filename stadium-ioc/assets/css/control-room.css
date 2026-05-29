@@ -354,8 +354,8 @@
 
 /* Phòng An ninh — hai sidebar tối; sáng khi đã nhấn màn hình giám sát */
 #page-security.voc-security-interior:not(.voc-sidebars-lit) .security-sidebar {
-  opacity: 0.14;
-  filter: brightness(0.5) saturate(0.7);
+  opacity: 0;
+  filter: none;
   pointer-events: none;
   transition: opacity 0.4s ease, filter 0.4s ease;
 }
@@ -368,7 +368,7 @@
 
 #page-security.voc-security-interior:not(.voc-sidebars-lit) .scene-view-tabs,
 #page-security.voc-security-interior:not(.voc-sidebars-lit) .security-center__legend {
-  opacity: 0.25;
+  opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s ease;
 }

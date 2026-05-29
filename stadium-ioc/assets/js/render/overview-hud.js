@@ -80,7 +80,7 @@ function vocAlertViz(alerts, closePct) {
   </div>`;
 }
 
-function lineDonutCombo(lineValues, donutItems) {
+function lineDonutCombo(lineValues, donutItems, footerHtml = '') {
   const max = Math.max(...lineValues);
   const min = Math.min(...lineValues);
   const avg = Math.round(lineValues.reduce((sum, value) => sum + value, 0) / lineValues.length);
@@ -106,7 +106,7 @@ function lineDonutCombo(lineValues, donutItems) {
       <svg class="overview-combo" viewBox="0 0 88 72" aria-hidden="true">
         <g class="overview-combo__grid">
           ${[14, 24, 34, 44, 54].map((y) => `<line x1="4" y1="${y}" x2="78" y2="${y}"/>`).join('')}
-          ${labels.map((label, i) => `<text x="${8 + i * 10}" y="68" transform="rotate(-36 ${8 + i * 10} 68)">${label}</text>`).join('')}
+          ${labels.map((label, i) => `<text x="${8 + i * 10}" y="68" text-anchor="middle">${label}</text>`).join('')}
         </g>
         <polyline class="overview-combo__line" points="${points}"/>
         ${lineValues.map((value, i) => {
@@ -117,6 +117,7 @@ function lineDonutCombo(lineValues, donutItems) {
       </svg>
       ${distributionChart(caseTotal, groups, { idSuffix: 'Rollup' })}
     </div>
+    ${footerHtml}
   </div>`;
 }
 
@@ -130,17 +131,10 @@ export function renderOverviewRight(d) {
   const closed = Number(d.rollup[1]?.value || 0);
   const pending = Number(d.rollup[2]?.value || 0);
   const closePct = total ? Math.round((closed / total) * 100) : 0;
-  const alertBars = d.alerts.map((alert) => {
-    const value = alert.tag === 'INCIDENT' ? 9 : alert.tag === 'ACCESS' ? 6 : 4;
-    return { time: alert.tag.slice(0, 3), value, tag: alert.tag };
-  });
   const rollupBars = [
     { time: 'All', value: total },
     { time: 'OK', value: closed },
     { time: 'Wait', value: pending },
-    { time: 'INC', value: alertBars.find((b) => b.tag === 'INCIDENT')?.value || 0 },
-    { time: 'ACC', value: alertBars.find((b) => b.tag === 'ACCESS')?.value || 0 },
-    { time: 'OPS', value: alertBars.find((b) => b.tag !== 'INCIDENT' && b.tag !== 'ACCESS')?.value || 0 },
   ];
   const alertDots = d.alerts.map((alert) =>
     `<button type="button" class="ops-alert-dot" title="${alert.title}" aria-label="${alert.tag}: ${alert.title}">
@@ -154,14 +148,13 @@ export function renderOverviewRight(d) {
           { value: closed },
           { value: pending },
           { value: Math.max(total - closed - pending, 1) },
-        ])}
-        <div class="ops-rollup__nums">
+        ], `<div class="overview-combo-kpis">
           <span><b>${total}</b><em>all</em></span>
           <span><b>${closed}</b><em>ok</em></span>
           <span class="ops-rollup__warn"><b>${pending}</b><em>wait</em></span>
-        </div>
+        </div>`)}
       </div>
-      ${barChartSvg(rollupBars)}
+      <div class="ops-rollup__bars">${barChartSvg(rollupBars)}</div>
     </section>
     <section class="hud-block ops-rollup__alerts ops-alert-viz">${hudHead('Cảnh báo VOC')}
       ${vocAlertViz(d.alerts, closePct)}

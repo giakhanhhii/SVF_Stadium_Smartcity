@@ -213,7 +213,7 @@ function bindDispatchDialogs() {
     const recStatus = dialog.querySelector('[data-dispatch-rec-status]');
 
     if (openBtn) {
-      rt.selectedType = cfg.defaultType;
+      rt.selectedType = openBtn.dataset.dispatchTypePreset || cfg.defaultType;
       resetRecorder(dialog, rt);
       dialog.hidden = false;
       dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {

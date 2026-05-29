@@ -1,7 +1,7 @@
 import { hudHead, areaChartSvg, renderAlerts, camThumb } from './hud-charts.js';
 import { distributionChart, distributionMinis, distributionStack, radial3dChart } from './radial3d-chart.js';
 import {
-  renderDispatchPanel, renderDispatchDialog, SECURITY_DISPATCH,
+  renderDispatchPanel, renderDispatchDialog, MEDICAL_DISPATCH, SECURITY_DISPATCH,
 } from './emergency-dispatch.js';
 
 function eventRadarChart(values, labels) {
@@ -51,7 +51,7 @@ function eventLineDonutCombo(bars, centerValue) {
       <svg class="overview-combo event-combo" viewBox="0 0 88 72" aria-hidden="true">
         <g class="overview-combo__grid">
           ${[14, 24, 34, 44, 54].map((y) => `<line x1="4" y1="${y}" x2="82" y2="${y}"/>`).join('')}
-          ${bars.map((b, i) => `<text x="${8 + i * 12}" y="68" transform="rotate(-36 ${8 + i * 12} 68)">${b.time}</text>`).join('')}
+          ${bars.map((b, i) => `<text x="${8 + i * 12}" y="68" text-anchor="middle">${b.time}</text>`).join('')}
         </g>
         <polyline class="overview-combo__line event-combo__line" points="${points}"/>
         ${bars.map((b, i) => {
@@ -126,24 +126,104 @@ function renderAttendanceView(view) {
     </section>`;
 }
 
-export function renderEventsLeft(d) {
-  const c = d.crowd;
-  const sectors = c.sectors.map(sectorRow).join('');
-  const feeds = d.broadcast.feeds.map((f) => camThumb(f.label)).join('');
-  const liveView = d.attendanceViews.live;
-  return `
-    <section class="hud-block hud-block--crowd">
-      ${hudHead(c.title)}
-      ${distributionChart(c.total, c.groups, { idSuffix: 'EvtCrowd' })}
-      <div class="hud-inline-stat"><i class="ti ti-users"></i><span>${c.capacityLabel}</span><strong>${c.totalFormatted}</strong></div>
-      <div class="hud-crowd-sectors">${sectors}</div>
-    </section>
-    <section class="hud-block">${hudHead(d.broadcast.title)}<div class="hud-cam-grid">${feeds}</div></section>
-    <div class="hud-tabs hud-tabs--dual" data-events-attendance-tabs>
-      <button class="hud-tab hud-tab--active" data-events-attendance="live">${d.modeTabs[0]}</button>
-      <button class="hud-tab" data-events-attendance="stands">${d.modeTabs[1]}</button>
+function evacuationRoutePanel() {
+  return `<section class="hud-block event-route">
+    ${hudHead('Lối thoát dẫm đạp')}
+    <div class="event-route__diagram">
+      <span class="event-route__node event-route__node--hot">B12</span>
+      <span class="event-route__line event-route__line--a"></span>
+      <span class="event-route__node event-route__node--exit">B2</span>
+      <span class="event-route__line event-route__line--b"></span>
+      <span class="event-route__node event-route__node--exit">C1</span>
     </div>
-    <div data-events-attendance-panel>${renderAttendanceView(liveView)}</div>`;
+    <svg class="event-route-flow" viewBox="0 0 160 38" aria-hidden="true">
+      <g class="event-route-flow__grid">
+        ${[8, 16, 24, 32].map((y) => `<line x1="4" y1="${y}" x2="156" y2="${y}"/>`).join('')}
+      </g>
+      <polyline points="6,28 28,22 52,18 76,12 104,16 130,10 154,14"/>
+      ${[6, 28, 52, 76, 104, 130, 154].map((x, i) => `<circle cx="${x}" cy="${[28, 22, 18, 12, 16, 10, 14][i]}" r="2"/>`).join('')}
+    </svg>
+    <div class="event-risk__actions">
+      <button type="button" class="event-risk__btn" data-dispatch-open="security" data-dispatch-type-preset="evac">
+        <i class="ti ti-door-exit"></i><span>Mở B2/C1</span>
+      </button>
+      <button type="button" class="event-risk__btn">
+        <i class="ti ti-arrow-guide"></i><span>Đảo luồng</span>
+      </button>
+      <button type="button" class="event-risk__btn">
+        <i class="ti ti-speakerphone"></i><span>PA hướng dẫn</span>
+      </button>
+    </div>
+  </section>`;
+}
+
+function fireSensorTrendPanel() {
+  const bars = [
+    { label: 'Nhiệt', value: 82 },
+    { label: 'Khói', value: 64 },
+    { label: 'Gas', value: 38 },
+    { label: 'Điện', value: 52 },
+  ];
+  return `<section class="hud-block event-fire-trend">
+    ${hudHead('Cảm biến cháy nổ')}
+    <div class="event-fire-bars">${bars.map((b) =>
+    `<div class="event-fire-bar event-fire-bar--${b.value > 70 ? 'hot' : b.value > 45 ? 'warn' : 'ok'}">
+      <span>${b.label}</span><i style="height:${b.value}%"></i><b>${b.value}%</b>
+    </div>`,
+  ).join('')}</div>
+    <div class="event-risk__actions">
+      <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="medical" data-dispatch-type-preset="fire">
+        <i class="ti ti-flame"></i><span>Báo cháy</span>
+      </button>
+      <button type="button" class="event-risk__btn">
+        <i class="ti ti-wind"></i><span>Hút khói</span>
+      </button>
+      <button type="button" class="event-risk__btn">
+        <i class="ti ti-power"></i><span>Cắt điện</span>
+      </button>
+    </div>
+  </section>`;
+}
+
+export function renderEventsLeft(d) {
+  return `
+    ${overloadPressurePanel(d.crowd)}
+    ${evacuationRoutePanel()}
+    ${fireSensorTrendPanel()}`;
+}
+
+function overloadPressurePanel(crowd) {
+  const sectors = crowd.sectors.map((s, i) => ({
+    label: s.label.replace('Khán đài ', '').replace('KhÃ¡n Ä‘Ã i ', ''),
+    value: s.pct,
+    tone: i === 1 ? 'hot' : s.pct >= 88 ? 'warn' : 'ok',
+  }));
+  return `<section class="hud-block event-overload">
+    ${hudHead('Quá tải & dẫm đạp')}
+    <div class="event-overload__main">
+      ${eventRadarChart([0.86, 0.92, 0.74, 0.68, 0.81, 0.58], ['B12', 'DEN', 'FLOW', 'EXIT', 'PA', 'SEC'])}
+      <div class="event-overload__meter">
+        <strong>92%</strong>
+        <span>điểm nóng B12</span>
+      </div>
+    </div>
+    <div class="event-overload__lanes">${sectors.map((s) =>
+    `<div class="event-overload__lane event-overload__lane--${s.tone}">
+      <span>${s.label}</span><i style="width:${s.value}%"></i><b>${s.value}%</b>
+    </div>`,
+  ).join('')}</div>
+    <div class="event-risk__actions">
+      <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="security" data-dispatch-type-preset="crowd">
+        <i class="ti ti-shield-exclamation"></i><span>Báo an ninh</span>
+      </button>
+      <button type="button" class="event-risk__btn" data-dispatch-open="security" data-dispatch-type-preset="evac">
+        <i class="ti ti-door-exit"></i><span>Mở lối thoát</span>
+      </button>
+      <button type="button" class="event-risk__btn">
+        <i class="ti ti-arrows-split"></i><span>Chia luồng</span>
+      </button>
+    </div>
+  </section>`;
 }
 
 function stampedePanel(stampede) {
@@ -159,6 +239,93 @@ function stampedePanel(stampede) {
       '<i class="ti ti-door-exit"></i> Sơ tán: VOC-22 — PA khẩn',
     ],
   })}`;
+}
+
+function stampedeDetailPanel(stampede) {
+  const cells = Array.from({ length: 24 }, (_, i) => {
+    const hot = [6, 7, 11, 12, 13].includes(i);
+    const warn = [2, 5, 8, 10, 14, 17, 18].includes(i);
+    const exit = [0, 4, 19, 23].includes(i);
+    const cls = exit ? 'exit' : hot ? 'hot' : warn ? 'warn' : 'ok';
+    const label = exit ? 'EXIT' : hot ? 'B12' : warn ? 'DENSE' : '';
+    return `<span class="event-risk-cell event-risk-cell--${cls}">${label}</span>`;
+  }).join('');
+  return `<section class="hud-block event-risk event-risk--stampede">
+    ${hudHead('Dẫm đạp / quá tải')}
+    <div class="event-risk__radar">${eventRadarChart([0.92, 0.78, 0.64, 0.86, 0.58, 0.72], ['DEN', 'GATE', 'FLOW', 'B12', 'PA', 'EXIT'])}</div>
+    <div class="event-risk__map">
+      <div class="event-risk__pitch">SÂN</div>
+      <div class="event-risk__grid">${cells}</div>
+    </div>
+    <div class="event-risk__kpis">
+      <span><b>${stampede?.pct || 0}%</b><em>Mật độ B12</em></span>
+      <span><b>02</b><em>Cổng phụ mở</em></span>
+      <span><b>04'</b><em>ETA sơ tán</em></span>
+    </div>
+    <div class="event-risk__actions">
+      <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="security" data-dispatch-type-preset="crowd">
+        <i class="ti ti-shield-exclamation"></i><span>Báo an ninh</span>
+      </button>
+      <button type="button" class="event-risk__btn" data-dispatch-open="security" data-dispatch-type-preset="evac">
+        <i class="ti ti-door-exit"></i><span>Mở lối thoát</span>
+      </button>
+      <button type="button" class="event-risk__btn">
+        <i class="ti ti-volume"></i><span>PA phân luồng</span>
+      </button>
+    </div>
+  </section>`;
+}
+
+function fireRiskPanel() {
+  const sensors = [
+    { label: 'F&B Bếp B', temp: '68°C', smoke: '42%', tone: 'hot' },
+    { label: 'Kho LED', temp: '41°C', smoke: '18%', tone: 'warn' },
+    { label: 'Máy phát', temp: '54°C', smoke: '25%', tone: 'warn' },
+    { label: 'VIP pantry', temp: '31°C', smoke: '4%', tone: 'ok' },
+  ];
+  const cells = Array.from({ length: 20 }, (_, i) => {
+    const hot = [6, 7, 11].includes(i);
+    const warn = [2, 5, 10, 12, 16].includes(i);
+    const cls = hot ? 'hot' : warn ? 'warn' : 'ok';
+    return `<span class="event-fire-cell event-fire-cell--${cls}"></span>`;
+  }).join('');
+  const fireGroups = [
+    { label: 'Nhiệt', value: 68 },
+    { label: 'Khói', value: 42 },
+    { label: 'Gas', value: 18 },
+    { label: 'Điện', value: 54 },
+  ];
+  return `<section class="hud-block event-risk event-risk--fire">
+    ${hudHead('Nguy cơ cháy nổ')}
+    <div class="event-fire-layout">
+      <div class="event-fire-radial">
+        ${radial3dChart(fireGroups, { idSuffix: 'EvtFireRisk' })}
+        <strong>F&B B</strong>
+      </div>
+      <div class="event-fire-core">
+        <i class="ti ti-flame"></i>
+        <strong>F&B B</strong>
+        <span>khói + nhiệt tăng</span>
+      </div>
+      <div class="event-fire-matrix">${cells}</div>
+    </div>
+    <div class="event-fire-sensors">${sensors.map((s) =>
+    `<div class="event-fire-sensor event-fire-sensor--${s.tone}">
+      <span>${s.label}</span><b>${s.temp}</b><em>${s.smoke}</em>
+    </div>`,
+  ).join('')}</div>
+    <div class="event-risk__actions">
+      <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="medical" data-dispatch-type-preset="fire">
+        <i class="ti ti-flame"></i><span>Gọi cứu hỏa</span>
+      </button>
+      <button type="button" class="event-risk__btn">
+        <i class="ti ti-power"></i><span>Cắt điện khu B</span>
+      </button>
+      <button type="button" class="event-risk__btn">
+        <i class="ti ti-wind"></i><span>Mở hút khói</span>
+      </button>
+    </div>
+  </section>`;
 }
 
 function renderMetricBars(metrics) {
@@ -179,6 +346,12 @@ function renderPaPanel(d, key) {
 }
 
 export function renderEventsRight(d) {
+  return `
+    ${stampedeDetailPanel(d.stampede)}
+    ${fireRiskPanel()}
+    ${renderDispatchDialog(SECURITY_DISPATCH)}
+    ${renderDispatchDialog(MEDICAL_DISPATCH)}`;
+
   const stats = d.ops.stats.map((s) =>
     `<div class="hud-energy-cell"><div class="hud-energy-lbl">${s.label}</div><div class="hud-energy-val">${s.value}</div>
     <div class="hud-energy-trend hud-energy-trend--${s.trend}">${s.trend === 'up' ? '+' : '-'} ${s.change}</div></div>`,

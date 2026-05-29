@@ -98,7 +98,7 @@ function alertChart(alerts) {
   return `<div class="stad-sec-alert-chart">${alerts.map((a, i) =>
     `<div class="stad-sec-alert-bar" title="${a.tag}: ${a.title}">
       <span style="height:${78 - i * 18}%;opacity:${0.95 - i * 0.16}"></span>
-      <i>${a.tag}</i>
+      <i>${a.label ?? a.tag}</i>
     </div>`,
   ).join('')}</div>`;
 }
@@ -149,7 +149,7 @@ export function renderSecurityLeft(d) {
 
 export function renderSecurityRight(d) {
   return `
-    <section class="hud-block">${hudHead('Canh bao')}${alertChart(d.alerts)}</section>
+    <section class="hud-block">${hudHead('Cảnh báo')}${alertChart(d.alerts)}</section>
     <section class="hud-block" data-security-access-panel>${renderAccessView(d.access, 'main')}</section>
     <section class="hud-block" data-security-zone-panel>${renderZonesView(d.zones, 'live')}</section>
     <section class="hud-block hud-block--grow">${hudHead(d.response.title)}
@@ -172,7 +172,7 @@ export function renderSecurityExteriorLeft(d) {
 
 export function renderSecurityExteriorRight(d) {
   return `
-    <section class="hud-block">${hudHead('Canh bao ngoai vi')}${alertChart(d.alerts)}</section>
+    <section class="hud-block">${hudHead('Cảnh báo ngoại vi')}${alertChart(d.alerts)}</section>
     <section class="hud-block" data-security-parking-panel>${renderParkingView(d.parking, 'parking')}</section>
     <section class="hud-block">${hudHead(d.patrol.title)}
       ${patrolChart(d.patrol)}

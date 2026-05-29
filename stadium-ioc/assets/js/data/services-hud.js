@@ -21,29 +21,72 @@ export const servicesHud = {
         { label: 'Quầy vé' },
       ],
     },
-    modeTabs: ['Bãi đỗ', 'F&B & WC'],
-    tickets: { title: 'Vé điện tử', label: 'Quét thành công', value: '98,2%' },
-    queueBars: {
-      title: 'Thời gian chờ TB',
-      subtitle: 'phút — theo khu vực',
-      bars: [
-        { time: 'P1', value: 3 },
-        { time: 'P2', value: 5 },
-        { time: 'P3', value: 4 },
-        { time: 'P4', value: 8 },
-        { time: 'F&B', value: 4 },
-        { time: 'WC', value: 6 },
-      ],
+    modeTabs: ['Bãi đỗ', 'F&B & Vé'],
+    modeViews: {
+      parking: {
+        statTitle: 'Điều phối bãi đỗ',
+        icon: 'ti-parking',
+        label: 'Bãi P4 gần đầy',
+        value: '98%',
+        chartTitle: 'Thời gian chờ bãi',
+        subtitle: 'phút — theo bãi',
+        bars: [
+          { time: 'P1', value: 3 },
+          { time: 'P2', value: 5 },
+          { time: 'P3', value: 4 },
+          { time: 'P4', value: 8 },
+          { time: 'Taxi', value: 4 },
+          { time: 'Bus', value: 2 },
+        ],
+      },
+      commerce: {
+        statTitle: 'F&B & Vé điện tử',
+        icon: 'ti-ticket',
+        label: 'Quét vé thành công',
+        value: '98,2%',
+        chartTitle: 'Hàng chờ dịch vụ',
+        subtitle: 'phút — theo điểm',
+        bars: [
+          { time: 'F&B', value: 4 },
+          { time: 'C12', value: 6 },
+          { time: 'Cổng', value: 3 },
+          { time: 'Vé', value: 6 },
+          { time: 'VIP', value: 2 },
+          { time: 'App', value: 1 },
+        ],
+      },
     },
   },
   right: {
     fb: {
       title: 'F&B & Tiện ích',
-      tabs: ['F&B', 'WC', 'WiFi'],
-      metrics: [
-        { label: 'Quầy mở', value: '24/24', pct: 100 },
-        { label: 'Hàng chờ TB', value: '4 ph', pct: 35 },
-      ],
+      tabs: ['F&B', 'Bãi đỗ', 'WiFi'],
+      views: {
+        fb: {
+          ringPct: 78,
+          ringLabel: 'Doanh thu',
+          metrics: [
+            { label: 'Quầy mở', value: '24/24', pct: 100 },
+            { label: 'Hàng chờ TB', value: '4 ph', pct: 35 },
+          ],
+        },
+        parking: {
+          ringPct: 78,
+          ringLabel: 'Bãi đỗ',
+          metrics: [
+            { label: 'Chỗ đã dùng', value: '1.872', pct: 78 },
+            { label: 'Bãi P4', value: '98%', pct: 98 },
+          ],
+        },
+        wifi: {
+          ringPct: 96,
+          ringLabel: 'WiFi OK',
+          metrics: [
+            { label: 'Thiết bị online', value: '12.4K', pct: 86 },
+            { label: 'Băng thông', value: 'Ổn định', pct: 96 },
+          ],
+        },
+      },
     },
     traffic: {
       title: 'Lưu thông quanh sân',
@@ -85,7 +128,7 @@ export const servicesHud = {
     },
     alerts: [
       { tag: 'CẢNH BÁO', tagBg: '#3d3010', tagColor: '#BA7517', title: 'Bãi P4 gần đầy — 98%', time: '5 phút' },
-      { tag: 'PHẢN HỒI', tagBg: '#0a2840', tagColor: '#00d4ff', title: 'WC B3 — Hàng chờ dài', time: '18 phút' },
+      { tag: 'PHẢN HỒI', tagBg: '#0a2840', tagColor: '#00d4ff', title: 'Cổng B3 — Hàng chờ dài', time: '18 phút' },
       { tag: 'XỬ LÝ', tagBg: '#0a3028', tagColor: '#1D9E75', title: 'F&B C12 hết nước — Đã bổ sung', time: '35 phút' },
     ],
   },

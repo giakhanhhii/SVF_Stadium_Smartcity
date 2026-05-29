@@ -23,31 +23,68 @@ export const securityHud = {
       ],
     },
     modeTabs: ['Giám sát trực tiếp', 'Phân tích AI'],
-    gates: { title: 'Cổng kiểm soát', label: 'Hoạt động / Tổng', value: '8/8' },
-    densityBars: {
-      title: 'Mật độ theo khán đài',
-      subtitle: 'người/m² — cập nhật 5s',
-      bars: snap.sectors.map((s) => ({
-        time: s.label.replace('Khán đài ', ''),
-        value: Math.round(4 + s.fillPercent * 0.08),
-      })),
+    modeViews: {
+      live: {
+        statTitle: 'Cổng kiểm soát',
+        icon: 'ti-door',
+        label: 'Hoạt động / Tổng',
+        value: '8/8',
+        chartTitle: 'Mật độ theo khán đài',
+        subtitle: 'người/m² — cập nhật 5s',
+        bars: snap.sectors.map((s) => ({
+          time: s.label.replace('Khán đài ', ''),
+          value: Math.round(4 + s.fillPercent * 0.08),
+        })),
+      },
+      ai: {
+        statTitle: 'Phân tích AI',
+        icon: 'ti-brain',
+        label: 'Sự kiện nghi vấn',
+        value: '6',
+        chartTitle: 'Rủi ro theo khu vực',
+        subtitle: 'điểm rủi ro — dự báo 10 phút',
+        bars: [
+          { time: 'A', value: 42 },
+          { time: 'B', value: 86 },
+          { time: 'C', value: 55 },
+          { time: 'D', value: 61 },
+          { time: 'VIP', value: 28 },
+          { time: 'Cổng', value: 72 },
+        ],
+      },
     },
   },
   right: {
     access: {
       title: 'Kiểm soát ra vào',
       tabs: ['Cổng chính', 'Cổng phụ'],
-      metrics: [
-        { label: 'Vé quét thành công', value: '98,2%', pct: 98 },
-        { label: 'Từ chối / nghi vấn', value: '142', pct: 12 },
-      ],
+      views: {
+        main: {
+          ringPct: 98,
+          ringLabel: 'Vé OK',
+          metrics: [
+            { label: 'Vé quét thành công', value: '98,2%', pct: 98 },
+            { label: 'Từ chối / nghi vấn', value: '142', pct: 12 },
+          ],
+        },
+        secondary: {
+          ringPct: 91,
+          ringLabel: 'Cổng phụ',
+          metrics: [
+            { label: 'Cổng phụ mở', value: '2/3', pct: 67 },
+            { label: 'Hàng chờ TB', value: '6 ph', pct: 54 },
+          ],
+        },
+      },
     },
     zones: {
       title: 'Vùng cảnh báo',
       tabs: ['Trực tiếp', 'Dự báo', 'Lịch sử'],
-      quantity: 46,
-      status: 'Khán đài B',
-      lanes: ['Mở cổng B2', 'Tăng tuần tra', 'PA thông báo'],
+      views: {
+        live: { quantity: 46, status: 'Khán đài B', lanes: ['Mở cổng B2', 'Tăng tuần tra', 'PA thông báo'] },
+        forecast: { quantity: 8, status: 'B-12 sau 10 phút', lanes: ['Giảm mật độ B', 'Điều tiết C1', 'Theo dõi heatmap'] },
+        history: { quantity: 23, status: '3 điểm lặp lại', lanes: ['Xem ca trước', 'So sánh heatmap', 'Xuất biên bản'] },
+      },
     },
     response: {
       title: 'Phản ứng an ninh 24h',

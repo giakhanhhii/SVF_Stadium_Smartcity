@@ -1,12 +1,14 @@
 import { securityHud } from './security-hud.js';
 import { getGateState, getGateSummary } from './security-gates-state.js';
 
+const liveZone = securityHud.right.zones.views.live;
+
 export const securityRoomData = {
   status: {
     camerasOnline: '46/48',
     gatesActive: getGateSummary(),
     crowdTotal: securityHud.left.crowd.total,
-    hotZone: securityHud.right.zones.status,
+    hotZone: liveZone.status,
   },
   cameras: securityHud.left.cameras.feeds.map((f, i) => ({
     id: `cam-${i}`,
@@ -14,7 +16,7 @@ export const securityRoomData = {
     online: i !== 2,
   })),
   gates: getGateState(),
-  actions: securityHud.right.zones.lanes.map((label, i) => ({
+  actions: liveZone.lanes.map((label, i) => ({
     id: `act-${i}`,
     label,
     icon: ['ti-door', 'ti-walk', 'ti-speakerphone'][i] || 'ti-bolt',

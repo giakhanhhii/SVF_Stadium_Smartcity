@@ -60,12 +60,25 @@ export function bindViewTabs(pageId) {
       btn.classList.add('scene-view-tab--active');
       const viewId = btn.dataset.sceneView;
       if (pageId === 'security' && isSecurityInteriorActive()) {
+        root.classList.toggle('security-exterior-mode', viewId === 'overview');
+        root.classList.toggle('security-interior-mode', viewId !== 'overview');
+        document.dispatchEvent(new CustomEvent('voc-security-view-changed', {
+          detail: viewId === 'overview' ? 'exterior' : 'interior',
+        }));
         document.dispatchEvent(new CustomEvent('voc-open-stadium-screen', {
           detail: feedToViewId(viewId === 'overview' ? 'exterior' : 'interior'),
         }));
         return;
-      }      const container = root.querySelector('[data-mount="stadium-scene"]');
+      }
+      const container = root.querySelector('[data-mount="stadium-scene"]');
       applyPageView(viewId, container);
+      if (pageId === 'security') {
+        root.classList.toggle('security-exterior-mode', viewId === 'overview');
+        root.classList.toggle('security-interior-mode', viewId !== 'overview');
+        document.dispatchEvent(new CustomEvent('voc-security-view-changed', {
+          detail: viewId === 'overview' ? 'exterior' : 'interior',
+        }));
+      }
     });
   });
 }

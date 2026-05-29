@@ -23,28 +23,71 @@ export const securityExteriorHud = {
       ],
     },
     modeTabs: ['Perimeter', 'Giao thông'],
-    perimeter: { title: 'Chu vi an ninh', label: 'Camera / Sensor', value: '32/32' },
-    flowBars: {
-      title: 'Hàng chờ cổng ngoài',
-      subtitle: 'phút — cập nhật 10s',
-      bars: [
-        { time: 'A', value: 4 },
-        { time: 'B', value: 7 },
-        { time: 'C', value: 3 },
-        { time: 'VIP', value: 2 },
-        { time: 'P1', value: 5 },
-        { time: 'P4', value: 9 },
-      ],
+    modeViews: {
+      perimeter: {
+        statTitle: 'Chu vi an ninh',
+        icon: 'ti-shield',
+        label: 'Camera / Sensor',
+        value: '32/32',
+        chartTitle: 'Hàng chờ cổng ngoài',
+        subtitle: 'phút — cập nhật 10s',
+        bars: [
+          { time: 'A', value: 4 },
+          { time: 'B', value: 7 },
+          { time: 'C', value: 3 },
+          { time: 'VIP', value: 2 },
+          { time: 'P1', value: 5 },
+          { time: 'P4', value: 9 },
+        ],
+      },
+      traffic: {
+        statTitle: 'Giao thông ngoại vi',
+        icon: 'ti-traffic-lights',
+        label: 'Điểm ùn tắc',
+        value: '2',
+        chartTitle: 'Tải phương tiện',
+        subtitle: 'xe/phút — theo trục',
+        bars: [
+          { time: 'A', value: 32 },
+          { time: 'B', value: 46 },
+          { time: 'C', value: 25 },
+          { time: 'P1', value: 38 },
+          { time: 'P3', value: 21 },
+          { time: 'P4', value: 58 },
+        ],
+      },
     },
   },
   right: {
     parking: {
       title: 'Bãi đỗ & phương tiện',
       tabs: ['Bãi đỗ', 'Xe bus', 'Taxi'],
-      metrics: [
-        { label: 'Tổng sử dụng', value: '78%', pct: 78 },
-        { label: 'P4 gần đầy', value: '98%', pct: 98 },
-      ],
+      views: {
+        parking: {
+          ringPct: 78,
+          ringLabel: 'Bãi đỗ',
+          metrics: [
+            { label: 'Tổng sử dụng', value: '78%', pct: 78 },
+            { label: 'P4 gần đầy', value: '98%', pct: 98 },
+          ],
+        },
+        bus: {
+          ringPct: 90,
+          ringLabel: 'Bus',
+          metrics: [
+            { label: 'Shuttle hoạt động', value: '18/20', pct: 90 },
+            { label: 'Chờ trung bình', value: '5 ph', pct: 42 },
+          ],
+        },
+        taxi: {
+          ringPct: 64,
+          ringLabel: 'Taxi',
+          metrics: [
+            { label: 'Làn taxi mở', value: '3/4', pct: 75 },
+            { label: 'Xe đang chờ', value: '64', pct: 64 },
+          ],
+        },
+      },
     },
     patrol: {
       title: 'Tuần tra chu vi',

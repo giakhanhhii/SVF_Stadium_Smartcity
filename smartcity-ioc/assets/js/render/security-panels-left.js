@@ -3,25 +3,13 @@ function hudHead(title) {
 }
 
 function camThumb(label) {
-  return `<div class="hud-cam">
+  return `<div class="hud-cam" title="${label}">
     <svg viewBox="0 0 80 50"><rect fill="#0a2848" width="80" height="50"/>
     <rect fill="#185FA5" x="10" y="15" width="25" height="20" opacity="0.4"/>
-    <rect fill="#1D9E75" x="45" y="20" width="20" height="15" opacity="0.3"/></svg>
-    <span>${label}</span>
+    <rect fill="#1D9E75" x="45" y="20" width="20" height="15" opacity="0.3"/>
+    <circle cx="61" cy="17" r="3" fill="#00d4ff"/></svg>
+    <span></span>
   </div>`;
-}
-
-function barChartSvg(bars) {
-  const max = Math.max(...bars.map((b) => b.value));
-  const cols = bars.map((b, i) => {
-    const h = (b.value / max) * 36;
-    const fill = i % 2 ? '#4488ff' : '#00d4ff';
-    return `<rect x="${4 + i * 18}" y="${40 - h}" width="12" height="${h}" fill="${fill}" rx="1"/>`;
-  }).join('');
-  const labels = bars.map((b, i) =>
-    `<text x="${10 + i * 18}" y="48" fill="#5a8ab0" font-size="5" text-anchor="middle">${b.time.slice(-5)}</text>`,
-  ).join('');
-  return `<svg viewBox="0 0 112 52" class="hud-chart">${cols}${labels}</svg>`;
 }
 
 function donutSvg(segments) {
@@ -41,14 +29,41 @@ function donutSvg(segments) {
   }).join('');
   return `<svg viewBox="0 0 56 56" class="hud-donut">${arcs}
     <circle cx="${cx}" cy="${cy}" r="12" fill="#0a1828"/>
-    <text x="${cx}" y="${cy + 3}" text-anchor="middle" fill="#00d4ff" font-size="10">👤</text>
+    <path d="M23 25a5 5 0 1 1 10 0a5 5 0 0 1-10 0Zm-5 17c1-6 5-10 10-10s9 4 10 10" fill="none" stroke="#00d4ff" stroke-width="2" stroke-linecap="round"/>
   </svg>`;
 }
 
-export function renderLeftSidebar(d) {
-  const groups = d.personnel.groups.map((g) =>
-    `<div class="hud-pill hud-pill--${g.tone}"><span class="hud-pill__lbl">${g.label}</span><span class="hud-pill__val">${g.value.toLocaleString('vi-VN')}</span></div>`,
+function verticalBars(bars) {
+  const max = Math.max(...bars.map((b) => b.value));
+  return `<div class="hud-vbar-chart">${bars.map((b) => {
+    const h = (b.value / max) * 38;
+    return `<div class="hud-vbar" title="${b.time}: ${b.value}">
+      <i style="height:${h}px"></i>
+      <span>${b.value}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function distributionChart(groups) {
+  const total = groups.reduce((sum, g) => sum + g.value, 0);
+  const segments = groups.map((g) => {
+    const pct = Math.round((g.value / total) * 100);
+    return `<span class="hud-stack-seg hud-stack-seg--${g.tone}" style="width:${pct}%" title="${g.label}: ${pct}%"></span>`;
+  }).join('');
+  const legend = groups.map((g) =>
+    `<div class="hud-mini-kpi hud-mini-kpi--${g.tone}">
+      <span>${g.label}</span>
+      <strong>${g.value.toLocaleString('vi-VN')}</strong>
+    </div>`,
   ).join('');
+  return `<div class="hud-total-chart">
+    <div class="hud-total">${total.toLocaleString('vi-VN')}</div>
+    <div class="hud-stack">${segments}</div>
+    <div class="hud-mini-kpi-grid">${legend}</div>
+  </div>`;
+}
+
+export function renderLeftSidebar(d) {
   const cams = d.cameras.feeds.map((f) => camThumb(f.label)).join('');
   const careLegend = d.residentsCare.segments.map((s) =>
     `<div class="hud-legend-row"><span class="hud-legend-dot" style="background:${s.color}"></span>${s.label}</div>`,
@@ -56,9 +71,7 @@ export function renderLeftSidebar(d) {
 
   return `
     <section class="hud-block">${hudHead(d.personnel.title)}
-      <div class="hud-metric-lbl">${d.personnel.totalLabel}</div>
-      <div class="hud-metric-big">${d.personnel.total.toLocaleString('vi-VN')}</div>
-      <div class="hud-pill-row">${groups}</div>
+      ${distributionChart(d.personnel.groups)}
     </section>
     <section class="hud-block">${hudHead(d.cameras.title)}
       <div class="hud-cam-grid">${cams}</div>
@@ -68,11 +81,14 @@ export function renderLeftSidebar(d) {
       <button class="hud-tab">${d.modeTabs[1]}</button>
     </div>
     <section class="hud-block">${hudHead(d.blacklist.title)}
-      <div class="hud-inline-stat"><i class="ti ti-user-minus"></i><span>${d.blacklist.label}</span><strong>${d.blacklist.value}</strong></div>
+      <div class="hud-risk-gauge">
+        <i class="ti ti-user-minus"></i>
+        <strong>${d.blacklist.value}</strong>
+        <span>${d.blacklist.label}</span>
+      </div>
     </section>
     <section class="hud-block">${hudHead(d.timeoutVisitors.title)}
-      <div class="hud-sub">${d.timeoutVisitors.subtitle}</div>
-      ${barChartSvg(d.timeoutVisitors.bars)}
+      ${verticalBars(d.timeoutVisitors.bars)}
     </section>
     <section class="hud-block">${hudHead(d.residentsCare.title)}
       <div class="hud-donut-wrap">${donutSvg(d.residentsCare.segments)}<div class="hud-legend">${careLegend}</div></div>

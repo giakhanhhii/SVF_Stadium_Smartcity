@@ -9,6 +9,11 @@ export const eventsHud = {
     crowd: {
       title: 'Mật độ khán giả',
       totalLabel: 'Lấp đầy toàn sân',
+      total: snap.total,
+      groups: snap.sectors.map((s) => ({
+        label: s.label.replace('Khán đài ', ''),
+        value: s.count,
+      })),
       fillPercent: snap.fillPercent,
       fillTone: venueFill.tone,
       fillLabel: venueFill.label,
@@ -85,6 +90,11 @@ export const eventsHud = {
             { label: 'PA System', value: 'ON', pct: 100 },
             { label: 'Vùng phủ âm thanh', value: '8/8', pct: 100 },
           ],
+          status: [
+            { icon: 'ti-volume', label: 'Âm lượng', value: '72%' },
+            { icon: 'ti-broadcast', label: 'Chế độ', value: 'Live' },
+            { icon: 'ti-clock', label: 'Thông báo kế', value: 'HT +5\'' },
+          ],
         },
         led: {
           ringPct: 100,
@@ -92,6 +102,11 @@ export const eventsHud = {
           metrics: [
             { label: 'LED chính', value: '4/4', pct: 100 },
             { label: 'Màn hình phụ', value: '8/8', pct: 100 },
+          ],
+          status: [
+            { icon: 'ti-brightness', label: 'Độ sáng', value: '88%' },
+            { icon: 'ti-photo', label: 'Playlist', value: 'Match HUD' },
+            { icon: 'ti-alert-circle', label: 'Cảnh báo', value: '0 lỗi' },
           ],
         },
       },

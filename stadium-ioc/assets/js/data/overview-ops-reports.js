@@ -9,6 +9,11 @@ export const overviewOpsReports = {
     capacity: snap.totalFormatted,
     capacityLabel: `Khán giả / ${snap.capacityFormatted} chỗ`,
     pct: snap.fillPercent,
+    total: snap.total,
+    groups: snap.sectors.map((s) => ({
+      label: s.label.replace('Khán đài ', ''),
+      value: s.count,
+    })),
   },
   categories: [
     {

@@ -3,16 +3,23 @@ export function hudHead(title) {
 }
 
 export function barChartSvg(bars) {
-  const max = Math.max(...bars.map((b) => b.value));
+  const max = Math.max(...bars.map((b) => b.value), 1);
+  const count = bars.length;
+  const width = 112;
+  const pad = 4;
+  const slot = (width - pad * 2) / count;
+  const barW = Math.min(12, Math.max(7, slot * 0.62));
   const cols = bars.map((b, i) => {
     const h = (b.value / max) * 36;
+    const x = pad + i * slot + (slot - barW) / 2;
     const fill = i % 2 ? '#4488ff' : '#00d4ff';
-    return `<rect x="${4 + i * 18}" y="${40 - h}" width="12" height="${h}" fill="${fill}" rx="1"/>`;
+    return `<rect x="${x.toFixed(1)}" y="${40 - h}" width="${barW.toFixed(1)}" height="${h}" fill="${fill}" rx="1"/>`;
   }).join('');
-  const labels = bars.map((b, i) =>
-    `<text x="${10 + i * 18}" y="48" fill="#5a8ab0" font-size="5" text-anchor="middle">${b.time}</text>`,
-  ).join('');
-  return `<svg viewBox="0 0 112 52" class="hud-chart">${cols}${labels}</svg>`;
+  const labels = bars.map((b, i) => {
+    const x = pad + i * slot + slot / 2;
+    return `<text x="${x.toFixed(1)}" y="48" fill="#5a8ab0" font-size="5" text-anchor="middle">${b.time}</text>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${width} 52" class="hud-chart">${cols}${labels}</svg>`;
 }
 
 export function ringSvg(pct, label) {

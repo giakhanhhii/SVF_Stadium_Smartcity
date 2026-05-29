@@ -211,6 +211,125 @@
   text-align: right;
 }
 
+.overview-flow,
+.event-flow {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.overview-flow__top,
+.event-flow__top {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.overview-flow__gauge,
+.event-flow__gauge {
+  display: block;
+  width: 112px;
+  height: 112px;
+  overflow: visible;
+  filter: drop-shadow(0 10px 16px rgba(0, 12, 28, 0.55));
+}
+
+.overview-flow__slice,
+.event-flow__slice {
+  stroke: rgba(230, 250, 255, 0.22);
+  stroke-width: 0.9;
+}
+
+.overview-flow__pin,
+.event-flow__pin {
+  stroke: rgba(126, 223, 255, 0.58);
+  stroke-width: 0.8;
+}
+
+.overview-flow__dot,
+.event-flow__dot {
+  fill: #bdf7ff;
+  opacity: 0.8;
+}
+
+.overview-flow__metric,
+.event-flow__metric {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.overview-flow__metric strong,
+.event-flow__metric strong {
+  color: #00d4ff;
+  font-size: 28px;
+  line-height: 1;
+  text-shadow: 0 0 12px rgba(0, 212, 255, 0.38);
+}
+
+.overview-flow__metric span,
+.event-flow__metric span {
+  overflow: hidden;
+  color: #7ab0d0;
+  font-size: 9px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-flow__track,
+.event-flow__track {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(122, 176, 208, 0.16);
+}
+
+.overview-flow__track span,
+.event-flow__track span {
+  min-width: 4px;
+  box-shadow: inset -1px 0 0 rgba(4, 8, 16, 0.65);
+}
+
+.overview-flow__cards,
+.event-flow__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.overview-flow-card,
+.event-flow-card {
+  min-width: 0;
+  padding: 5px;
+  border: 1px solid rgba(0, 180, 255, 0.14);
+  border-radius: 3px;
+  background: rgba(0, 30, 60, 0.32);
+}
+
+.overview-flow-card span,
+.event-flow-card span {
+  display: block;
+  overflow: hidden;
+  color: #7ab0d0;
+  font-size: 8px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-flow-card strong,
+.event-flow-card strong {
+  display: block;
+  margin-top: 2px;
+  color: #e8f4ff;
+  font-size: 13px;
+  line-height: 1.1;
+}
+
 .overview-pie3d__depth {
   fill: rgba(0, 76, 118, 0.58);
 }
@@ -281,6 +400,163 @@
 .overview-combo-wrap {
   display: grid;
   gap: 6px;
+}
+
+.overview-combo-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.overview-combo-row .overview-combo {
+  min-height: 72px;
+  margin: 0;
+}
+
+.overview-combo-row .stad-sec-total {
+  gap: 5px;
+}
+
+.overview-combo-row .stad-sec-total__top {
+  grid-template-columns: 64px 1fr;
+  gap: 6px;
+}
+
+.overview-combo-row .stad-sec-radial3d {
+  width: 64px;
+  height: 64px;
+}
+
+.overview-combo-row .stad-sec-total__top > strong {
+  font-size: 16px;
+}
+
+.overview-combo-row .stad-sec-mini-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.overview-combo-row .stad-sec-mini {
+  padding: 3px 4px;
+}
+
+.overview-combo-row .stad-sec-mini strong {
+  font-size: 9px;
+}
+
+.hud-env-row--radial {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.hud-env-row--radial .stad-sec-total {
+  gap: 5px;
+}
+
+.hud-env-row--radial .stad-sec-total__top {
+  grid-template-columns: 64px 1fr;
+  gap: 6px;
+}
+
+.hud-env-row--radial .stad-sec-radial3d {
+  width: 64px;
+  height: 64px;
+}
+
+.hud-env-row--radial .stad-sec-total__top > strong {
+  font-size: 16px;
+}
+
+.hud-env-row--radial .stad-sec-mini-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.hud-env-row--radial .hud-env-bars {
+  min-width: 0;
+}
+
+.hud-pa-viz {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hud-pa-viz__main {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.hud-pa-viz__top {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.hud-pa-viz__top .stad-sec-radial3d {
+  width: 64px;
+  height: 64px;
+}
+
+.hud-pa-viz__top > strong {
+  color: #00d4ff;
+  font-size: 22px;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.28);
+}
+
+.hud-pa-viz__side {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+  min-width: 0;
+}
+
+.hud-pa-viz .stad-sec-mini-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.hud-pa-status {
+  display: grid;
+  gap: 4px;
+}
+
+.hud-pa-status__item {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: 5px;
+  align-items: center;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid rgba(0, 180, 255, 0.14);
+  border-radius: 3px;
+  background: rgba(0, 30, 60, 0.32);
+  color: #7ab0d0;
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+.hud-pa-status__item i {
+  color: #00d4ff;
+  font-size: 10px;
+}
+
+.hud-pa-status__item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hud-pa-status__item strong {
+  color: #d8ecff;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .overview-combo-kpis {
@@ -959,6 +1235,54 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 5px;
   margin-top: 8px;
+}
+
+.ops-alert-radar-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.ops-alert-radar-wrap .overview-radar3d {
+  max-height: 156px;
+  margin: 0 0 4px;
+}
+
+.ops-alert-radar-wrap .overview-radar3d__grid text {
+  font-size: 7px;
+}
+
+.ops-alert-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.ops-alert-kpis span {
+  min-width: 0;
+  padding: 5px 4px;
+  border: 1px solid rgba(0, 180, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(5, 24, 45, 0.62);
+  text-align: center;
+}
+
+.ops-alert-kpis b {
+  display: block;
+  color: #e8f4ff;
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+.ops-alert-kpis em {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #7ab0d0;
+  font-size: 7px;
+  font-style: normal;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ops-alert-dot {

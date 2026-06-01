@@ -98,10 +98,14 @@ function applyDensityTint(fillRatio) {
 export function updateStadiumCrowd(camera, viewingInterior) {
   if (!crowdRoot || !instancedMesh) return;
 
-  if (lastMode === 'off') return;
-  crowdRoot.visible = false;
-  instancedMesh.visible = false;
-  lastMode = 'off';
+  refreshCrowdInstances();
+  const dist = Math.hypot(camera.position.x, camera.position.z);
+  const visible = viewingInterior || dist < NEAR_DIST;
+  const nextMode = visible ? 'on' : 'off';
+  if (lastMode === nextMode) return;
+  crowdRoot.visible = visible;
+  instancedMesh.visible = visible;
+  lastMode = nextMode;
 }
 
 export function disposeStadiumCrowd() {

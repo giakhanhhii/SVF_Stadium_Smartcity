@@ -17,6 +17,12 @@ import {
   buildControlRooms, bindControlRoomPick, setControlRoomsVisible, disposeControlRooms,
 } from './stadium-control-rooms.js';
 import {
+  buildParkingVehicles, setParkingVehiclesVisible, disposeParkingVehicles,
+} from './stadium-parking-vehicles.js';
+import {
+  buildPedestrians, updatePedestrians, setPedestriansVisible, disposePedestrians,
+} from './stadium-pedestrians.js';
+import {
   buildSecurityInterior, enterSecurityInterior, exitSecurityInterior,
   updateSecurityMonitors, bindSecurityMonitorPick, disposeSecurityInterior,
   isSecurityInteriorActive, feedToViewId, setSecurityInteriorVisible, reenterSecurityInterior,
@@ -59,6 +65,8 @@ function resolveMarkersForView(viewId) {
 
 function setParkingVisible(visible = true) {
   if (parkingGroup) parkingGroup.visible = visible;
+  setParkingVehiclesVisible(visible);
+  setPedestriansVisible(visible);
 }
 
 function bindVocEvents() {
@@ -92,9 +100,8 @@ function bindVocEvents() {
   });
 }
 
-const MODEL_URL = 'assets/models/pvf-stadium-openroof-v3.glb?v=roof-fit-20260528b';
+const MODEL_URL = 'assets/models/pvf-stadium-openroof-v4.glb?v=pitch-lines-visible-20260530a';
 const GLASS_OPAQUE = 0xe8ecf2;
-const GLASS_TRANSPARENT = 0xffffff;
 
 const _viewForward = new THREE.Vector3();
 const _viewToCenter = new THREE.Vector3();
@@ -180,38 +187,44 @@ function stabilizePitchSurface(model) {
   }
 }
 
+function setMaterialSolidDoubleSided(material, colorHex = null) {
+  if (!material) return;
+  (Array.isArray(material) ? material : [material]).forEach((m) => {
+    m.transparent = false;
+    m.opacity = 1;
+    m.depthWrite = true;
+    m.side = THREE.DoubleSide;
+    if (colorHex !== null && m.color) m.color.setHex(colorHex);
+    m.needsUpdate = true;
+  });
+}
+
+function stabilizeInteriorShell(model) {
+  [
+    'building_base',
+    'facade_spandrels',
+    'roof_collar',
+    'roof_rim_frame',
+    'roof_dome',
+    'roof_rect_opening_trim',
+  ].forEach((name) => {
+    const mesh = model.getObjectByName(name);
+    if (mesh?.material) setMaterialSolidDoubleSided(mesh.material);
+  });
+
+  const glass = model.getObjectByName('facade_glass');
+  if (glass?.material) setMaterialSolidDoubleSided(glass.material, GLASS_OPAQUE);
+}
+
 export function setControlRoomMode(mode) {
   controlRoomMode = mode;
   updateControlRoomVisibility();
 }
 
-/** Kính trong suốt chỉ khi camera thực sự ở trong bowl hẹp */
-function isCameraInsideShell(camera) {
-  const { x, y, z } = camera.position;
-  const { rx, rz } = floodRingConfig;
-  return (x / (rx * 0.92)) ** 2 + (z / (rz * 0.92)) ** 2 < 1.08 && y < domeConfig.rimY + 24;
-}
-
-function updateShellVisibility(camera, controls) {
-  const viewingInterior = isCameraViewingInterior(camera, controls);
-  const insideShell = isCameraInsideShell(camera);
-  const roofOpen = roofProgress > 0.02;
-
+/** Keep the stadium shell solid from both exterior and interior camera angles. */
+function updateShellVisibility() {
   if (facadeGlassMesh?.material) {
-    const m = facadeGlassMesh.material;
-    if (insideShell || viewingInterior) {
-      m.transparent = true;
-      m.opacity = insideShell ? 0.72 : 0.38;
-      m.depthWrite = false;
-      m.side = THREE.DoubleSide;
-      m.color.setHex(GLASS_TRANSPARENT);
-    } else {
-      m.transparent = false;
-      m.opacity = 1;
-      m.depthWrite = true;
-      m.side = THREE.FrontSide;
-      m.color.setHex(GLASS_OPAQUE);
-    }
+    setMaterialSolidDoubleSided(facadeGlassMesh.material, GLASS_OPAQUE);
   }
 
   if (roofClosedCap) roofClosedCap.visible = false;
@@ -282,6 +295,7 @@ function createScene(container, navPageId) {
       floodlightsGroup.traverse((o) => { o.visible = false; });
     }
     stabilizePitchSurface(stadiumModel);
+    stabilizeInteriorShell(stadiumModel);
     facadeGlassMesh = stadiumModel.getObjectByName('facade_glass');
     facadeMullionsMesh = stadiumModel.getObjectByName('facade_mullions');
     facadeTopFrameMesh = stadiumModel.getObjectByName('facade_top_frame');
@@ -295,6 +309,8 @@ function createScene(container, navPageId) {
     roofOpenGroup = stadiumModel.getObjectByName('roof_open');
     setRoofProgress(roofProgress);
     buildStadiumGates(scene);
+    buildParkingVehicles(scene);
+    buildPedestrians(scene);
     buildControlRooms(scene);
     buildSecurityInterior(scene);
     setMonitorFeedHooks({ beforeFeedRender: prepareMonitorFeed, afterFeedsRender: restoreAfterMonitorFeeds });
@@ -314,6 +330,7 @@ function createScene(container, navPageId) {
   function animate() {
     frameId = requestAnimationFrame(animate);
     pulseMarkers(clock.getElapsedTime());
+    updatePedestrians(clock.getElapsedTime());
     controls.update();
     updateShellVisibility(camera, controls);
     updateStadiumCrowd(camera, isCameraViewingInterior(camera, controls));
@@ -355,6 +372,8 @@ function createScene(container, navPageId) {
       roofClosedCap = null;
       parkingGroup = null;
       disposeControlRooms();
+      disposeParkingVehicles();
+      disposePedestrians();
       disposeStadiumGates();
       disposeSecurityInterior();
       mainScene = null;

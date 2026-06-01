@@ -16,6 +16,8 @@ let active = false;
 let savedControls = null;
 let beforeFeedRender = null;
 let afterFeedsRender = null;
+let lastMonitorFeedRender = 0;
+const MONITOR_FEED_INTERVAL_MS = 100;
 
 export function setMonitorFeedHooks({ beforeFeedRender: hook, afterFeedsRender: afterHook }) {
   beforeFeedRender = hook;
@@ -290,6 +292,9 @@ export function exitSecurityInterior(refs) {
 
 export function updateSecurityMonitors(renderer, scene) {
   if (!active || !interiorGroup?.visible) return;
+  const now = performance.now();
+  if (now - lastMonitorFeedRender < MONITOR_FEED_INTERVAL_MS) return;
+  lastMonitorFeedRender = now;
 
   const prevBg = scene.background;
   const prevRoomVis = interiorGroup.visible;
@@ -347,6 +352,7 @@ export function unbindSecurityMonitorPick() {
 export function disposeSecurityInterior() {
   unbindSecurityMonitorPick();
   active = false;
+  lastMonitorFeedRender = 0;
   monitorMeshes = [];
   feedCams = [];
   feedIds = [];

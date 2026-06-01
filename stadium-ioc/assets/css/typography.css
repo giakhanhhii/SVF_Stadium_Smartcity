@@ -26,9 +26,13 @@ body,
 .event-action-modal,
 .event-smoke-modal,
 .event-power-modal,
+.fac-action-modal,
+.svc-action-modal,
 .event-action-modal button,
 .event-smoke-modal button,
-.event-power-modal button {
+.event-power-modal button,
+.fac-action-modal button,
+.svc-action-modal button {
   font-family: var(--font-family-ui) !important;
   font-synthesis: none;
 }
@@ -36,7 +40,9 @@ body,
 .prototype-shell .ti,
 .event-action-modal .ti,
 .event-smoke-modal .ti,
-.event-power-modal .ti {
+.event-power-modal .ti,
+.fac-action-modal .ti,
+.svc-action-modal .ti {
   font-family: "tabler-icons" !important;
 }
 

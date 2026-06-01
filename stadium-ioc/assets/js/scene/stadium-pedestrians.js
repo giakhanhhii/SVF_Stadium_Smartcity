@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const COUNT = 150;
+const COUNT = 72;
 const WALK_RADIUS_MIN = 390;
 const WALK_RADIUS_MAX = 548;
 const COLORS = [0x185fa5, 0xa32d2d, 0x0f6e56, 0xba7517, 0xe8edf4, 0x252a34];
@@ -63,7 +63,7 @@ export function buildPedestrians(scene) {
 }
 
 export function updatePedestrians(elapsed) {
-  if (!pedestrianRoot) return;
+  if (!pedestrianRoot?.visible) return;
   walkers.forEach((w) => {
     const a = w.angle + elapsed * w.speed * w.direction;
     const p = pointAt(w.radius, a);

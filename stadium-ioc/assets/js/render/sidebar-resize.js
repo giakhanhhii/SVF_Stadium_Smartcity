@@ -91,10 +91,15 @@ function onDragMove(event) {
   event.stopPropagation();
 
   const dx = event.clientX - activeDrag.startX;
-  const rawLeft = activeDrag.side === 'left' ? activeDrag.startLeft + dx : activeDrag.startLeft;
-  const rawRight = activeDrag.side === 'right' ? activeDrag.startRight - dx : activeDrag.startRight;
-  const left = clampWidth(rawLeft, activeDrag.command, rawRight);
-  const right = clampWidth(rawRight, activeDrag.command, left);
+  let left = activeDrag.startLeft;
+  let right = activeDrag.startRight;
+
+  if (activeDrag.side === 'left') {
+    left = clampWidth(activeDrag.startLeft + dx, activeDrag.command, activeDrag.startRight);
+  } else {
+    right = clampWidth(activeDrag.startRight - dx, activeDrag.command, activeDrag.startLeft);
+  }
+
   const commandRect = activeDrag.command.getBoundingClientRect();
   const guideX = activeDrag.side === 'left' ? commandRect.left + left : commandRect.right - right;
 

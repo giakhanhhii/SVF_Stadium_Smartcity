@@ -5,6 +5,9 @@
   "scripts": {
     "generate:stadium": "node scripts/generate-stadium-glb.mjs",
     "dev": "node scripts/dev-server.mjs",
+    "dev:start": "node scripts/start-dev-server.mjs",
+    "dev:check": "node scripts/check-dev-server.mjs",
+    "dev:stop": "node scripts/stop-dev-server.mjs",
     "test:stadium": "playwright test tests/stadium-visual.spec.js",
     "test:stadium:ui": "playwright test tests/stadium-visual.spec.js --ui",
     "export:ke-hoach": "node scripts/export-ke-hoach-ioc-excel.mjs && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/add-ke-hoach-charts.ps1"

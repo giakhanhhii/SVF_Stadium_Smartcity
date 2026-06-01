@@ -957,6 +957,10 @@
   gap: 10px;
 }
 
+.event-risk--fire {
+  gap: 12px;
+}
+
 .event-overload {
   gap: 10px;
 }
@@ -1201,6 +1205,22 @@
 
 .event-risk__btn--hot i {
   color: #7edfff;
+}
+
+.event-risk--fire .event-risk__actions {
+  gap: 7px;
+}
+
+.event-risk--fire .event-risk__btn {
+  min-height: 42px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 7px;
+  padding: 8px;
+  font-size: 10px;
+}
+
+.event-risk--fire .event-risk__btn i {
+  font-size: 16px;
 }
 
 .event-action-modal[hidden] {
@@ -1496,7 +1516,16 @@
   border-radius: 5px;
   background: rgba(0, 80, 120, 0.34);
   color: #d8f4ff;
-  transition: background 260ms ease, border-color 260ms ease, color 260ms ease, opacity 260ms ease;
+  font-family: inherit;
+  transition: background 260ms ease, border-color 260ms ease, color 260ms ease, opacity 260ms ease, box-shadow 260ms ease, filter 260ms ease;
+  cursor: pointer;
+}
+
+.event-power-zone:hover,
+.event-power-zone--selected {
+  border-color: rgba(0, 212, 255, 0.72);
+  background: rgba(0, 106, 154, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.18), 0 0 18px rgba(0, 212, 255, 0.12);
 }
 
 .event-power-zone i {
@@ -1516,15 +1545,31 @@
 }
 
 .event-power-zone--off {
-  border-color: rgba(40, 88, 112, 0.2);
-  background: rgba(4, 24, 38, 0.66);
-  color: #4e7890;
-  opacity: 0.68;
+  border-color: rgba(0, 132, 172, 0.42);
+  background: linear-gradient(180deg, rgba(5, 35, 52, 0.82), rgba(3, 20, 34, 0.9));
+  color: #9fc8da;
+  filter: saturate(0.7) brightness(0.82);
+  opacity: 1;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.52);
+}
+
+.event-power-zone--off:hover,
+.event-power-zone--off.event-power-zone--selected {
+  border-color: rgba(0, 180, 220, 0.56);
+  background: linear-gradient(180deg, rgba(6, 42, 62, 0.86), rgba(4, 24, 40, 0.92));
+  color: #c5e7f4;
+  filter: saturate(0.78) brightness(0.88);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 132, 172, 0.12);
 }
 
 .event-power-zone--off i {
-  background: #19465e;
+  background: #27758f;
   box-shadow: none;
+  opacity: 0.42;
+}
+
+.event-power-zone--off b {
+  color: #c8e7f2;
 }
 
 .event-power-confirm {
@@ -1555,19 +1600,19 @@
 
 .event-fire-layout {
   display: grid;
-  grid-template-columns: 92px 1fr;
-  gap: 8px;
+  grid-template-columns: 118px 1fr;
+  gap: 10px;
   align-items: center;
 }
 
 .event-fire-core {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-columns: 28px minmax(0, 1fr);
   gap: 2px 8px;
   align-items: center;
   grid-column: 1 / -1;
-  min-height: 46px;
-  padding: 8px;
+  min-height: 58px;
+  padding: 10px 12px;
   border: 1px solid rgba(0, 212, 255, 0.24);
   border-radius: 4px;
   background: radial-gradient(circle at 18px 50%, rgba(0, 212, 255, 0.24), rgba(0, 48, 88, 0.22) 64%);
@@ -1577,18 +1622,18 @@
 .event-fire-core i {
   grid-row: span 2;
   color: #00d4ff;
-  font-size: 22px;
+  font-size: 28px;
 }
 
 .event-fire-core strong {
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
 }
 
 .event-fire-core span {
   grid-column: 2;
   color: #7ab0d0;
-  font-size: 7px;
+  font-size: 9px;
 }
 
 .event-fire-radial {
@@ -1600,8 +1645,8 @@
 }
 
 .event-fire-radial .stad-sec-radial3d {
-  width: 86px;
-  height: 86px;
+  width: 112px;
+  height: 112px;
 }
 
 .event-fire-radial > strong {
@@ -1610,7 +1655,7 @@
   left: 50%;
   transform: translateX(-50%);
   color: #e8f4ff;
-  font-size: 9px;
+  font-size: 11px;
   text-shadow: 0 0 8px rgba(0, 212, 255, 0.34);
 }
 
@@ -1619,13 +1664,18 @@
   grid-column: 2;
   grid-row: 1;
   grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
+  gap: 6px;
+}
+
+.event-risk--fire .event-fire-cell {
+  min-height: 30px;
+  border-radius: 4px;
 }
 
 .event-fire-sensors {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px;
+  gap: 7px;
 }
 
 .event-fire-sensor {
@@ -1634,12 +1684,13 @@
   gap: 5px;
   align-items: center;
   min-width: 0;
-  padding: 5px;
+  min-height: 34px;
+  padding: 7px;
   border: 1px solid rgba(122, 176, 208, 0.14);
   border-radius: 4px;
   background: rgba(0, 30, 60, 0.28);
   color: #7ab0d0;
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .event-fire-sensor span {

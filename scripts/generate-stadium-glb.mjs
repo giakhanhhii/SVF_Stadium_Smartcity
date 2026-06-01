@@ -11,7 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT = path.join(__dirname, '..', 'stadium-ioc', 'assets', 'models', 'pvf-stadium-openroof-v3.glb');
+const OUT = path.join(__dirname, '..', 'stadium-ioc', 'assets', 'models', 'pvf-stadium-openroof-v4.glb');
 
 const PITCH_L = 105;
 const PITCH_W = 68;
@@ -818,14 +818,16 @@ function createPitch(group) {
   const g = new THREE.Group();
   g.name = 'pitch';
 
-  const DESIRED_FIELD_SCALE = 3.15;
+  const pitchL = BOWL.innerRx * 2.24;
   // Cho cỏ “fill” sát mép khán đài trong: tăng margin để không còn mảng nền trắng
-  const FIT_MARGIN = 0.93;
-  const fitScaleX = (BOWL.innerRx * FIT_MARGIN) / PITCH_HALF_L;
-  const fitScaleZ = (BOWL.innerRz * FIT_MARGIN) / PITCH_HALF_W;
-  const FIELD_SCALE = Math.min(DESIRED_FIELD_SCALE, fitScaleX, fitScaleZ);
-  const pitchL = PITCH_L * FIELD_SCALE;
-  const pitchW = PITCH_W * FIELD_SCALE;
+  const pitchW = BOWL.innerRz * 2.24;
+  const scale = Math.min(pitchL / PITCH_L, pitchW / PITCH_W);
+  const lineW = 0.74 * scale;
+  const lineY = 0.68;
+  const goalDepth = 2.4 * scale;
+  const goalWidth = 7.32 * scale;
+  const goalHeight = 2.44 * scale;
+  const postW = 0.18 * scale;
 
   const surf = new THREE.Mesh(new THREE.PlaneGeometry(pitchL, pitchW, 1, 1), MAT.grass);
   surf.rotation.x = -Math.PI / 2;
@@ -833,6 +835,137 @@ function createPitch(group) {
   surf.renderOrder = 8;
   surf.name = 'pitch_surface';
   g.add(surf);
+
+  const addLine = (name, x, z, w, d) => {
+    const line = new THREE.Mesh(new THREE.PlaneGeometry(w, d), MAT.line);
+    line.rotation.x = -Math.PI / 2;
+    line.position.set(x, lineY, z);
+    line.renderOrder = 10;
+    line.name = name;
+    g.add(line);
+    return line;
+  };
+
+  const addCircle = (name, radius, x = 0, z = 0, start = 0, end = Math.PI * 2) => {
+    const pts = [];
+    const steps = Math.max(24, Math.ceil((Math.abs(end - start) / (Math.PI * 2)) * 96));
+    for (let i = 0; i <= steps; i++) {
+      const a = start + ((end - start) * i) / steps;
+      pts.push(new THREE.Vector3(x + Math.cos(a) * radius, lineY, z + Math.sin(a) * radius));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, steps, lineW * 0.55, 6, false), MAT.line);
+    tube.renderOrder = 10;
+    tube.name = name;
+    g.add(tube);
+    return tube;
+  };
+
+  const addGoal = (name, side) => {
+    const goal = new THREE.Group();
+    goal.name = name;
+    const x = side * (pitchL / 2 - 1.35 * scale);
+    const backX = x - side * goalDepth;
+    const railX = (x + backX) / 2;
+    const postGeo = new THREE.BoxGeometry(postW, goalHeight, postW);
+    const barGeo = new THREE.BoxGeometry(postW, postW, goalWidth + postW);
+    const depthGeo = new THREE.BoxGeometry(goalDepth, postW * 0.72, postW * 0.72);
+    [-1, 1].forEach((zSign) => {
+      const post = new THREE.Mesh(postGeo, MAT.line);
+      post.position.set(x, goalHeight / 2 + lineY, zSign * goalWidth / 2);
+      goal.add(post);
+
+      const rearPost = new THREE.Mesh(postGeo, MAT.line);
+      rearPost.position.set(backX, goalHeight / 2 + lineY, zSign * goalWidth / 2);
+      goal.add(rearPost);
+
+      const sideRail = new THREE.Mesh(depthGeo, MAT.line);
+      sideRail.position.set(railX, goalHeight + lineY, zSign * goalWidth / 2);
+      goal.add(sideRail);
+
+      const groundRail = new THREE.Mesh(depthGeo, MAT.line);
+      groundRail.position.set(railX, lineY + postW * 0.35, zSign * goalWidth / 2);
+      goal.add(groundRail);
+    });
+
+    const crossbar = new THREE.Mesh(barGeo, MAT.line);
+    crossbar.position.set(x, goalHeight + lineY, 0);
+    goal.add(crossbar);
+
+    const backBar = new THREE.Mesh(barGeo, MAT.line);
+    backBar.position.set(backX, goalHeight + lineY, 0);
+    goal.add(backBar);
+
+    const bottomBar = new THREE.Mesh(barGeo, MAT.line);
+    bottomBar.position.set(backX, lineY + postW * 0.35, 0);
+    goal.add(bottomBar);
+
+    const netMat = new THREE.MeshBasicMaterial({ color: 0xdfe8f2, transparent: true, opacity: 0.32, side: THREE.DoubleSide });
+
+    const backNet = new THREE.Mesh(new THREE.PlaneGeometry(goalWidth, goalHeight), netMat);
+    backNet.rotation.y = Math.PI / 2;
+    backNet.position.set(backX, goalHeight / 2 + lineY, 0);
+    backNet.renderOrder = 9;
+    goal.add(backNet);
+
+    [-1, 1].forEach((zSign) => {
+      const sideNet = new THREE.Mesh(new THREE.PlaneGeometry(goalDepth, goalHeight), netMat);
+      sideNet.position.set(railX, goalHeight / 2 + lineY, zSign * goalWidth / 2);
+      sideNet.renderOrder = 9;
+      goal.add(sideNet);
+    });
+
+    const topNet = new THREE.Mesh(new THREE.PlaneGeometry(goalDepth, goalWidth), netMat);
+    topNet.rotation.x = -Math.PI / 2;
+    topNet.position.set(railX, goalHeight + lineY, 0);
+    topNet.renderOrder = 9;
+    goal.add(topNet);
+
+    g.add(goal);
+  };
+
+  const fieldL = pitchL * 0.88;
+  const fieldW = pitchW * 0.78;
+  const halfL = fieldL / 2;
+  const halfW = fieldW / 2;
+  addLine('pitch_line_north', 0, -halfW + lineW / 2, pitchL, lineW);
+  addLine('pitch_line_south', 0, halfW - lineW / 2, pitchL, lineW);
+  addLine('pitch_line_west', -halfL + lineW / 2, 0, lineW, pitchW);
+  addLine('pitch_line_east', halfL - lineW / 2, 0, lineW, pitchW);
+  addLine('pitch_halfway_line', 0, 0, lineW, pitchW);
+  addCircle('pitch_center_circle', 9.15 * scale);
+  addCircle('pitch_center_spot', lineW * 1.8);
+
+  const penaltyD = 16.5 * scale;
+  const penaltyW = 40.3 * scale;
+  const boxD = 5.5 * scale;
+  const boxW = 18.32 * scale;
+  [-1, 1].forEach((side) => {
+    const penX = side * (halfL - penaltyD / 2);
+    const boxX = side * (halfL - boxD / 2);
+    addLine(`pitch_penalty_back_${side}`, side * (halfL - penaltyD), 0, lineW, penaltyW);
+    addLine(`pitch_penalty_top_${side}`, penX, -penaltyW / 2, penaltyD, lineW);
+    addLine(`pitch_penalty_bottom_${side}`, penX, penaltyW / 2, penaltyD, lineW);
+    addLine(`pitch_goalbox_back_${side}`, side * (halfL - boxD), 0, lineW, boxW);
+    addLine(`pitch_goalbox_top_${side}`, boxX, -boxW / 2, boxD, lineW);
+    addLine(`pitch_goalbox_bottom_${side}`, boxX, boxW / 2, boxD, lineW);
+    addCircle(`pitch_penalty_spot_${side}`, lineW * 1.4, side * (halfL - 11 * scale), 0);
+    addCircle(
+      `pitch_penalty_arc_${side}`,
+      9.15 * scale,
+      side * (halfL - 11 * scale),
+      0,
+      side > 0 ? Math.PI * 0.72 : -Math.PI * 0.28,
+      side > 0 ? Math.PI * 1.28 : Math.PI * 0.28,
+    );
+    addGoal(`football_goal_${side > 0 ? 'east' : 'west'}`, side);
+  });
+
+  const cornerR = 1.6 * scale;
+  addCircle('pitch_corner_ne', cornerR, halfL, -halfW, Math.PI * 0.5, Math.PI);
+  addCircle('pitch_corner_se', cornerR, halfL, halfW, Math.PI, Math.PI * 1.5);
+  addCircle('pitch_corner_sw', cornerR, -halfL, halfW, Math.PI * 1.5, Math.PI * 2);
+  addCircle('pitch_corner_nw', cornerR, -halfL, -halfW, 0, Math.PI * 0.5);
 
   group.add(g);
 }

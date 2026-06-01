@@ -1,3 +1,5 @@
+import { parkingVehicleLots } from './stadium-parking-vehicles-data.js';
+
 export const domeConfig = {
   rimY: 79.2,
   panelY: 140.4,
@@ -22,11 +24,14 @@ export const floodRingConfig = {
 
 /** Marker 4 bãi — hiển thị trên mọi góc nhìn ngoài sân */
 export const parkingMarkers = [
-  { type: 'parking', pos: [-357, 2, -357], color: 0x534ab7, label: 'P1 85%' },
-  { type: 'parking', pos: [357, 2, -357], color: 0x534ab7, label: 'P2 92%' },
-  { type: 'parking', pos: [-357, 2, 357], color: 0x534ab7, label: 'P3 88%' },
-  { type: 'parking', pos: [357, 2, 357], color: 0xba7517, label: 'P4 98%' },
-];
+  [-357, 2, -357],
+  [357, 2, -357],
+  [-357, 2, 357],
+  [357, 2, 357],
+].map((pos, index) => {
+  const lot = parkingVehicleLots[index];
+  return { type: 'parking', pos, color: 0xba7517, label: `${lot.id} ${lot.usagePct}% ${lot.total} xe` };
+});
 
 /** Góc nhìn thấy được bãi đỗ quanh sân */
 export const exteriorSceneViews = new Set([

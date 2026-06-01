@@ -1,3 +1,9 @@
+import { parkingVehicleLots, parkingVehicleSummary } from './stadium-parking-vehicles-data.js';
+
+const busiestParkingLot = parkingVehicleLots.reduce((max, lot) => (lot.usagePct > max.usagePct ? lot : max), parkingVehicleLots[0]);
+const parkingCarPct = Math.round((parkingVehicleSummary.cars / parkingVehicleSummary.total) * 100);
+const parkingMotorbikePct = 100 - parkingCarPct;
+
 export const securityExteriorHud = {
   left: {
     ingress: {
@@ -64,11 +70,12 @@ export const securityExteriorHud = {
       tabs: ['Bãi đỗ', 'Xe bus', 'Taxi'],
       views: {
         parking: {
-          ringPct: 78,
+          ringPct: parkingVehicleSummary.usagePct,
           ringLabel: 'Bãi đỗ',
           metrics: [
-            { label: 'Tổng sử dụng', value: '78%', pct: 78 },
-            { label: 'P4 gần đầy', value: '98%', pct: 98 },
+            { label: 'Ô tô', value: `${parkingVehicleSummary.cars}`, pct: parkingCarPct },
+            { label: 'Xe máy', value: `${parkingVehicleSummary.motorbikes}`, pct: parkingMotorbikePct },
+            { label: 'Tổng', value: `${parkingVehicleSummary.total}`, pct: parkingVehicleSummary.usagePct },
           ],
         },
         bus: {
@@ -108,7 +115,7 @@ export const securityExteriorHud = {
       chart: [0.15, 0.22, 0.38, 0.62, 0.88, 0.95, 0.82, 0.68, 0.55, 0.42, 0.28, 0.18],
     },
     alerts: [
-      { tag: 'CẢNH BÁO', label: 'Cảnh báo', tagBg: '#3d3010', tagColor: '#BA7517', title: 'Bãi P4 gần đầy — 98%', time: '5 phút' },
+      { tag: 'CẢNH BÁO', label: 'Cảnh báo', tagBg: '#3d3010', tagColor: '#BA7517', title: `Bãi ${busiestParkingLot.id} đông — ${busiestParkingLot.usagePct}%`, time: '5 phút' },
       { tag: 'GIAO THÔNG', label: 'Giao thông', tagBg: '#0a2840', tagColor: '#00d4ff', title: 'Tắc cổng B — Hàng chờ 7 phút', time: '8 phút' },
       { tag: 'NGOẠI VI', label: 'Ngoại vi', tagBg: '#1a1840', tagColor: '#534AB7', title: 'Xe dừng bất thường — Đường vào A', time: '14 phút' },
     ],

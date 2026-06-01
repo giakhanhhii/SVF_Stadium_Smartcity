@@ -1,14 +1,20 @@
+import { parkingVehicleLots, parkingVehicleSummary } from './stadium-parking-vehicles-data.js';
+
+const busiestParkingLot = parkingVehicleLots.reduce((max, lot) => (lot.usagePct > max.usagePct ? lot : max), parkingVehicleLots[0]);
+const parkingCarPct = Math.round((parkingVehicleSummary.cars / parkingVehicleSummary.total) * 100);
+const parkingMotorbikePct = 100 - parkingCarPct;
+
 export const servicesHud = {
   left: {
     parking: {
       title: 'Bãi đỗ xe',
-      total: 78,
-      totalLabel: '% sử dụng — 2.400 chỗ',
-      groups: [
-        { label: 'P1', value: 85, tone: 'cyan' },
-        { label: 'P2', value: 92, tone: 'purple' },
-        { label: 'P4', value: 98, tone: 'blue' },
-      ],
+      total: parkingVehicleSummary.usagePct,
+      totalLabel: `% sử dụng — ${parkingVehicleSummary.total} / ${parkingVehicleSummary.capacity} phương tiện`,
+      groups: parkingVehicleLots.map((lot, index) => ({
+        label: lot.id,
+        value: lot.usagePct,
+        tone: ['cyan', 'purple', 'blue', 'cyan'][index] || 'cyan',
+      })),
     },
     services: {
       title: 'Điểm dịch vụ',
@@ -26,8 +32,8 @@ export const servicesHud = {
       parking: {
         statTitle: 'Điều phối bãi đỗ',
         icon: 'ti-parking',
-        label: 'Bãi P4 gần đầy',
-        value: '98%',
+        label: `Bãi ${busiestParkingLot.id} đông`,
+        value: `${parkingVehicleSummary.total}`,
         chartTitle: 'Thời gian chờ bãi',
         subtitle: 'phút — theo bãi',
         bars: [
@@ -63,7 +69,7 @@ export const servicesHud = {
       tabs: ['F&B', 'Bãi đỗ', 'WiFi'],
       views: {
         fb: {
-          ringPct: 78,
+          ringPct: parkingVehicleSummary.usagePct,
           ringLabel: 'Doanh thu',
           metrics: [
             { label: 'Quầy mở', value: '24/24', pct: 100 },
@@ -74,8 +80,9 @@ export const servicesHud = {
           ringPct: 78,
           ringLabel: 'Bãi đỗ',
           metrics: [
-            { label: 'Chỗ đã dùng', value: '1.872', pct: 78 },
-            { label: 'Bãi P4', value: '98%', pct: 98 },
+            { label: 'Ô tô', value: `${parkingVehicleSummary.cars}`, pct: parkingCarPct },
+            { label: 'Xe máy', value: `${parkingVehicleSummary.motorbikes}`, pct: parkingMotorbikePct },
+            { label: 'Tổng', value: `${parkingVehicleSummary.total}`, pct: parkingVehicleSummary.usagePct },
           ],
         },
         wifi: {
@@ -92,7 +99,7 @@ export const servicesHud = {
       title: 'Lưu thông quanh sân',
       tabs: ['Trực tiếp', 'Dự báo', 'Sau trận'],
       quantity: 4,
-      status: 'P4 gần đầy',
+      status: `${parkingVehicleSummary.cars} ô tô · ${parkingVehicleSummary.motorbikes} xe máy`,
       lanes: ['Chuyển P3', 'Cập nhật LED', 'Mở làn phụ'],
     },
     medical: {
@@ -119,7 +126,7 @@ export const servicesHud = {
       title: 'Dịch vụ khán giả 24h',
       tabs: ['Doanh thu', 'Phản hồi', 'WiFi'],
       stats: [
-        { label: 'Bãi đỗ sử dụng', value: '78%', trend: 'up', change: '1.872 xe' },
+        { label: 'Bãi đỗ sử dụng', value: `${parkingVehicleSummary.usagePct}%`, trend: 'up', change: `${parkingVehicleSummary.total} xe` },
         { label: 'F&B doanh thu', value: '842M', trend: 'up', change: '+18%' },
         { label: 'WiFi thiết bị', value: '12.4K', trend: 'up', change: 'Ổn định' },
         { label: 'Phản hồi app', value: '23', trend: 'down', change: '3 mới' },
@@ -127,7 +134,7 @@ export const servicesHud = {
       chart: [0.12, 0.18, 0.35, 0.55, 0.72, 0.85, 0.92, 0.88, 0.75, 0.55, 0.35, 0.2],
     },
     alerts: [
-      { tag: 'CẢNH BÁO', tagBg: '#3d3010', tagColor: '#BA7517', title: 'Bãi P4 gần đầy — 98%', time: '5 phút' },
+      { tag: 'CẢNH BÁO', tagBg: '#3d3010', tagColor: '#BA7517', title: `Bãi ${busiestParkingLot.id} đông — ${busiestParkingLot.usagePct}%`, time: '5 phút' },
       { tag: 'PHẢN HỒI', tagBg: '#0a2840', tagColor: '#00d4ff', title: 'Cổng B3 — Hàng chờ dài', time: '18 phút' },
       { tag: 'XỬ LÝ', tagBg: '#0a3028', tagColor: '#1D9E75', title: 'F&B C12 hết nước — Đã bổ sung', time: '35 phút' },
     ],

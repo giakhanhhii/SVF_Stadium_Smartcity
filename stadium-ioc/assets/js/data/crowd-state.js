@@ -10,9 +10,18 @@ const state = {
 
 /** Mock: ~87% lấp đầy theo capacity thực từ geometry */
 function applyDefaultFill() {
+  const defaultCounts = {
+    north: 1897,
+    south: 2146,
+    east: 1962,
+    west: 2011,
+  };
   const ratio = 0.87;
   CROWD_SECTORS.forEach((sec) => {
-    state.sectors[sec.id].count = Math.round(sec.capacity * ratio);
+    state.sectors[sec.id].count = Math.min(
+      sec.capacity,
+      defaultCounts[sec.id] ?? Math.round(sec.capacity * ratio),
+    );
   });
 }
 applyDefaultFill();

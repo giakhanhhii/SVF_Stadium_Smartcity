@@ -28,6 +28,9 @@
   background: #040810;
   --sidebar-left-width: 280px;
   --sidebar-right-width: 280px;
+  --stadium-glass-bg: rgba(6, 14, 26, 0.7);
+  --stadium-glass-bg-soft: rgba(6, 14, 26, 0.7);
+  --stadium-glass-blur: blur(4px) saturate(1.12);
 }
 
 .page-view--overview .security-command {
@@ -71,8 +74,8 @@
   z-index: 4;
   width: var(--sidebar-left-width);
   max-width: calc(100% - 520px);
-  background: linear-gradient(180deg, rgba(6, 14, 26, 0.96) 0%, rgba(6, 12, 22, 0.96) 100%);
-  backdrop-filter: blur(2px);
+  background: var(--stadium-glass-bg);
+  backdrop-filter: var(--stadium-glass-blur);
 }
 
 .page-view--stadium-cmd .security-sidebar--left,
@@ -112,6 +115,47 @@
 
 .page-view--stadium-cmd .security-sidebar {
   min-width: 0;
+}
+
+.page-view--stadium-cmd .sidebar-hud > .hud-block,
+.page-view--overview .security-command .sidebar-hud > .hud-block {
+  background: transparent !important;
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(145, 226, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.page-view--stadium-cmd .sidebar-hud > .hud-block--dragging,
+.page-view--overview .security-command .sidebar-hud > .hud-block--dragging {
+  background: var(--stadium-glass-bg) !important;
+  backdrop-filter: var(--stadium-glass-blur);
+}
+
+.page-view--stadium-cmd .sidebar-nav,
+.page-view--overview .security-command .sidebar-nav {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.page-view--stadium-cmd .sidebar-nav__item,
+.page-view--stadium-cmd .sidebar-action,
+.page-view--overview .security-command .sidebar-nav__item,
+.page-view--overview .security-command .sidebar-action {
+  background: transparent;
+}
+
+.page-view--stadium-cmd .sidebar-nav__item:hover,
+.page-view--stadium-cmd .sidebar-action:hover,
+.page-view--overview .security-command .sidebar-nav__item:hover,
+.page-view--overview .security-command .sidebar-action:hover {
+  background: rgba(0, 212, 255, 0.06);
+}
+
+.page-view--stadium-cmd .sidebar-nav__item.active,
+.page-view--overview .security-command .sidebar-nav__item.active {
+  background: transparent;
+  box-shadow: inset 3px 0 0 rgba(94, 224, 176, 0.78);
 }
 
 .sidebar-resize-handle {

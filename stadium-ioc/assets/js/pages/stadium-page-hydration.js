@@ -4,7 +4,7 @@ import {
   bindSecurityHudTabs, bindSecurityExteriorHudTabs,
 } from '../render/stadium-security-hud-render.js';
 import { renderEventsLeft, renderEventsRight, bindEventsHudTabs } from '../render/stadium-events-hud-render.js';
-import { renderFacilitiesLeft, renderFacilitiesRight } from '../render/stadium-facilities-hud-render.js';
+import { renderFacilitiesLeft, renderFacilitiesRight, bindFacilitiesActions } from '../render/stadium-facilities-hud-render.js';
 import { renderServicesLeft, renderServicesRight, bindServicesHudTabs } from '../render/stadium-services-hud-render.js';
 import { renderReportsLeft, renderReportsRight, bindReportsHistory } from '../render/reports-hud.js';
 import { overviewHud } from '../data/stadium-overview-hud-data.js';
@@ -15,6 +15,7 @@ import { facilitiesHud } from '../data/stadium-facilities-hud-data.js';
 import { servicesHud } from '../data/stadium-services-hud-data.js';
 import { reportsData } from '../data/stadium-reports-data.js';
 import { renderViewTabs } from '../render/scene-view-tabs.js';
+import { initHudBlockDrag } from '../render/hud-block-drag.js';
 
 export function hydrateSecuritySidebars(mode = 'interior') {
   const root = document.getElementById('page-security');
@@ -39,6 +40,7 @@ export function hydrateSecuritySidebars(mode = 'interior') {
       `<span class="legend-item"><span class="legend-dot" style="background:${item.color}"></span>${item.label}</span>`,
     ).join('');
   }
+  initHudBlockDrag(root);
 }
 
 export function hydratePage(pageId) {
@@ -68,6 +70,7 @@ export function hydratePage(pageId) {
     facilities: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderFacilitiesLeft(facilitiesHud.left);
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderFacilitiesRight(facilitiesHud.right);
+      bindFacilitiesActions(root);
       const tabs = root.querySelector('[data-mount="view-tabs"]');
       if (tabs) tabs.innerHTML = renderViewTabs('facilities');
     },
@@ -88,6 +91,7 @@ export function hydratePage(pageId) {
   };
 
   if (mounts[pageId]) mounts[pageId]();
+  initHudBlockDrag(root);
 }
 
 export function hydrateAllPages() {

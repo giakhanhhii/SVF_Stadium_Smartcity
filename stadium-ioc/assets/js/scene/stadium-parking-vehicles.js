@@ -4,6 +4,7 @@ import { parkingVehicleLots } from '../data/stadium-parking-vehicles-data.js';
 const PARK_RADIUS = 505;
 const LOT_W = 156;
 const LOT_D = 116;
+const VEHICLE_RENDER_RATIO = 0.42;
 
 let parkingVehicles = null;
 
@@ -108,7 +109,8 @@ function fillCars(root, lot) {
     }
   }
 
-  seededShuffle(slots, lot.seed).slice(0, lot.cars).forEach(({ row, col }, i) => {
+  const renderCars = Math.max(8, Math.round(lot.cars * VEHICLE_RENDER_RATIO));
+  seededShuffle(slots, lot.seed).slice(0, renderCars).forEach(({ row, col }, i) => {
     const lx = startX + col * gapX + ((row % 2) * 1.4);
     const lz = startZ + row * gapZ;
     const p = lotToWorld(lot, lx, lz);
@@ -132,7 +134,8 @@ function fillMotorbikes(root, lot) {
     }
   }
 
-  seededShuffle(slots, lot.seed + 101).slice(0, lot.motorbikes).forEach(({ row, col }, i) => {
+  const renderMotorbikes = Math.max(12, Math.round(lot.motorbikes * VEHICLE_RENDER_RATIO));
+  seededShuffle(slots, lot.seed + 101).slice(0, renderMotorbikes).forEach(({ row, col }, i) => {
     const lx = startX + col * gapX + ((row % 2) * 1.2);
     const lz = startZ + row * gapZ;
     const p = lotToWorld(lot, lx, lz);

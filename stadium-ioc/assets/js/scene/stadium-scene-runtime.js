@@ -100,7 +100,7 @@ function bindVocEvents() {
   });
 }
 
-const MODEL_URL = 'assets/models/pvf-stadium-openroof-v4.glb?v=pitch-lines-visible-20260530a';
+const MODEL_URL = 'assets/models/pvf-stadium-openroof-v4.glb?v=pitch-lines-raised-20260601';
 const GLASS_OPAQUE = 0xe8ecf2;
 
 const _viewForward = new THREE.Vector3();
@@ -185,6 +185,34 @@ function stabilizePitchSurface(model) {
     pitch.material.polygonOffsetUnits = -8;
     pitch.material.needsUpdate = true;
   }
+}
+
+function stabilizePitchMarkings(model) {
+  const markingPrefixes = [
+    'pitch_line_',
+    'pitch_halfway_line',
+    'pitch_center_',
+    'pitch_penalty_',
+    'pitch_goalbox_',
+    'pitch_corner_',
+    'football_goal_',
+  ];
+
+  model.traverse((obj) => {
+    if (!obj.isMesh || !markingPrefixes.some((prefix) => obj.name.startsWith(prefix))) return;
+    obj.frustumCulled = false;
+    obj.renderOrder = Math.max(obj.renderOrder || 0, 11);
+    (Array.isArray(obj.material) ? obj.material : [obj.material]).filter(Boolean).forEach((material) => {
+      material.side = THREE.DoubleSide;
+      material.depthTest = true;
+      material.depthWrite = true;
+      material.polygonOffset = true;
+      material.polygonOffsetFactor = -10;
+      material.polygonOffsetUnits = -10;
+      if (material.color) material.color.setHex(0xffffff);
+      material.needsUpdate = true;
+    });
+  });
 }
 
 function setMaterialSolidDoubleSided(material, colorHex = null) {
@@ -295,6 +323,7 @@ function createScene(container, navPageId) {
       floodlightsGroup.traverse((o) => { o.visible = false; });
     }
     stabilizePitchSurface(stadiumModel);
+    stabilizePitchMarkings(stadiumModel);
     stabilizeInteriorShell(stadiumModel);
     facadeGlassMesh = stadiumModel.getObjectByName('facade_glass');
     facadeMullionsMesh = stadiumModel.getObjectByName('facade_mullions');

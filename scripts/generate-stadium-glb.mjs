@@ -556,7 +556,15 @@ const MAT = {
   }),
   frame: new THREE.MeshStandardMaterial({ color: 0x12141a, roughness: 0.48, metalness: 0.42 }),
   steel: new THREE.MeshStandardMaterial({ color: 0xc8ccd4, roughness: 0.32, metalness: 0.78 }),
-  line: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+  line: new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    side: THREE.DoubleSide,
+    depthTest: true,
+    depthWrite: true,
+    polygonOffset: true,
+    polygonOffsetFactor: -6,
+    polygonOffsetUnits: -6,
+  }),
   lawn: new THREE.MeshStandardMaterial({ map: texLawn, roughness: 0.9, metalness: 0 }),
   palm: new THREE.MeshStandardMaterial({ color: 0x3d6b32, roughness: 0.85 }),
   trunk: new THREE.MeshStandardMaterial({ color: 0x6b5038, roughness: 0.92 }),
@@ -822,8 +830,9 @@ function createPitch(group) {
   // Cho cỏ “fill” sát mép khán đài trong: tăng margin để không còn mảng nền trắng
   const pitchW = BOWL.innerRz * 2.24;
   const scale = Math.min(pitchL / PITCH_L, pitchW / PITCH_W);
-  const lineW = 0.74 * scale;
+  const lineW = 0.92 * scale;
   const lineY = 0.68;
+  const lineH = 0.08 * scale;
   const goalDepth = 2.4 * scale;
   const goalWidth = 7.32 * scale;
   const goalHeight = 2.44 * scale;
@@ -837,9 +846,8 @@ function createPitch(group) {
   g.add(surf);
 
   const addLine = (name, x, z, w, d) => {
-    const line = new THREE.Mesh(new THREE.PlaneGeometry(w, d), MAT.line);
-    line.rotation.x = -Math.PI / 2;
-    line.position.set(x, lineY, z);
+    const line = new THREE.Mesh(new THREE.BoxGeometry(w, lineH, d), MAT.line);
+    line.position.set(x, lineY + lineH / 2, z);
     line.renderOrder = 10;
     line.name = name;
     g.add(line);
@@ -849,12 +857,14 @@ function createPitch(group) {
   const addCircle = (name, radius, x = 0, z = 0, start = 0, end = Math.PI * 2) => {
     const pts = [];
     const steps = Math.max(24, Math.ceil((Math.abs(end - start) / (Math.PI * 2)) * 96));
+    const tubeR = lineW * 0.46;
+    const tubeY = lineY + tubeR + lineH;
     for (let i = 0; i <= steps; i++) {
       const a = start + ((end - start) * i) / steps;
-      pts.push(new THREE.Vector3(x + Math.cos(a) * radius, lineY, z + Math.sin(a) * radius));
+      pts.push(new THREE.Vector3(x + Math.cos(a) * radius, tubeY, z + Math.sin(a) * radius));
     }
     const curve = new THREE.CatmullRomCurve3(pts);
-    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, steps, lineW * 0.55, 6, false), MAT.line);
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, steps, tubeR, 10, false), MAT.line);
     tube.renderOrder = 10;
     tube.name = name;
     g.add(tube);

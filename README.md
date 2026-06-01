@@ -28,6 +28,8 @@ npx playwright install chromium
 
 ## Chay website
 
+Lenh chay website chinh:
+
 ```powershell
 npm run dev
 ```
@@ -56,6 +58,20 @@ $env:PORT=3458; npm.cmd run dev
 ```powershell
 npm run test:stadium
 ```
+
+Trong Codex sandbox, Playwright co the bi Windows chan khi mo Chromium voi loi `spawn EPERM`. Khi do chay lai lenh test voi quyen ngoai sandbox/approval; day la gioi han moi truong, khong phai loi app.
+
+## Ghi chu cho Codex agent
+
+Nguoi dung chay website bang `npm run dev`. Cac lenh duoi day chi la tien ich phu khi agent can bat server nen hoac kiem tra moi truong:
+
+```powershell
+npm.cmd run dev:start
+npm.cmd run dev:check
+npm.cmd run dev:stop
+```
+
+Khong dung cac lenh phu nay thay cho huong dan chay website thong thuong.
 
 ## Export Excel
 

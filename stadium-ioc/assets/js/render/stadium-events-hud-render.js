@@ -318,10 +318,10 @@ function fireRiskPanel() {
       <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="medical" data-dispatch-type-preset="fire">
         <i class="ti ti-flame"></i><span>Gọi cứu hỏa</span>
       </button>
-      <button type="button" class="event-risk__btn">
+      <button type="button" class="event-risk__btn" data-fire-action="power-zone-b">
         <i class="ti ti-power"></i><span>Cắt điện khu B</span>
       </button>
-      <button type="button" class="event-risk__btn">
+      <button type="button" class="event-risk__btn" data-fire-action="smoke">
         <i class="ti ti-wind"></i><span>Mở hút khói</span>
       </button>
     </div>
@@ -414,7 +414,7 @@ const fireSystemController = {
 
 function fireControlModals() {
   const zoneItems = FIRE_POWER_ZONES.map((name) =>
-    `<span class="event-power-zone event-power-zone--on" data-power-zone="${name}"><i></i><b>${name}</b></span>`,
+    `<button type="button" class="event-power-zone event-power-zone--on" data-power-zone="${name}"><i></i><b>${name}</b></button>`,
   ).join('');
   return `<div class="event-smoke-modal" data-smoke-modal hidden>
     <div class="event-smoke-modal__panel" role="dialog" aria-modal="true" aria-label="Hút khói">
@@ -446,7 +446,7 @@ function fireControlModals() {
       <p data-power-message>Điều này sẽ cắt điện hoàn toàn hệ thống sân vận động. Bạn có chắc chắn muốn tiếp tục?</p>
       <div class="event-power-zones">${zoneItems}</div>
       <div class="event-action-modal__status"><i class="ti ti-bolt"></i><span data-power-status>Chờ xác nhận thao tác nguồn.</span></div>
-      <div class="event-power-confirm" data-power-confirm>
+      <div class="event-power-confirm" data-power-confirm hidden>
         <button type="button" class="event-power-confirm__no" data-power-cancel>Không</button>
         <button type="button" class="event-power-confirm__yes" data-power-accept>Có, cắt điện</button>
       </div>
@@ -586,59 +586,147 @@ export function bindEventsHudTabs(root, data) {
   const renderPowerZones = () => {
     powerModal?.querySelectorAll('[data-power-zone]').forEach((node) => {
       const zone = fireSystemController.powerZones.find((item) => item.name === node.dataset.powerZone);
+      const selected = powerModal?.dataset.powerZone === node.dataset.powerZone;
       node.classList.toggle('event-power-zone--on', !!zone?.on);
       node.classList.toggle('event-power-zone--off', !zone?.on);
+      node.classList.toggle('event-power-zone--selected', selected);
+      node.setAttribute('aria-pressed', String(selected));
+      node.setAttribute('aria-label', `${zone?.name || node.dataset.powerZone} - ${zone?.on ? 'đang có điện' : 'đã cắt điện'}`);
     });
   };
 
-  const preparePowerConfirm = (turnOn) => {
+  const preparePowerConfirm = ({ turnOn = false, zoneName = '', showConfirm = true } = {}) => {
     showModal(powerModal);
-    powerModal.querySelector('[data-power-title]').textContent = turnOn ? 'Mở điện toàn bộ SVĐ' : 'Cắt điện toàn bộ SVĐ';
-    powerModal.querySelector('[data-power-message]').textContent = turnOn
-      ? 'Bạn có chắc muốn mở điện toàn bộ hệ thống sân vận động? Các khu sẽ được cấp điện lại theo từng bước.'
-      : 'Bạn có chắc chắn muốn cắt điện? Điều này sẽ cắt điện hoàn toàn hệ thống sân vận động.';
-    powerModal.querySelector('[data-power-status]').textContent = 'Chờ xác nhận thao tác nguồn.';
+    powerModal.dataset.powerIntent = turnOn ? 'on' : 'off';
+    powerModal.dataset.powerZone = zoneName;
+    powerModal.querySelector('[data-power-title]').textContent = zoneName
+      ? `${turnOn ? 'Mở điện' : 'Cắt điện'} ${zoneName}`
+      : `${turnOn ? 'Mở điện' : 'Cắt điện'} toàn bộ SVĐ`;
+    powerModal.querySelector('[data-power-message]').textContent = zoneName
+      ? `Bạn có chắc muốn ${turnOn ? 'mở điện lại' : 'tắt điện'} ${zoneName}? Thao tác này chỉ áp dụng cho khu vực được chọn.`
+      : turnOn
+        ? 'Bạn có chắc muốn mở điện toàn bộ hệ thống sân vận động? Các khu sẽ được cấp điện lại theo từng bước.'
+        : 'Bạn có chắc chắn muốn cắt điện? Điều này sẽ cắt điện hoàn toàn hệ thống sân vận động.';
+    powerModal.querySelector('[data-power-status]').textContent = zoneName
+      ? `Chờ xác nhận thao tác nguồn cho ${zoneName}.`
+      : 'Chờ xác nhận thao tác nguồn.';
     powerModal.querySelector('[data-power-accept]').textContent = turnOn ? 'Có, mở điện' : 'Có, cắt điện';
     powerModal.dataset.powerIntent = turnOn ? 'on' : 'off';
-    powerModal.querySelector('[data-power-confirm]').hidden = false;
+    powerModal.querySelector('[data-power-confirm]').hidden = !showConfirm;
     renderPowerZones();
   };
 
-  const runPowerSequence = (turnOn) => {
+  const runPowerSequence = (turnOn, zoneName = '') => {
     if (powerTimer) clearInterval(powerTimer);
     const status = powerModal.querySelector('[data-power-status]');
     const confirm = powerModal.querySelector('[data-power-confirm]');
     confirm.hidden = true;
-    if (status) status.textContent = turnOn ? 'Đang mở điện từng khu...' : 'Đang cắt điện từng khu...';
-    fireSystemController.emit(turnOn ? 'power-restore-start' : 'power-cut-start', {
-      zones: fireSystemController.powerZones.map((z) => z.name),
-    });
-    const order = [...fireSystemController.powerZones.keys()].sort(() => Math.random() - 0.5);
-    let index = 0;
-    powerTimer = setInterval(() => {
-      const zoneIndex = order[index];
-      if (zoneIndex != null) fireSystemController.powerZones[zoneIndex].on = turnOn;
-      renderPowerZones();
-      index += 1;
-      if (index >= order.length) {
-        clearInterval(powerTimer);
-        powerTimer = null;
-        fireSystemController.powerOn = turnOn;
-        if (status) status.textContent = turnOn
-          ? 'Đã mở điện lại toàn bộ hệ thống SVĐ.'
-          : 'Đã cắt điện toàn bộ hệ thống SVĐ. Nhấn nút nguồn để mở lại.';
-        fireSystemController.emit(turnOn ? 'power-restore-complete' : 'power-cut-complete', {
-          zones: fireSystemController.powerZones.map((z) => ({ ...z })),
-        });
-      }
-    }, 260);
+    if (!zoneName) {
+      if (status) status.textContent = turnOn ? 'Đang mở điện từng khu...' : 'Đang cắt điện từng khu...';
+      fireSystemController.emit(turnOn ? 'power-restore-start' : 'power-cut-start', {
+        zones: fireSystemController.powerZones.map((z) => z.name),
+      });
+      const order = [...fireSystemController.powerZones.keys()].sort(() => Math.random() - 0.5);
+      let index = 0;
+      powerTimer = setInterval(() => {
+        const zoneIndex = order[index];
+        if (zoneIndex != null) fireSystemController.powerZones[zoneIndex].on = turnOn;
+        const zoneName = fireSystemController.powerZones[zoneIndex]?.name;
+        renderPowerZones();
+        if (status && zoneName) {
+          status.textContent = turnOn ? `Đang mở điện lại ${zoneName}...` : `Đang cắt điện ${zoneName}...`;
+        }
+        index += 1;
+        if (index >= order.length) {
+          clearInterval(powerTimer);
+          powerTimer = null;
+          fireSystemController.powerOn = turnOn;
+          if (status) status.textContent = turnOn
+            ? 'Đã mở điện lại toàn bộ hệ thống SVĐ.'
+            : 'Đã cắt điện toàn bộ hệ thống SVĐ. Nhấn nút nguồn để mở lại.';
+          fireSystemController.emit(turnOn ? 'power-restore-complete' : 'power-cut-complete', {
+            zones: fireSystemController.powerZones.map((z) => ({ ...z })),
+          });
+        }
+      }, 260);
+      return;
+    }
+
+    const zone = fireSystemController.powerZones.find((item) => item.name === zoneName);
+    if (!zone) {
+      if (status) status.textContent = 'Vui lòng chọn một khu vực trước khi xác nhận.';
+      return;
+    }
+    const zoneNode = [...powerModal.querySelectorAll('[data-power-zone]')]
+      .find((node) => node.dataset.powerZone === zoneName);
+    if (status) status.textContent = turnOn ? `Đang mở điện lại ${zoneName}...` : `Đang cắt điện ${zoneName}...`;
+    fireSystemController.emit(turnOn ? 'power-restore-start' : 'power-cut-start', { zones: [zoneName] });
+    zone.on = turnOn;
+    fireSystemController.powerOn = fireSystemController.powerZones.some((item) => item.on);
+    renderPowerZones();
+    zoneNode?.classList.toggle('event-power-zone--on', turnOn);
+    zoneNode?.classList.toggle('event-power-zone--off', !turnOn);
+    powerTimer = setTimeout(() => {
+      powerTimer = null;
+      if (status) status.textContent = turnOn
+        ? `Đã mở điện lại ${zoneName}.`
+        : `Đã cắt điện ${zoneName}. Các khu vực khác vẫn giữ trạng thái hiện tại.`;
+      fireSystemController.emit(turnOn ? 'power-restore-complete' : 'power-cut-complete', {
+        zones: [{ ...zone }],
+      });
+    }, 420);
   };
 
   root.addEventListener('click', (event) => {
     const fireBtn = event.target.closest('[data-fire-action]');
     if (!fireBtn) return;
     if (fireBtn.dataset.fireAction === 'smoke') startSmokeExtraction();
-    if (fireBtn.dataset.fireAction === 'power') preparePowerConfirm(false);
+    if (fireBtn.dataset.fireAction === 'power') preparePowerConfirm({ turnOn: false, showConfirm: false });
+    if (fireBtn.dataset.fireAction === 'power-zone-b') {
+      preparePowerConfirm({ turnOn: false, zoneName: 'Khán đài B', showConfirm: true });
+    }
+  });
+
+  const handlePowerModalClick = (event) => {
+    const activePowerModal = event.currentTarget;
+    event.stopPropagation();
+    if (event.target.closest('[data-power-close]') || event.target.closest('[data-power-cancel]') || event.target === activePowerModal) {
+      activePowerModal.hidden = true;
+      return;
+    }
+    if (event.target.closest('[data-power-toggle]')) {
+      preparePowerConfirm({ turnOn: !fireSystemController.powerOn });
+      return;
+    }
+    const zoneNode = event.target.closest('[data-power-zone]');
+    if (zoneNode) {
+      const zone = fireSystemController.powerZones.find((item) => item.name === zoneNode.dataset.powerZone);
+      preparePowerConfirm({ turnOn: !zone?.on, zoneName: zoneNode.dataset.powerZone, showConfirm: true });
+      return;
+    }
+    if (event.target.closest('[data-power-accept]')) {
+      runPowerSequence(activePowerModal.dataset.powerIntent === 'on', activePowerModal.dataset.powerZone);
+    }
+  };
+
+  powerModal?.addEventListener('click', handlePowerModalClick);
+  powerModal?.querySelector('[data-power-accept]')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    runPowerSequence(powerModal.dataset.powerIntent === 'on', powerModal.dataset.powerZone);
+  });
+  powerModal?.querySelectorAll('[data-power-zone]').forEach((zoneNode) => {
+    zoneNode.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const zone = fireSystemController.powerZones.find((item) => item.name === zoneNode.dataset.powerZone);
+      preparePowerConfirm({ turnOn: !zone?.on, zoneName: zoneNode.dataset.powerZone, showConfirm: true });
+    });
+  });
+  powerModal?.querySelector('[data-power-toggle]')?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    preparePowerConfirm({ turnOn: !fireSystemController.powerOn });
   });
 
   document.addEventListener('click', (event) => {
@@ -651,16 +739,23 @@ export function bindEventsHudTabs(root, data) {
       return;
     }
     if (!activePowerModal) return;
+    if (activePowerModal !== powerModal) return;
     if (event.target.closest('[data-power-close]') || event.target.closest('[data-power-cancel]') || event.target === activePowerModal) {
       activePowerModal.hidden = true;
       return;
     }
     if (event.target.closest('[data-power-toggle]')) {
-      preparePowerConfirm(!fireSystemController.powerOn);
+      preparePowerConfirm({ turnOn: !fireSystemController.powerOn });
+      return;
+    }
+    const zoneNode = event.target.closest('[data-power-zone]');
+    if (zoneNode) {
+      const zone = fireSystemController.powerZones.find((item) => item.name === zoneNode.dataset.powerZone);
+      preparePowerConfirm({ turnOn: !zone?.on, zoneName: zoneNode.dataset.powerZone, showConfirm: true });
       return;
     }
     if (event.target.closest('[data-power-accept]')) {
-      runPowerSequence(activePowerModal.dataset.powerIntent === 'on');
+      runPowerSequence(activePowerModal.dataset.powerIntent === 'on', activePowerModal.dataset.powerZone);
     }
   });
 }

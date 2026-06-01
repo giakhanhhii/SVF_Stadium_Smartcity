@@ -3,7 +3,7 @@
  * Load sau security-command.css để ghi đè HUD/sidebar.
  */
 :root {
-  --font-family-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-ui: "Segoe UI Variable Text", "Segoe UI", "Noto Sans", Arial, sans-serif;
   --font-size-caption: 9px;
   --font-size-label: 10px;
   --font-size-body-sm: 11px;
@@ -17,12 +17,27 @@
   --line-height-ui: 1.35;
 }
 
+body,
 .prototype-shell,
 .prototype-shell button,
 .prototype-shell input,
 .prototype-shell textarea,
-.prototype-shell select {
-  font-family: var(--font-family-ui);
+.prototype-shell select,
+.event-action-modal,
+.event-smoke-modal,
+.event-power-modal,
+.event-action-modal button,
+.event-smoke-modal button,
+.event-power-modal button {
+  font-family: var(--font-family-ui) !important;
+  font-synthesis: none;
+}
+
+.prototype-shell .ti,
+.event-action-modal .ti,
+.event-smoke-modal .ti,
+.event-power-modal .ti {
+  font-family: "tabler-icons" !important;
 }
 
 .text-secondary {

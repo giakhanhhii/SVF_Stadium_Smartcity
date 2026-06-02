@@ -200,9 +200,52 @@ function adviceDiagram(notes = []) {
       <i class="ti ${icons[index] || 'ti-check'}"></i><b>0${index + 1}</b><span></span>
     </button>
   `).join('')}</div>
-  <button type="button" class="report-advice__send">
+  <button type="button" class="report-advice__send" data-report-advice-open>
     <i class="ti ti-send"></i><span>Gửi góp ý</span>
-  </button>`;
+  </button>
+  <div class="report-send__status report-advice__status" data-report-advice-status>Ch&#432;a g&#7917;i g&#243;p &#253; cho ban qu&#7843;n l&#253;.</div>
+  <div class="report-advice-modal" data-report-advice-modal hidden>
+    <div class="report-send-modal__panel report-advice-modal__panel" role="dialog" aria-modal="true" aria-label="G&#7917;i g&#243;p &#253; cho ban qu&#7843;n l&#253;">
+      <button type="button" class="report-send-modal__close" data-report-advice-close aria-label="&#272;&#243;ng">
+        <i class="ti ti-x"></i>
+      </button>
+      <div class="report-send-modal__head">
+        <span><i class="ti ti-message-report"></i></span>
+        <div>
+          <small>G&#243;p &#253; qu&#7843;n l&#253;</small>
+          <h3>G&#7917;i g&#243;p &#253; cho ban qu&#7843;n l&#253;</h3>
+        </div>
+      </div>
+      <div class="report-send-modal__grid">
+        <label><span>Nh&#243;m g&#243;p &#253;</span>
+          <select data-report-advice-topic>
+            <option>Quy tr&#236;nh v&#7853;n h&#224;nh</option>
+            <option>An to&#224;n kh&#225;n gi&#7843;</option>
+            <option>H&#7841; t&#7847;ng - thi&#7871;t b&#7883;</option>
+            <option>D&#7883;ch v&#7909; trong s&#226;n</option>
+          </select>
+        </label>
+        <label><span>M&#7913;c &#432;u ti&#234;n</span>
+          <select data-report-advice-priority>
+            <option>Theo d&#245;i</option>
+            <option>&#431;u ti&#234;n</option>
+            <option>C&#7847;n x&#7917; l&#253; ngay</option>
+          </select>
+        </label>
+      </div>
+      <label class="report-advice-modal__note"><span>N&#7897;i dung</span>
+        <textarea data-report-advice-message rows="4">&#272;&#7873; xu&#7845;t t&#7889;i &#432;u lu&#7891;ng ph&#7843;n h&#7891;i VOC sau ca v&#7853;n h&#224;nh, &#432;u ti&#234;n c&#225;c &#273;i&#7875;m n&#243;ng v&#224; nh&#243;m ch&#7881; s&#7889; c&#7843;m bi&#7871;n b&#7845;t th&#432;&#7901;ng.</textarea>
+      </label>
+      <div class="report-send-modal__summary">
+        <span><b>03</b><em>Khuy&#7871;n ngh&#7883;</em></span>
+        <span><b>01</b><em>Ca v&#7853;n h&#224;nh</em></span>
+        <span><b>VOC</b><em>Ng&#432;&#7901;i nh&#7853;n</em></span>
+      </div>
+      <button type="button" class="report-send-modal__primary" data-report-advice-confirm>
+        <i class="ti ti-send"></i><span>X&#225;c nh&#7853;n g&#7917;i g&#243;p &#253;</span>
+      </button>
+    </div>
+  </div>`;
 }
 
 function focusMap() {
@@ -289,9 +332,18 @@ export function renderReportsRight(d) {
 export function bindReportsHistory(root) {
   if (!root || root.dataset.reportHistoryBound === 'true') return;
   root.dataset.reportHistoryBound = 'true';
+
+  const getBodyModal = (selector) => {
+    const modal = root.querySelector(selector) || document.querySelector(selector);
+    if (!modal) return null;
+    const bodyModal = document.body.querySelector(selector);
+    if (bodyModal && bodyModal !== modal) bodyModal.remove();
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+    return modal;
+  };
+
   root.addEventListener('click', (e) => {
     const modal = root.querySelector('[data-report-history-modal]');
-    const sendModal = root.querySelector('[data-report-send-modal]');
 
     if (modal && e.target.closest('[data-report-history-open]')) {
       modal.hidden = false;
@@ -311,17 +363,21 @@ export function bindReportsHistory(root) {
       return;
     }
 
-    if (sendModal && e.target.closest('[data-report-send-open]')) {
+    if (e.target.closest('[data-report-send-open]')) {
+      const sendModal = getBodyModal('[data-report-send-modal]');
+      if (!sendModal) return;
       sendModal.hidden = false;
       return;
     }
 
-    if (sendModal && (e.target.closest('[data-report-send-close]') || e.target === sendModal)) {
-      sendModal.hidden = true;
+    if (e.target.closest('[data-report-advice-open]')) {
+      const adviceModal = getBodyModal('[data-report-advice-modal]');
+      if (!adviceModal) return;
+      adviceModal.hidden = false;
       return;
     }
 
-    if (sendModal && e.target.closest('[data-report-send-confirm]')) {
+    if (false && sendModal && e.target.closest('[data-report-send-confirm]')) {
       const recipient = root.querySelector('[data-report-recipient]')?.value || 'cấp trên';
       const delivery = root.querySelector('[data-report-delivery]')?.value || 'system';
       const format = root.querySelector('[data-report-format]')?.value || 'PDF';
@@ -329,6 +385,42 @@ export function bindReportsHistory(root) {
       const method = delivery === 'system' ? 'trực tiếp từ hệ thống' : `dưới định dạng ${format}`;
       if (status) status.textContent = `Đã gửi báo cáo tổng hợp tới ${recipient} ${method}.`;
       sendModal.hidden = true;
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const sendModal = document.querySelector('[data-report-send-modal]:not([hidden])');
+    const adviceModal = document.querySelector('[data-report-advice-modal]:not([hidden])');
+
+    if (sendModal && (e.target.closest('[data-report-send-close]') || e.target === sendModal)) {
+      sendModal.hidden = true;
+      return;
+    }
+
+    if (sendModal && e.target.closest('[data-report-send-confirm]')) {
+      const recipient = sendModal.querySelector('[data-report-recipient]')?.value || 'c\u1ea5p tr\u00ean';
+      const delivery = sendModal.querySelector('[data-report-delivery]')?.value || 'system';
+      const format = sendModal.querySelector('[data-report-format]')?.value || 'PDF';
+      const status = root.querySelector('[data-report-send-status]');
+      const method = delivery === 'system'
+        ? 'tr\u1ef1c ti\u1ebfp t\u1eeb h\u1ec7 th\u1ed1ng'
+        : `d\u01b0\u1edbi \u0111\u1ecbnh d\u1ea1ng ${format}`;
+      if (status) status.textContent = `\u0110\u00e3 g\u1eedi b\u00e1o c\u00e1o t\u1ed5ng h\u1ee3p t\u1edbi ${recipient} ${method}.`;
+      sendModal.hidden = true;
+      return;
+    }
+
+    if (adviceModal && (e.target.closest('[data-report-advice-close]') || e.target === adviceModal)) {
+      adviceModal.hidden = true;
+      return;
+    }
+
+    if (adviceModal && e.target.closest('[data-report-advice-confirm]')) {
+      const topic = adviceModal.querySelector('[data-report-advice-topic]')?.value || 'g\u00f3p \u00fd';
+      const priority = adviceModal.querySelector('[data-report-advice-priority]')?.value || 'theo d\u00f5i';
+      const status = root.querySelector('[data-report-advice-status]');
+      if (status) status.textContent = `\u0110\u00e3 g\u1eedi g\u00f3p \u00fd "${topic}" v\u1edbi m\u1ee9c ${priority} t\u1edbi ban qu\u1ea3n l\u00fd.`;
+      adviceModal.hidden = true;
     }
   });
 }

@@ -2,7 +2,7 @@ export function hudHead(title) {
   return `<div class="hud-head"><span>${title}</span><i class="ti ti-dots"></i></div>`;
 }
 
-export function barChartSvg(bars) {
+export function barChartSvg(bars, { showLabels = true } = {}) {
   const max = Math.max(...bars.map((b) => b.value), 1);
   const count = bars.length;
   const width = 112;
@@ -15,11 +15,39 @@ export function barChartSvg(bars) {
     const fill = i % 2 ? '#4488ff' : '#00d4ff';
     return `<rect x="${x.toFixed(1)}" y="${40 - h}" width="${barW.toFixed(1)}" height="${h}" fill="${fill}" rx="1"/>`;
   }).join('');
-  const labels = bars.map((b, i) => {
-    const x = pad + i * slot + slot / 2;
-    return `<text x="${x.toFixed(1)}" y="48" fill="#5a8ab0" font-size="5" text-anchor="middle">${b.time}</text>`;
-  }).join('');
+  const labels = showLabels
+    ? bars.map((b, i) => {
+      const x = pad + i * slot + slot / 2;
+      return `<text x="${x.toFixed(1)}" y="48" fill="#5a8ab0" font-size="5" text-anchor="middle">${b.time}</text>`;
+    }).join('')
+    : '';
   return `<svg viewBox="0 0 ${width} 52" class="hud-chart">${cols}${labels}</svg>`;
+}
+
+/** Cột + % + nhãn trong cùng SVG — căn khít dưới từng cột (tab Tổng quan · Cơ sở hạ tầng) */
+export function facilityBarChartSvg(bars) {
+  const max = Math.max(...bars.map((b) => b.value), 1);
+  const count = bars.length;
+  const width = 112;
+  const pad = 4;
+  const slot = (width - pad * 2) / count;
+  const barW = Math.min(12, Math.max(7, slot * 0.62));
+  const barBottom = 40;
+  const pctY = barBottom + 5;
+  const lblY = pctY + 13;
+  const viewHeight = 64;
+  const markup = bars.map((b, i) => {
+    const h = (b.value / max) * 36;
+    const cx = pad + i * slot + slot / 2;
+    const fill = i % 2 ? '#4488ff' : '#00d4ff';
+    const pct = `${b.value}${b.unit || ''}`;
+    return `<g class="hud-chart__col" transform="translate(${cx.toFixed(2)} 0)">
+      <rect x="${(-barW / 2).toFixed(2)}" y="${(barBottom - h).toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" fill="${fill}" rx="1"/>
+      <text class="hud-chart__pct" x="0" y="${pctY}" text-anchor="middle" dominant-baseline="hanging">${pct}</text>
+      <text class="hud-chart__lbl" x="0" y="${lblY}" text-anchor="middle">${b.time}</text>
+    </g>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${width} ${viewHeight}" class="hud-chart hud-chart--facility" aria-hidden="true">${markup}</svg>`;
 }
 
 export function ringSvg(pct, label) {

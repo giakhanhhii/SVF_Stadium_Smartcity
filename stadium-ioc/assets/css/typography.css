@@ -165,12 +165,6 @@ body,
   font-size: var(--font-size-caption);
 }
 
-.page-view--stadium-cmd .overview-strip__title { font-size: var(--font-size-body-sm); }
-.page-view--stadium-cmd .overview-strip__meta,
-.page-view--overview .overview-strip__meta {
-  font-size: var(--font-size-body-sm);
-}
-
 .page-view--stadium-cmd .svc-emergency__eyebrow,
 .page-view--stadium-cmd .svc-emergency__note,
 .page-view--stadium-cmd .svc-emergency__rec {
@@ -221,4 +215,43 @@ body,
 
 .prototype-shell .report-table {
   font-size: var(--font-size-body-sm);
+}
+
+#page-events .event-risk__btn:hover,
+#page-events .event-risk__btn:focus-visible {
+  position: relative;
+  border-color: rgba(0, 180, 255, 0.48) !important;
+  background: rgba(0, 120, 180, 0.16) !important;
+  background-color: rgba(0, 120, 180, 0.16) !important;
+  box-shadow: none !important;
+  color: #e8f8ff !important;
+  outline: none;
+}
+
+#page-events .event-risk__btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: 1px solid rgba(0, 180, 255, 0.48);
+  border-radius: inherit;
+  opacity: 0;
+  background: rgba(0, 120, 180, 0.16);
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+
+#page-events .event-risk__btn:hover::before,
+#page-events .event-risk__btn:focus-visible::before {
+  opacity: 1;
+}
+
+#page-events .event-risk__btn > * {
+  position: relative;
+  z-index: 1;
+}
+
+#page-events .event-risk__btn:hover .ti,
+#page-events .event-risk__btn:focus-visible .ti {
+  color: #18d8f5 !important;
 }

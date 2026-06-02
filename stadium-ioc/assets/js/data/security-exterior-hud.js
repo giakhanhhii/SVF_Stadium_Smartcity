@@ -53,6 +53,19 @@ export const securityExteriorHud = {
         value: '2',
         chartTitle: 'Tải phương tiện',
         subtitle: 'xe/phút — theo trục',
+        summary: 'Cổng B và bãi P4 đang chịu tải cao, ưu tiên mở làn P3 và đẩy xe bus về trục Bắc.',
+        routes: [
+          { label: 'Cổng A', value: '32 xe/ph', pct: 52, tone: 'ok' },
+          { label: 'Cổng B', value: '46 xe/ph', pct: 78, tone: 'warn' },
+          { label: 'Cổng C', value: '25 xe/ph', pct: 42, tone: 'ok' },
+          { label: 'P4', value: '58 xe/ph', pct: 92, tone: 'hot' },
+        ],
+        hotspots: [
+          { zone: 'P4', wait: '9 phút', note: 'Dồn xe sau hiệp 2' },
+          { zone: 'Gate B', wait: '7 phút', note: 'Taxi nhập làn chậm' },
+          { zone: 'A1', wait: '3 phút', note: 'Ổn định' },
+        ],
+        actions: ['Mở làn P3', 'Điều tiết Gate B', 'Đẩy shuttle Bắc'],
         bars: [
           { time: 'A', value: 32 },
           { time: 'B', value: 46 },

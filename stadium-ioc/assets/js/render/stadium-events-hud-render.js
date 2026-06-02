@@ -147,10 +147,10 @@ function evacuationRoutePanel() {
       <button type="button" class="event-risk__btn" data-dispatch-open="security" data-dispatch-type-preset="evac">
         <i class="ti ti-door-exit"></i><span>Mở B2/C1</span>
       </button>
-      <button type="button" class="event-risk__btn">
+      <button type="button" class="event-risk__btn" data-event-action-open="reverse">
         <i class="ti ti-arrow-guide"></i><span>Đảo luồng</span>
       </button>
-      <button type="button" class="event-risk__btn">
+      <button type="button" class="event-risk__btn" data-event-action-open="paGuide">
         <i class="ti ti-speakerphone"></i><span>PA hướng dẫn</span>
       </button>
     </div>
@@ -219,7 +219,7 @@ function overloadPressurePanel(crowd) {
       <button type="button" class="event-risk__btn" data-dispatch-open="security" data-dispatch-type-preset="evac">
         <i class="ti ti-door-exit"></i><span>Mở lối thoát</span>
       </button>
-      <button type="button" class="event-risk__btn">
+      <button type="button" class="event-risk__btn" data-event-action-open="split">
         <i class="ti ti-arrows-split"></i><span>Chia luồng</span>
       </button>
     </div>
@@ -269,25 +269,89 @@ function stampedeDetailPanel(stampede) {
       <button type="button" class="event-risk__btn" data-dispatch-open="security" data-dispatch-type-preset="evac">
         <i class="ti ti-door-exit"></i><span>Mở lối thoát</span>
       </button>
-      <button type="button" class="event-risk__btn">
+      <button type="button" class="event-risk__btn" data-event-action-open="paSplit">
         <i class="ti ti-volume"></i><span>PA phân luồng</span>
       </button>
     </div>
   </section>`;
 }
 
+const FIRE_ZONE_DETAILS = {
+  fb: {
+    label: 'F&B B',
+    sensor: 'F&B Bếp B',
+    temp: '68°C',
+    smoke: '42%',
+    tone: 'hot',
+    status: 'khói + nhiệt tăng',
+    icon: 'ti-flame',
+    primary: 'Gọi cứu hỏa',
+    power: 'Cắt điện khu B',
+    ventilation: 'Mở hút khói',
+  },
+  led: {
+    label: 'Kho LED',
+    sensor: 'Kho LED',
+    temp: '41°C',
+    smoke: '18%',
+    tone: 'warn',
+    status: 'nhiệt tủ LED tăng',
+    icon: 'ti-device-tv',
+    primary: 'Cử kỹ thuật LED',
+    power: 'Cắt nguồn LED',
+    ventilation: 'Tăng thông gió',
+  },
+  generator: {
+    label: 'Máy phát',
+    sensor: 'Máy phát',
+    temp: '54°C',
+    smoke: '25%',
+    tone: 'warn',
+    status: 'nhiệt máy phát cao',
+    icon: 'ti-engine',
+    primary: 'Gọi đội điện',
+    power: 'Chuyển UPS',
+    ventilation: 'Mở cửa gió',
+  },
+  vip: {
+    label: 'VIP pantry',
+    sensor: 'VIP pantry',
+    temp: '31°C',
+    smoke: '4%',
+    tone: 'ok',
+    status: 'ổn định, theo dõi',
+    icon: 'ti-tools-kitchen-2',
+    primary: 'Kiểm tra pantry',
+    power: 'Giữ nguồn VIP',
+    ventilation: 'Theo dõi HVAC',
+  },
+};
+
 function fireRiskPanel() {
   const sensors = [
-    { label: 'F&B Bếp B', temp: '68°C', smoke: '42%', tone: 'hot' },
-    { label: 'Kho LED', temp: '41°C', smoke: '18%', tone: 'warn' },
-    { label: 'Máy phát', temp: '54°C', smoke: '25%', tone: 'warn' },
-    { label: 'VIP pantry', temp: '31°C', smoke: '4%', tone: 'ok' },
+    { id: 'fb', ...FIRE_ZONE_DETAILS.fb },
+    { id: 'led', ...FIRE_ZONE_DETAILS.led },
+    { id: 'generator', ...FIRE_ZONE_DETAILS.generator },
+    { id: 'vip', ...FIRE_ZONE_DETAILS.vip },
   ];
+  const fireZoneCells = {
+    6: { id: 'fb', label: 'F&B B' },
+    7: { id: 'led', label: 'Kho LED' },
+    11: { id: 'generator', label: 'Máy phát' },
+    17: { id: 'vip', label: 'VIP' },
+  };
   const cells = Array.from({ length: 20 }, (_, i) => {
     const hot = [6, 7, 11].includes(i);
     const warn = [2, 5, 10, 12, 16].includes(i);
     const cls = hot ? 'hot' : warn ? 'warn' : 'ok';
-    return `<span class="event-fire-cell event-fire-cell--${cls}"></span>`;
+    const zone = fireZoneCells[i];
+    if (zone) {
+      const active = zone.id === 'fb' ? ' event-fire-cell--active' : '';
+      return `<button type="button" class="event-fire-cell event-fire-cell--${cls}${active}" data-fire-zone="${zone.id}" aria-label="${zone.label}">
+        <span>${zone.label}</span>
+      </button>`;
+    }
+    return `<span class="event-fire-cell event-fire-cell--${cls}" aria-hidden="true"></span>`;
   }).join('');
   const fireGroups = [
     { label: 'Nhiệt', value: 68 },
@@ -300,29 +364,28 @@ function fireRiskPanel() {
     <div class="event-fire-layout">
       <div class="event-fire-radial">
         ${radial3dChart(fireGroups, { idSuffix: 'EvtFireRisk' })}
-        <strong>F&B B</strong>
       </div>
-      <div class="event-fire-core">
-        <i class="ti ti-flame"></i>
-        <strong>F&B B</strong>
-        <span>khói + nhiệt tăng</span>
+      <div class="event-fire-core" data-fire-core>
+        <i class="ti ti-flame" data-fire-core-icon></i>
+        <strong data-fire-core-title>F&B B</strong>
+        <span data-fire-core-status>khói + nhiệt tăng</span>
       </div>
       <div class="event-fire-matrix">${cells}</div>
     </div>
     <div class="event-fire-sensors">${sensors.map((s) =>
-    `<div class="event-fire-sensor event-fire-sensor--${s.tone}">
-      <span>${s.label}</span><b>${s.temp}</b><em>${s.smoke}</em>
-    </div>`,
+    `<button type="button" class="event-fire-sensor event-fire-sensor--${s.tone}${s.id === 'fb' ? ' event-fire-sensor--active' : ''}" data-fire-zone="${s.id}">
+      <span>${s.sensor}</span><b>${s.temp}</b><em>${s.smoke}</em>
+    </button>`,
   ).join('')}</div>
     <div class="event-risk__actions">
-      <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="medical" data-dispatch-type-preset="fire">
-        <i class="ti ti-flame"></i><span>Gọi cứu hỏa</span>
+      <button type="button" class="event-risk__btn event-risk__btn--hot" data-fire-primary-action data-dispatch-open="medical" data-dispatch-type-preset="fire">
+        <i class="ti ti-flame" data-fire-primary-icon></i><span data-fire-primary-label>Gọi cứu hỏa</span>
       </button>
       <button type="button" class="event-risk__btn" data-fire-action="power-zone-b">
-        <i class="ti ti-power"></i><span>Cắt điện khu B</span>
+        <i class="ti ti-power"></i><span data-fire-power-label>Cắt điện khu B</span>
       </button>
       <button type="button" class="event-risk__btn" data-fire-action="smoke">
-        <i class="ti ti-wind"></i><span>Mở hút khói</span>
+        <i class="ti ti-wind"></i><span data-fire-vent-label>Mở hút khói</span>
       </button>
     </div>
   </section>`;
@@ -485,6 +548,31 @@ export function renderEventsRight(d) {
 }
 
 export function bindEventsHudTabs(root, data) {
+  if (!root.dataset.eventRiskHoverBound) {
+    root.dataset.eventRiskHoverBound = 'true';
+    const setRiskButtonHover = (button, active) => {
+      if (!button?.classList?.contains('event-risk__btn')) return;
+      button.style.borderColor = active ? 'rgba(0, 180, 255, 0.48)' : '';
+      button.style.background = active ? 'rgba(0, 120, 180, 0.16)' : '';
+      button.style.backgroundColor = active ? 'rgba(0, 120, 180, 0.16)' : '';
+      button.style.color = active ? '#e8f8ff' : '';
+      const icon = button.querySelector('.ti');
+      if (icon) icon.style.color = active ? '#18d8f5' : '';
+    };
+
+    root.addEventListener('pointerover', (event) => {
+      const button = event.target.closest('.event-risk__btn');
+      if (button && root.contains(button)) setRiskButtonHover(button, true);
+    });
+
+    root.addEventListener('pointerout', (event) => {
+      const button = event.target.closest('.event-risk__btn');
+      if (button && root.contains(button) && !button.contains(event.relatedTarget)) {
+        setRiskButtonHover(button, false);
+      }
+    });
+  }
+
   root.querySelector('[data-events-attendance-tabs]')?.addEventListener('click', (event) => {
     const tab = event.target.closest('[data-events-attendance]');
     if (!tab) return;
@@ -501,6 +589,27 @@ export function bindEventsHudTabs(root, data) {
   });
 
   const modal = root.querySelector('[data-event-action-modal]');
+  const selectFireZone = (zoneId = 'fb') => {
+    const zone = FIRE_ZONE_DETAILS[zoneId] || FIRE_ZONE_DETAILS.fb;
+    const fireCard = root.querySelector('.event-risk--fire');
+    if (!fireCard) return;
+    fireCard.querySelector('[data-fire-core-icon]').className = `ti ${zone.icon}`;
+    fireCard.querySelector('[data-fire-core-title]').textContent = zone.label;
+    fireCard.querySelector('[data-fire-core-status]').textContent = zone.status;
+    fireCard.querySelector('[data-fire-primary-icon]').className = `ti ${zone.icon}`;
+    fireCard.querySelector('[data-fire-primary-label]').textContent = zone.primary;
+    fireCard.querySelector('[data-fire-power-label]').textContent = zone.power;
+    fireCard.querySelector('[data-fire-vent-label]').textContent = zone.ventilation;
+    fireCard.querySelectorAll('[data-fire-zone]').forEach((node) => {
+      const active = node.dataset.fireZone === zoneId;
+      if (node.classList.contains('event-fire-cell')) node.classList.toggle('event-fire-cell--active', active);
+      if (node.classList.contains('event-fire-sensor')) node.classList.toggle('event-fire-sensor--active', active);
+      node.setAttribute('aria-pressed', String(active));
+    });
+  };
+
+  selectFireZone('fb');
+
   const fillAction = (action) => {
     if (!modal || !action) return;
     if (modal.parentElement !== document.body) document.body.appendChild(modal);
@@ -517,6 +626,12 @@ export function bindEventsHudTabs(root, data) {
   };
 
   root.addEventListener('click', (event) => {
+    const fireZone = event.target.closest('[data-fire-zone]');
+    if (fireZone && fireZone.matches('button')) {
+      selectFireZone(fireZone.dataset.fireZone);
+      return;
+    }
+
     const btn = event.target.closest('.event-risk__btn');
     if (!btn || btn.dataset.dispatchOpen) return;
     const icon = btn.querySelector('.ti');

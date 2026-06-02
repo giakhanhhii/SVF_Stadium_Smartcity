@@ -27,6 +27,58 @@ function aquaDonut(pct, label) {
   </svg>`;
 }
 
+function modeInsight(view) {
+  if (!view.statTitle.includes('Chu vi')) return '';
+  return `<div class="security-mode-insight">
+    <div class="security-mode-ring">
+      <strong>100%</strong>
+      <span>Phủ cảm biến</span>
+    </div>
+    <div class="security-mode-metrics">
+      <span><b>8</b><em>Điểm gác</em></span>
+      <span><b>0</b><em>Mất tín hiệu</em></span>
+      <span><b>4 ph</b><em>Tuần tra</em></span>
+    </div>
+  </div>
+  <div class="security-mode-rail"><span style="width: 100%"></span></div>`;
+}
+
+function trafficModeDetail(view) {
+  if (!view.routes?.length) return '';
+  const routes = view.routes.map((route) => `
+    <div class="security-traffic-route security-traffic-route--${route.tone}">
+      <div class="security-traffic-route__head">
+        <span>${route.label}</span><strong>${route.value}</strong>
+      </div>
+      <div class="security-traffic-route__track"><i style="width:${route.pct}%"></i></div>
+    </div>
+  `).join('');
+  const hotspots = (view.hotspots || []).map((spot) => `
+    <span class="security-traffic-hotspot">
+      <b>${spot.zone}</b><strong>${spot.wait}</strong><em>${spot.note}</em>
+    </span>
+  `).join('');
+  const actions = (view.actions || []).map((action) =>
+    `<button type="button" class="hud-vent-btn">${action}</button>`,
+  ).join('');
+  return `<div class="security-traffic-panel">
+    <div class="security-traffic-summary">${view.summary}</div>
+    <div class="security-traffic-map" aria-hidden="true">
+      <svg viewBox="0 0 160 76">
+        <path class="security-traffic-map__road" d="M8 18h100l24 18-24 18H8"/>
+        <path class="security-traffic-map__road security-traffic-map__road--alt" d="M38 68V44h84"/>
+        <circle class="security-traffic-map__node security-traffic-map__node--ok" cx="28" cy="18" r="5"/>
+        <circle class="security-traffic-map__node security-traffic-map__node--warn" cx="92" cy="18" r="6"/>
+        <circle class="security-traffic-map__node security-traffic-map__node--hot" cx="124" cy="36" r="7"/>
+        <circle class="security-traffic-map__node security-traffic-map__node--ok" cx="38" cy="68" r="5"/>
+      </svg>
+      <div class="security-traffic-hotspots">${hotspots}</div>
+    </div>
+    <div class="security-traffic-routes">${routes}</div>
+    <div class="hud-vent-row security-traffic-actions">${actions}</div>
+  </div>`;
+}
+
 function renderModeView(view) {
   return `
     <section class="hud-block">${hudHead(view.statTitle)}
@@ -35,6 +87,8 @@ function renderModeView(view) {
         <strong>${view.value}</strong>
         <span>${view.label}</span>
       </div>
+      ${modeInsight(view)}
+      ${trafficModeDetail(view)}
     </section>
     <section class="hud-block">${hudHead(view.chartTitle)}${aquaBarChart(view.bars)}</section>`;
 }
@@ -119,10 +173,16 @@ function patrolChart(d) {
     const tone = i < d.quantity ? 'ok' : 'idle';
     return `<span class="stad-sec-cell stad-sec-cell--${tone}"></span>`;
   }).join('');
-  return `<div class="stad-sec-zone-chart" title="${d.status}">
-    <div class="stad-sec-zone-total"><i class="ti ti-walk"></i><strong>${d.quantity}</strong></div>
+  return `<div class="stad-sec-zone-chart security-patrol-chart" title="${d.status}" data-security-patrol-chart>
+    <div class="stad-sec-zone-total"><i class="ti ti-walk"></i><strong data-security-patrol-quantity>${d.quantity}</strong></div>
     <div class="stad-sec-matrix stad-sec-matrix--patrol">${cells}</div>
-  </div>`;
+  </div>
+  <div class="security-patrol-stats" data-security-patrol-stats>
+    <span><b data-security-patrol-route>${d.status}</b><em>Tuyến ưu tiên</em></span>
+    <span><b data-security-patrol-lanes>1</b><em>Làn mở</em></span>
+    <span><b data-security-patrol-led>Chờ</b><em>LED</em></span>
+  </div>
+  <div class="security-patrol-status" data-security-patrol-status>Đội tuần tra đang giữ nhịp kiểm soát quanh ${d.status}.</div>`;
 }
 
 function statTiles(stats) {
@@ -176,7 +236,7 @@ export function renderSecurityExteriorRight(d) {
     <section class="hud-block" data-security-parking-panel>${renderParkingView(d.parking, 'parking')}</section>
     <section class="hud-block">${hudHead(d.patrol.title)}
       ${patrolChart(d.patrol)}
-      <div class="hud-vent-row">${d.patrol.lanes.map((v) => `<button class="hud-vent-btn">${v}</button>`).join('')}</div>
+      <div class="hud-vent-row">${d.patrol.lanes.map((v, index) => `<button class="hud-vent-btn" data-security-patrol-action="${index}">${v}</button>`).join('')}</div>
     </section>
     <section class="hud-block hud-block--grow">${hudHead(d.traffic.title)}
       ${statTiles(d.traffic.stats)}${areaChartSvg(d.traffic.chart, 'secExtGrad')}
@@ -216,5 +276,37 @@ export function bindSecurityExteriorHudTabs(root, data) {
     const tab = event.target.closest('[data-security-parking]');
     const panel = root.querySelector('[data-security-parking-panel]');
     if (tab && panel) panel.innerHTML = renderParkingView(data.right.parking, tab.dataset.securityParking);
+  });
+
+  root.querySelectorAll('[data-security-patrol-action]').forEach((button) => {
+    if (button.dataset.securityPatrolBound === 'true') return;
+    button.dataset.securityPatrolBound = 'true';
+    button.addEventListener('click', () => {
+      const action = Number(button.dataset.securityPatrolAction || 0);
+      const card = button.closest('.hud-block');
+      const quantityEl = card?.querySelector('[data-security-patrol-quantity]');
+      const routeEl = card?.querySelector('[data-security-patrol-route]');
+      const lanesEl = card?.querySelector('[data-security-patrol-lanes]');
+      const ledEl = card?.querySelector('[data-security-patrol-led]');
+      const statusEl = card?.querySelector('[data-security-patrol-status]');
+      const cells = [...(card?.querySelectorAll('.stad-sec-matrix--patrol .stad-sec-cell') || [])];
+      const configs = [
+        { quantity: 15, route: 'Khu B', lanes: 1, led: 'Giữ', status: 'Đã tăng 3 tổ tuần tra tại khu B, ưu tiên quét hàng rào và cổng phụ.' },
+        { quantity: 13, route: 'P3', lanes: 2, led: 'Mở P3', status: 'Đã mở làn P3 và chuyển một tổ tuần tra sang điều tiết xe vào.' },
+        { quantity: 12, route: 'LED', lanes: 1, led: 'Đã cập nhật', status: 'Đã cập nhật LED hướng dẫn, giữ đội tuần tra hiện tại quanh P4.' },
+      ];
+      const next = configs[action] || configs[0];
+      if (quantityEl) quantityEl.textContent = String(next.quantity);
+      if (routeEl) routeEl.textContent = next.route;
+      if (lanesEl) lanesEl.textContent = String(next.lanes);
+      if (ledEl) ledEl.textContent = next.led;
+      if (statusEl) statusEl.textContent = next.status;
+      cells.forEach((cell, index) => {
+        cell.classList.toggle('stad-sec-cell--ok', index < next.quantity);
+        cell.classList.toggle('stad-sec-cell--idle', index >= next.quantity);
+      });
+      card?.querySelectorAll('[data-security-patrol-action]').forEach((el) => el.classList.remove('hud-vent-btn--active'));
+      button.classList.add('hud-vent-btn--active');
+    });
   });
 }

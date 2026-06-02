@@ -100,7 +100,7 @@ function bindVocEvents() {
   });
 }
 
-const MODEL_URL = 'assets/models/pvf-stadium-openroof-v4.glb?v=pitch-lines-raised-20260601';
+const MODEL_URL = 'assets/models/pvf-stadium-openroof-v4.glb?v=goals-on-grass-20260601';
 const GLASS_OPAQUE = 0xe8ecf2;
 
 const _viewForward = new THREE.Vector3();
@@ -215,6 +215,25 @@ function stabilizePitchMarkings(model) {
   });
 }
 
+function alignFootballGoalsToGrass(model) {
+  const GOAL_GRASS_INSET = 1.2;
+  [
+    { side: 1, goalName: 'football_goal_east', lineName: 'pitch_line_east' },
+    { side: -1, goalName: 'football_goal_west', lineName: 'pitch_line_west' },
+  ].forEach(({ side, goalName, lineName }) => {
+    const goal = model.getObjectByName(goalName);
+    const goalLine = model.getObjectByName(lineName);
+    if (!goal || !goalLine) return;
+
+    const goalBox = new THREE.Box3().setFromObject(goal);
+    const lineBox = new THREE.Box3().setFromObject(goalLine);
+    const goalFrontX = side > 0 ? goalBox.max.x : goalBox.min.x;
+    const lineCenterX = (lineBox.min.x + lineBox.max.x) / 2;
+    const targetFrontX = lineCenterX - side * GOAL_GRASS_INSET;
+    goal.position.x += targetFrontX - goalFrontX;
+  });
+}
+
 function setMaterialSolidDoubleSided(material, colorHex = null) {
   if (!material) return;
   (Array.isArray(material) ? material : [material]).forEach((m) => {
@@ -324,6 +343,7 @@ function createScene(container, navPageId) {
     }
     stabilizePitchSurface(stadiumModel);
     stabilizePitchMarkings(stadiumModel);
+    alignFootballGoalsToGrass(stadiumModel);
     stabilizeInteriorShell(stadiumModel);
     facadeGlassMesh = stadiumModel.getObjectByName('facade_glass');
     facadeMullionsMesh = stadiumModel.getObjectByName('facade_mullions');

@@ -14,11 +14,11 @@
 }
 
 .page-view--stadium-cmd .security-command {
-  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(240px, 280px);
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(260px, 320px);
 }
 
 .page-view--overview .security-command {
-  grid-template-columns: minmax(340px, 390px) minmax(0, 1fr) minmax(340px, 390px);
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(280px, 320px);
 }
 
 .page-view--stadium-cmd .security-command,
@@ -27,16 +27,16 @@
   isolation: isolate;
   overflow: hidden;
   background: #040810;
-  --sidebar-left-width: 280px;
-  --sidebar-right-width: 280px;
+  --sidebar-left-width: 320px;
+  --sidebar-right-width: 320px;
   --stadium-glass-bg: rgba(6, 14, 26, 0.64);
   --stadium-glass-bg-soft: rgba(6, 14, 26, 0.64);
   --stadium-glass-blur: blur(4px) saturate(1.12);
 }
 
 .page-view--overview .security-command {
-  --sidebar-left-width: 340px;
-  --sidebar-right-width: 340px;
+  --sidebar-left-width: 320px;
+  --sidebar-right-width: 320px;
 }
 
 .page-view--stadium-cmd .security-center,

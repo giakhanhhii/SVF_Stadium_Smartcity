@@ -1,7 +1,7 @@
 const DISPATCH_CFG = {
   medical: {
     defaultType: 'medical',
-    openStatus: 'Đang kết nối tổng đài VOC-11 / VOC-12.',
+    openStatus: 'Chọn tổng đài rồi bấm icon điện thoại để gọi.',
     types: {
       medical: { label: 'Đội y tế', eta: '3 phút' },
       fire: { label: 'Đội cứu hỏa', eta: '5 phút' },
@@ -9,7 +9,7 @@ const DISPATCH_CFG = {
   },
   security: {
     defaultType: 'crowd',
-    openStatus: 'Đang kết nối tổng đài an ninh VOC-21 / VOC-22.',
+    openStatus: 'Chọn tổng đài rồi bấm icon điện thoại để gọi.',
     types: {
       crowd: { label: 'Đội an ninh đám đông', eta: '2 phút' },
       evac: { label: 'Điều phối sơ tán', eta: '4 phút' },
@@ -27,6 +27,9 @@ function getRt(id) {
       recordSeconds: 0,
       recordTimer: null,
       etaTimer: null,
+      callTimer: null,
+      calling: false,
+      connected: false,
       mediaRecorder: null,
       mediaStream: null,
       recordChunks: [],
@@ -55,6 +58,7 @@ export function renderDispatchDialog(cfg) {
       <i class="ti ${t.icon}"></i><span>${t.label}</span><strong>${t.hotline}</strong>
     </button>`,
   ).join('');
+  const primary = cfg.types[0];
   return `<div class="svc-emergency" data-dispatch-dialog="${cfg.id}" hidden>
     <div class="svc-emergency__panel ${cfg.panelClass || ''}" role="dialog" aria-modal="true" aria-label="${cfg.ariaLabel}">
       <button type="button" class="svc-emergency__close" data-dispatch-close aria-label="Đóng"><i class="ti ti-x"></i></button>
@@ -65,12 +69,21 @@ export function renderDispatchDialog(cfg) {
           <h3>${cfg.title}</h3>
         </div>
       </div>
+      <div class="svc-emergency__option-label">Ưu tiên 1 · Chọn tổng đài gọi ngay</div>
       <div class="svc-emergency__lines">${lines}</div>
+      <div class="svc-emergency__call-status" data-dispatch-call-status>
+        <button type="button" class="svc-emergency__call-btn" data-dispatch-call aria-label="Bấm để gọi">
+          <i class="ti ti-phone-call"></i>
+        </button>
+        <div><small>Sẵn sàng gọi</small><strong>${primary?.hotline || ''}</strong><span>${primary?.label || ''}</span></div>
+        <em>CHỜ GỌI</em>
+      </div>
       <label class="svc-emergency__note">
         <span>${cfg.noteLabel}</span>
         <textarea data-dispatch-note rows="3" placeholder="${cfg.notePlaceholder}"></textarea>
       </label>
       <div class="svc-emergency__rec">
+        <b>Tùy chọn 2</b>
         <button type="button" class="svc-emergency__record" data-dispatch-record>
           <i class="ti ti-microphone"></i><span>Ghi âm mô tả</span>
         </button>
@@ -96,6 +109,39 @@ const formatTime = (s) =>
 
 function serviceLabel(id, type) {
   return DISPATCH_CFG[id]?.types[type]?.label || '';
+}
+
+function dispatchTypeConfig(dialog, type) {
+  const button = dialog.querySelector(`[data-dispatch-type="${type}"]`);
+  return {
+    label: button?.querySelector('span')?.textContent?.trim() || serviceLabel(dialog.dataset.dispatchDialog, type),
+    hotline: button?.querySelector('strong')?.textContent?.trim() || '',
+  };
+}
+
+function setCallStatus(dialog, type, phase = 'Sẵn sàng gọi') {
+  const call = dialog.querySelector('[data-dispatch-call-status]');
+  if (!call) return;
+  const info = dispatchTypeConfig(dialog, type);
+  const isCalling = phase === 'Đang gọi';
+  const isConnected = phase === 'Đã kết nối';
+  call.classList.toggle('svc-emergency__call-status--calling', isCalling);
+  call.classList.toggle('svc-emergency__call-status--connected', isConnected);
+  call.querySelector('small').textContent = phase;
+  call.querySelector('strong').textContent = info.hotline;
+  call.querySelector('span').textContent = info.label;
+  const badge = call.querySelector('em');
+  if (badge) badge.textContent = isCalling ? 'ĐANG GỌI' : (isConnected ? 'LIVE' : 'CHỜ GỌI');
+  const icon = call.querySelector('[data-dispatch-call] i');
+  if (icon) icon.className = `ti ${isCalling ? 'ti-phone-calling' : (isConnected ? 'ti-phone-check' : 'ti-phone-call')}`;
+}
+
+function resetCallState(dialog, rt, type = rt.selectedType) {
+  if (rt.callTimer) clearTimeout(rt.callTimer);
+  rt.callTimer = null;
+  rt.calling = false;
+  rt.connected = false;
+  setCallStatus(dialog, type, 'Sẵn sàng gọi');
 }
 
 function resolveDialogInActivePage(id) {
@@ -205,13 +251,14 @@ function bindDispatchDialogs() {
     const openBtn = e.target.closest('[data-dispatch-open]');
     const closeBtn = e.target.closest('[data-dispatch-close]');
     const lineBtn = e.target.closest('[data-dispatch-type]');
+    const callBtn = e.target.closest('[data-dispatch-call]');
     const recordBtn = e.target.closest('[data-dispatch-record]');
     const endBtn = e.target.closest('[data-dispatch-end]');
 
     const dialog = openBtn
       ? (openBtn.closest('.page-view')?.querySelector(`[data-dispatch-dialog="${openBtn.dataset.dispatchOpen}"]`)
         || resolveDialogInActivePage(openBtn.dataset.dispatchOpen))
-      : (closeBtn || lineBtn || recordBtn || endBtn)?.closest('[data-dispatch-dialog]');
+      : (closeBtn || lineBtn || callBtn || recordBtn || endBtn)?.closest('[data-dispatch-dialog]');
     if (!dialog) return;
 
     const id = dialog.dataset.dispatchDialog;
@@ -227,7 +274,8 @@ function bindDispatchDialogs() {
       dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {
         btn.classList.toggle('svc-emergency__line--active', btn.dataset.dispatchType === rt.selectedType);
       });
-      if (status) status.textContent = cfg.openStatus;
+      resetCallState(dialog, rt, rt.selectedType);
+      if (status) status.textContent = `Đã chọn ${dispatchTypeConfig(dialog, rt.selectedType).hotline}. Bấm icon điện thoại để gọi. Ghi âm là tùy chọn 2 nếu cần mô tả thêm.`;
       if (recStatus) recStatus.textContent = 'Chưa ghi âm';
       dialog.querySelector('[data-dispatch-playback]').hidden = true;
       return;
@@ -235,6 +283,7 @@ function bindDispatchDialogs() {
     if (closeBtn) {
       dialog.hidden = true;
       resetRecorder(dialog, rt);
+      resetCallState(dialog, rt);
       if (rt.etaTimer) clearTimeout(rt.etaTimer);
       return;
     }
@@ -243,7 +292,24 @@ function bindDispatchDialogs() {
       dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {
         btn.classList.toggle('svc-emergency__line--active', btn === lineBtn);
       });
-      if (status) status.textContent = `Đã chọn ${serviceLabel(id, rt.selectedType).toLowerCase()}. Hãy ghi âm hoặc nhập mô tả sự cố.`;
+      resetCallState(dialog, rt, rt.selectedType);
+      if (status) status.textContent = `Đã chọn ${dispatchTypeConfig(dialog, rt.selectedType).hotline}. Bấm icon điện thoại để bắt đầu gọi.`;
+      return;
+    }
+    if (callBtn) {
+      if (rt.callTimer) clearTimeout(rt.callTimer);
+      rt.calling = true;
+      rt.connected = false;
+      const info = dispatchTypeConfig(dialog, rt.selectedType);
+      setCallStatus(dialog, rt.selectedType, 'Đang gọi');
+      if (status) status.textContent = `Đang gọi ${info.hotline}...`;
+      rt.callTimer = setTimeout(() => {
+        rt.callTimer = null;
+        rt.calling = false;
+        rt.connected = true;
+        setCallStatus(dialog, rt.selectedType, 'Đã kết nối');
+        if (status) status.textContent = `Đã kết nối tới ${dispatchTypeConfig(dialog, rt.selectedType).hotline}. Ghi âm là tùy chọn phụ nếu cần mô tả thêm.`;
+      }, 1200);
       return;
     }
     if (recordBtn) {
@@ -253,8 +319,18 @@ function bindDispatchDialogs() {
     }
     if (endBtn) {
       if (rt.recording) stopRecording(dialog, rt, recStatus, status);
+      if (!rt.calling && !rt.connected) {
+        const info = dispatchTypeConfig(dialog, rt.selectedType);
+        if (status) status.textContent = `Chưa gọi ${info.hotline}. Hãy bấm icon điện thoại trước, ghi âm là tùy chọn 2.`;
+        return;
+      }
+      if (rt.callTimer) clearTimeout(rt.callTimer);
+      rt.callTimer = null;
+      rt.calling = false;
+      rt.connected = true;
       const label = serviceLabel(id, rt.selectedType);
-      if (status) status.textContent = `Yêu cầu đang được chuyển đến ${label.toLowerCase()}.`;
+      setCallStatus(dialog, rt.selectedType, 'Đã kết nối');
+      if (status) status.textContent = `Cuộc gọi tới ${dispatchTypeConfig(dialog, rt.selectedType).hotline} đã kết nối. Yêu cầu đang được chuyển đến ${label.toLowerCase()}.`;
       if (rt.etaTimer) clearTimeout(rt.etaTimer);
       rt.etaTimer = setTimeout(() => {
         const info = DISPATCH_CFG[id].types[rt.selectedType];
@@ -278,14 +354,15 @@ export function openDispatchDialog(id, opts = {}) {
   dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {
     btn.classList.toggle('svc-emergency__line--active', btn.dataset.dispatchType === type);
   });
+  resetCallState(dialog, rt, type);
   const note = dialog.querySelector('[data-dispatch-note]');
   if (note && opts.note != null) note.value = opts.note;
   const status = dialog.querySelector('[data-dispatch-status] span');
   const recStatus = dialog.querySelector('[data-dispatch-rec-status]');
   if (status) {
     status.textContent = opts.titleSuffix
-      ? `Báo lại yêu cầu ${opts.titleSuffix}. ${cfg?.openStatus || ''}`
-      : (cfg?.openStatus || 'Sẵn sàng.');
+      ? `Báo lại yêu cầu ${opts.titleSuffix}. Bấm icon điện thoại để gọi ${dispatchTypeConfig(dialog, type).hotline}.`
+      : `Đã chọn ${dispatchTypeConfig(dialog, type).hotline}. Bấm icon điện thoại để gọi. Ghi âm là tùy chọn 2 nếu cần mô tả thêm.`;
   }
   if (recStatus) recStatus.textContent = 'Chưa ghi âm';
   const playback = dialog.querySelector('[data-dispatch-playback]');

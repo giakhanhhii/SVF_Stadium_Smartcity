@@ -14,6 +14,117 @@ function historyItem(item, compact = false) {
   `;
 }
 
+const reportCaseUi = {
+  crowd: {
+    icon: 'ti-users-group',
+    title: 'Giải quyết quá tải khán đài',
+    route: ['An ninh', 'Cổng B2', 'Khán đài B'],
+    metrics: [['Mật độ', 'Cao'], ['Tổ phản ứng', '2'], ['ETA', '4 ph']],
+    primary: 'Kích hoạt phân luồng',
+  },
+  medical: {
+    icon: 'ti-first-aid-kit',
+    title: 'Điều phối hỗ trợ y tế',
+    route: ['Y tế', 'EMS-02', 'Cổng A'],
+    metrics: [['Cáng', 'Thiếu'], ['EMS', 'Sẵn sàng'], ['ETA', '3 ph']],
+    primary: 'Điều EMS',
+  },
+  power: {
+    icon: 'ti-bolt',
+    title: 'Khôi phục nguồn điện',
+    route: ['BMS', 'UPS phụ', 'Kiosk C2'],
+    metrics: [['Tải', 'Ổn định'], ['UPS', 'Online'], ['Rủi ro', 'Thấp']],
+    primary: 'Xác nhận khôi phục',
+  },
+  fire: {
+    icon: 'ti-flame',
+    title: 'Xử lý báo cháy / khói',
+    route: ['PCCC', 'Bếp B', 'Cảm biến khói'],
+    metrics: [['Khói', 'Dao động'], ['Gas', 'Cần khóa'], ['PCCC', 'Ưu tiên']],
+    primary: 'Chuyển PCCC xử lý',
+  },
+  'fire-risk': {
+    icon: 'ti-alert-triangle',
+    title: 'Xử lý nguy cơ cháy nổ',
+    route: ['Kỹ thuật', 'Tủ điện C4', 'CO2 standby'],
+    metrics: [['Nhiệt', 'Tăng'], ['Tải', 'Cao'], ['Rủi ro', 'Cần giảm']],
+    primary: 'Giảm tải & kiểm tra',
+  },
+  traffic: {
+    icon: 'ti-traffic-lights',
+    title: 'Điều tiết giao thông',
+    route: ['P4', 'Làn P3', 'LED'],
+    metrics: [['Hàng chờ', 'Cao'], ['Làn mở', '1'], ['ETA', '5 ph']],
+    primary: 'Mở phương án P3',
+  },
+};
+
+function reportHistoryCase(item) {
+  const action = item.resolved
+    ? '<span class="report-case__closed"><i class="ti ti-check"></i>Đã đóng</span>'
+    : `<button type="button" class="report-case__resolve" data-report-resolve="${item.id}">
+        <i class="ti ti-tool"></i><span>Giải quyết</span>
+      </button>`;
+  const escalation = !item.resolved && item.attempts >= 2
+    ? `<button type="button" class="report-case__escalate" data-report-escalate="${item.id}">
+        <i class="ti ti-message-report"></i><span>Khiếu nại phụ trách</span>
+      </button>`
+    : '';
+  return `<article class="report-case report-case--${item.tone}" data-report-case="${item.id}" data-report-resolved="${item.resolved ? 'true' : 'false'}">
+    <div class="report-case__main">
+      <small>${item.id} · ${item.time}</small>
+      <strong>${item.title}</strong>
+      <p>${item.summary}</p>
+    </div>
+    <div class="report-case__meta">
+      <span class="report-case__attempt">Lần ${item.attempts}</span>
+      <span>${item.owner}</span>
+      <b>${item.status}</b>
+    </div>
+    <div class="report-case__actions">
+      ${action}
+      ${escalation}
+    </div>
+    <div class="report-case__status" data-report-case-status></div>
+  </article>`;
+}
+
+function reportCaseList(items = [], filter = 'all') {
+  const filtered = items.filter((item) => {
+    if (filter === 'open') return !item.resolved;
+    if (filter === 'resolved') return item.resolved;
+    return true;
+  });
+  if (!filtered.length) return '<div class="report-history-modal__empty">Không có báo cáo trong nhóm này.</div>';
+  return filtered.map(reportHistoryCase).join('');
+}
+
+function reportResolveModal(items = []) {
+  const payload = encodeURIComponent(JSON.stringify(items));
+  return `<div class="report-resolve-modal" data-report-resolve-modal data-report-cases="${payload}" hidden>
+    <div class="report-resolve-modal__panel" role="dialog" aria-modal="true" aria-label="Giải quyết báo cáo">
+      <button type="button" class="report-send-modal__close" data-report-resolve-close aria-label="Đóng">
+        <i class="ti ti-x"></i>
+      </button>
+      <div class="report-send-modal__head">
+        <span><i class="ti ti-tool" data-report-resolve-icon></i></span>
+        <div>
+          <small data-report-resolve-tag>Luồng xử lý</small>
+          <h3 data-report-resolve-title>Giải quyết báo cáo</h3>
+          <p data-report-resolve-summary></p>
+        </div>
+      </div>
+      <div class="report-resolve-modal__route" data-report-resolve-route></div>
+      <div class="report-resolve-modal__metrics" data-report-resolve-metrics></div>
+      <div class="report-resolve-modal__steps" data-report-resolve-steps></div>
+      <div class="report-resolve-modal__status" data-report-resolve-status>Chưa kích hoạt thao tác xử lý.</div>
+      <button type="button" class="report-send-modal__primary" data-report-resolve-confirm>
+        <i class="ti ti-send"></i><span data-report-resolve-primary>Xác nhận xử lý</span>
+      </button>
+    </div>
+  </div>`;
+}
+
 function reportSummaryViz() {
   return `<div class="report-summary-viz">
     <div class="report-summary-viz__ring" style="--pct:88">
@@ -272,9 +383,10 @@ function focusMap() {
 }
 
 export function renderReportsLeft(d) {
-  const fullHistory = [...d.history, ...(d.simulatedHistory || [])]
-    .map((item) => historyItem(item))
-    .join('');
+  const reportCases = d.reportCases || [];
+  const resolvedCount = reportCases.filter((item) => item.resolved).length;
+  const openCount = reportCases.length - resolvedCount;
+  const allCount = reportCases.length;
 
   return `
     <section class="hud-block report-summary">${hudHead('Báo cáo vận hành')}
@@ -297,15 +409,17 @@ export function renderReportsLeft(d) {
         <button type="button" class="report-history-modal__close" data-report-history-close aria-label="Đóng">
           <i class="ti ti-x"></i>
         </button>
-        <button type="button" class="report-history-modal__clear" data-report-history-clear>
-          <i class="ti ti-trash"></i><span>Xóa toàn bộ lịch sử</span>
-        </button>
         <h3>Lịch sử báo cáo đã gửi</h3>
-        <p>Lịch sử thật được nạp từ hệ thống VOC; 3 dòng giả lập dùng để mô phỏng dữ liệu mở rộng.</p>
-        <div class="report-history-modal__list" data-report-history-full>${fullHistory}</div>
-        <div class="report-history-modal__empty" data-report-history-empty hidden>Chưa có lịch sử báo cáo trong phiên này.</div>
+        <p>Theo dõi các báo cáo đã gửi, báo cháy, nguy cơ cháy nổ và các vấn đề còn mở trong ca vận hành.</p>
+        <div class="report-history-modal__tabs" data-report-history-tabs>
+          <button type="button" class="hud-tab hud-tab--active" data-report-history-tab="all">Tất cả <b>${allCount}</b></button>
+          <button type="button" class="hud-tab" data-report-history-tab="open">Chưa giải quyết <b>${openCount}</b></button>
+          <button type="button" class="hud-tab" data-report-history-tab="resolved">Đã giải quyết <b>${resolvedCount}</b></button>
+        </div>
+        <div class="report-history-modal__list" data-report-history-panel data-report-cases="${encodeURIComponent(JSON.stringify(reportCases))}">${reportCaseList(reportCases, 'all')}</div>
       </div>
     </div>
+    ${reportResolveModal(reportCases)}
   `;
 }
 
@@ -343,23 +457,10 @@ export function bindReportsHistory(root) {
   };
 
   root.addEventListener('click', (e) => {
-    const modal = root.querySelector('[data-report-history-modal]');
+    const modal = getBodyModal('[data-report-history-modal]');
 
     if (modal && e.target.closest('[data-report-history-open]')) {
       modal.hidden = false;
-      return;
-    }
-
-    if (modal && (e.target.closest('[data-report-history-close]') || e.target === modal)) {
-      modal.hidden = true;
-      return;
-    }
-
-    if (modal && e.target.closest('[data-report-history-clear]')) {
-      const list = modal.querySelector('[data-report-history-full]');
-      const empty = modal.querySelector('[data-report-history-empty]');
-      if (list) list.innerHTML = '';
-      if (empty) empty.hidden = false;
       return;
     }
 
@@ -391,6 +492,97 @@ export function bindReportsHistory(root) {
   document.addEventListener('click', (e) => {
     const sendModal = document.querySelector('[data-report-send-modal]:not([hidden])');
     const adviceModal = document.querySelector('[data-report-advice-modal]:not([hidden])');
+    const historyModal = document.querySelector('[data-report-history-modal]');
+    const openHistoryModal = document.querySelector('[data-report-history-modal]:not([hidden])');
+    const resolveModalAny = document.querySelector('[data-report-resolve-modal]');
+    const resolveModal = document.querySelector('[data-report-resolve-modal]:not([hidden])');
+    const cases = (() => {
+      try {
+        return JSON.parse(decodeURIComponent(resolveModalAny?.dataset.reportCases || '%5B%5D'));
+      } catch {
+        return [];
+      }
+    })();
+
+    if (openHistoryModal && (e.target.closest('[data-report-history-close]') || e.target === openHistoryModal)) {
+      openHistoryModal.hidden = true;
+      return;
+    }
+
+    const historyTab = e.target.closest('[data-report-history-tab]');
+    if (openHistoryModal && historyTab) {
+      openHistoryModal.querySelectorAll('[data-report-history-tab]').forEach((tab) => {
+        tab.classList.toggle('hud-tab--active', tab === historyTab);
+      });
+      const panel = openHistoryModal.querySelector('[data-report-history-panel]');
+      if (panel) {
+        const items = JSON.parse(decodeURIComponent(panel.dataset.reportCases || '%5B%5D'));
+        panel.innerHTML = reportCaseList(items, historyTab.dataset.reportHistoryTab);
+      }
+      return;
+    }
+
+    const escalateBtn = e.target.closest('[data-report-escalate]');
+    if (openHistoryModal && escalateBtn) {
+      const card = openHistoryModal.querySelector(`[data-report-case="${escalateBtn.dataset.reportEscalate}"]`);
+      const item = cases.find((entry) => entry.id === escalateBtn.dataset.reportEscalate);
+      const status = card?.querySelector('[data-report-case-status]');
+      if (status && item) {
+        status.textContent = `Đã gửi khiếu nại tới ${item.owner}; yêu cầu phản hồi trước mốc SLA tiếp theo.`;
+        status.hidden = false;
+      }
+      escalateBtn.disabled = true;
+      escalateBtn.querySelector('span').textContent = 'Đã khiếu nại';
+      return;
+    }
+
+    const resolveBtn = e.target.closest('[data-report-resolve]');
+    if (openHistoryModal && resolveModalAny && resolveBtn) {
+      if (resolveModalAny.parentElement !== document.body) document.body.appendChild(resolveModalAny);
+      const item = cases.find((entry) => entry.id === resolveBtn.dataset.reportResolve);
+      const ui = reportCaseUi[item?.type] || reportCaseUi.crowd;
+      if (!item) return;
+      resolveModalAny.dataset.activeCase = item.id;
+      resolveModalAny.querySelector('[data-report-resolve-icon]').className = `ti ${ui.icon}`;
+      resolveModalAny.querySelector('[data-report-resolve-tag]').textContent = `${item.id} · Lần ${item.attempts}`;
+      resolveModalAny.querySelector('[data-report-resolve-title]').textContent = ui.title;
+      resolveModalAny.querySelector('[data-report-resolve-summary]').textContent = item.summary;
+      resolveModalAny.querySelector('[data-report-resolve-primary]').textContent = ui.primary;
+      resolveModalAny.querySelector('[data-report-resolve-status]').textContent = 'Chưa kích hoạt thao tác xử lý.';
+      resolveModalAny.querySelector('[data-report-resolve-route]').innerHTML = ui.route
+        .map((step, index) => `${index ? '<i></i>' : ''}<span>${step}</span>`)
+        .join('');
+      resolveModalAny.querySelector('[data-report-resolve-metrics]').innerHTML = ui.metrics
+        .map(([label, value]) => `<span><b>${value}</b><em>${label}</em></span>`)
+        .join('');
+      resolveModalAny.querySelector('[data-report-resolve-steps]').innerHTML = item.steps
+        .map((step, index) => `<span><b>0${index + 1}</b>${step}</span>`)
+        .join('');
+      resolveModalAny.hidden = false;
+      return;
+    }
+
+    if (resolveModal && (e.target.closest('[data-report-resolve-close]') || e.target === resolveModal)) {
+      resolveModal.hidden = true;
+      return;
+    }
+
+    if (resolveModal && e.target.closest('[data-report-resolve-confirm]')) {
+      const id = resolveModal.dataset.activeCase;
+      const card = historyModal?.querySelector(`[data-report-case="${id}"]`);
+      const status = card?.querySelector('[data-report-case-status]');
+      const resolveButton = card?.querySelector('[data-report-resolve]');
+      if (status) {
+        status.textContent = 'Đã kích hoạt luồng xử lý; chờ xác nhận đóng báo cáo từ người phụ trách.';
+        status.hidden = false;
+      }
+      if (resolveButton) {
+        resolveButton.disabled = true;
+        resolveButton.querySelector('span').textContent = 'Đang xử lý';
+      }
+      resolveModal.querySelector('[data-report-resolve-status]').textContent = 'Đã gửi thao tác xử lý tới bộ phận phụ trách.';
+      return;
+    }
 
     if (sendModal && (e.target.closest('[data-report-send-close]') || e.target === sendModal)) {
       sendModal.hidden = true;

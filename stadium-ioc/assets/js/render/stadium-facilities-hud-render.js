@@ -1,4 +1,4 @@
-import { hudHead, ringSvg, areaChartSvg } from './hud-charts.js';
+import { hudHead, ringSvg } from './hud-charts.js';
 import { setRoofProgress, getRoofProgress } from '../scene/stadium-scene-registry.js';
 
 let roofAnim = null;
@@ -98,7 +98,7 @@ const facilityActions = {
     steps: ['Đồng bộ lại telemetry', 'Kiểm tra cảnh báo HVAC-B', 'Gửi snapshot cho đội kỹ thuật'],
     primary: 'Đồng bộ BMS',
     status: 'Chờ xác nhận đồng bộ dữ liệu BMS.',
-    done: 'Đã đồng bộ BMS và cập nhật chỉ số hạ tầng 24h.',
+    done: 'Đã đồng bộ BMS và cập nhật telemetry realtime.',
   },
   temp: {
     icon: 'ti-temperature',
@@ -269,14 +269,20 @@ export function bindFacilitiesActions(root) {
   if (!root || root.dataset.facilityActionsBound) return;
   root.dataset.facilityActionsBound = 'true';
   root.addEventListener('click', (event) => {
+    const modeBtn = event.target.closest('[data-fac-mode]');
+    if (modeBtn && root.contains(modeBtn)) {
+      const modeTabs = modeBtn.closest('[data-fac-mode-tabs]');
+      const panel = root.querySelector('[data-fac-mode-panel]');
+      if (modeTabs) {
+        modeTabs.querySelectorAll('.hud-tab').forEach((tab) => {
+          tab.classList.toggle('hud-tab--active', tab === modeBtn);
+        });
+      }
+      if (panel) panel.innerHTML = facilityModeDiagram(modeBtn.dataset.facMode);
+      return;
+    }
     const btn = event.target.closest('[data-fac-action]');
     if (!btn || !root.contains(btn)) return;
-    const modeTabs = btn.closest('[data-fac-mode-tabs]');
-    if (modeTabs) {
-      modeTabs.querySelectorAll('.hud-tab').forEach((tab) => {
-        tab.classList.toggle('hud-tab--active', tab === btn);
-      });
-    }
     fillFacilityActionModal(root, facilityActions[btn.dataset.facAction]);
   });
 }
@@ -376,6 +382,51 @@ function loadMatrix(bars = []) {
   return `<div class="fac-load">${cells}</div>`;
 }
 
+function facilityModeDiagram(mode = 'monitor') {
+  if (mode === 'roof') return roofStatusDiagram();
+  return monitorStatusDiagram();
+}
+
+function monitorStatusDiagram() {
+  const nodes = [
+    { label: 'HVAC', icon: 'ti-air-conditioning', value: '92%', tone: 'warn' },
+    { label: 'Đèn', icon: 'ti-bulb', value: 'OK', tone: 'ok' },
+    { label: 'UPS', icon: 'ti-bolt', value: '61%', tone: 'ok' },
+    { label: 'Thang', icon: 'ti-elevator', value: '14/16', tone: 'warn' },
+  ];
+  return `<div class="fac-mode-diagram fac-mode-diagram--monitor">
+    <div class="fac-mode-diagram__core">
+      <i class="ti ti-building-factory-2"></i><strong>BMS</strong><span>24/24 node</span>
+    </div>
+    <div class="fac-mode-diagram__nodes">${nodes.map((node) =>
+    `<span class="fac-mode-node fac-mode-node--${node.tone}">
+      <i class="ti ${node.icon}"></i><b>${node.value}</b><em>${node.label}</em>
+    </span>`,
+  ).join('')}</div>
+  </div>`;
+}
+
+function roofStatusDiagram() {
+  const locks = [
+    { label: 'Gió', value: 'OK', tone: 'ok' },
+    { label: 'Motor', value: 'Ổn định', tone: 'ok' },
+    { label: 'Khóa cơ', value: 'Ready', tone: 'ok' },
+  ];
+  return `<div class="fac-mode-diagram fac-mode-diagram--roof">
+    <div class="fac-roof-viz" aria-hidden="true">
+      <span class="fac-roof-viz__base"></span>
+      <span class="fac-roof-viz__shell fac-roof-viz__shell--left"></span>
+      <span class="fac-roof-viz__shell fac-roof-viz__shell--right"></span>
+      <span class="fac-roof-viz__gap"></span>
+    </div>
+    <div class="fac-roof-stats">${locks.map((item) =>
+    `<span class="fac-roof-stat fac-roof-stat--${item.tone}">
+      <b>${item.value}</b><em>${item.label}</em>
+    </span>`,
+  ).join('')}</div>
+  </div>`;
+}
+
 function infraTrendActions() {
   const points = [46, 52, 58, 66, 62, 74, 69];
   const polyline = points.map((y, index) => `${8 + index * 15},${76 - y}`).join(' ');
@@ -426,36 +477,16 @@ function statusRail(alerts = []) {
   ).join('')}</div>`;
 }
 
-function infraDiagram(stats = []) {
-  const icons = ['ti-temperature', 'ti-bulb', 'ti-elevator', 'ti-building-arch'];
-  const actions = ['temp', 'light', 'elevator', 'roofstatus'];
-  const items = stats.map((item, index) => ({
-    ...item,
-    action: actions[index],
-    icon: icons[index] || 'ti-cpu',
-    tone: index === 2 ? 'warn' : 'ok',
-  }));
-  return `<div class="fac-infra-diagram">
-    <button type="button" class="fac-infra-diagram__core" data-fac-action="bms" aria-label="Xem chi tiết BMS">
-      <i class="ti ti-building-factory-2"></i><strong>BMS</strong>
-    </button>
-    <div class="fac-infra-diagram__items">${items.map((item) =>
-    `<button type="button" class="fac-infra-item fac-infra-item--${item.tone}" data-fac-action="${item.action}" aria-label="Xem chi tiết ${item.label}">
-      <i class="ti ${item.icon}"></i><b>${item.value}</b>
-    </button>`,
-  ).join('')}</div>
-  </div>`;
-}
-
 export function renderFacilitiesLeft(d) {
   return `
     <section class="hud-block">${hudHead(d.env.title)}${thermalMap(d.env.groups)}</section>
     <section class="hud-block">${hudHead('Tải hạ tầng 24h')}${infraTrendActions()}${facilityActionModal()}</section>
     <section class="hud-block">${hudHead(d.systems.title)}${networkDiagram(d.systems.feeds)}</section>
     <div class="hud-tabs hud-tabs--dual" data-fac-mode-tabs>
-      <button class="hud-tab hud-tab--active" type="button" data-fac-action="monitor">${d.modeTabs[0]}</button>
-      <button class="hud-tab" type="button" data-fac-action="roof">${d.modeTabs[1]}</button>
+      <button class="hud-tab hud-tab--active" type="button" data-fac-mode="monitor">${d.modeTabs[0]}</button>
+      <button class="hud-tab" type="button" data-fac-mode="roof">${d.modeTabs[1]}</button>
     </div>
+    <section class="hud-block hud-block--fac-mode" data-fac-mode-panel>${facilityModeDiagram('monitor')}</section>
     <section class="hud-block">${hudHead(d.loadBars.title)}${loadMatrix(d.loadBars.bars)}</section>`;
 }
 
@@ -474,9 +505,6 @@ export function renderFacilitiesRight(d) {
         <button class="hud-vent-btn" data-roof="close">Đóng mái</button>
         <button class="hud-vent-btn hud-vent-btn--danger" data-roof="stop">Dừng khẩn cấp</button>
       </div>
-    </section>
-    <section class="hud-block hud-block--grow">${hudHead(d.infra.title)}
-      ${infraDiagram(d.infra.stats)}${areaChartSvg(d.infra.chart, 'facGrad')}
     </section>`;
   requestAnimationFrame(() => {
     const root = document.querySelector('#page-facilities [data-mount="sidebar-right"]');

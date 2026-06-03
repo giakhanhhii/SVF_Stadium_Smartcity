@@ -32,6 +32,200 @@ function eventRadarChart(values, labels) {
   </svg>`;
 }
 
+const CROWD_DENSITY_ZONES = [
+  { id: 'A', label: 'Khán đài A', pct: 82, tone: 'warn', note: 'Gần ngưỡng, theo dõi lối lên' },
+  { id: 'B12', label: 'Khán đài B12', pct: 92, tone: 'hot', note: 'Cần điều tổ ngay' },
+  { id: 'B2', label: 'Cổng B2', pct: 86, tone: 'warn', note: 'Mở thêm luồng thoát' },
+  { id: 'C1', label: 'Cổng C1', pct: 78, tone: 'ok', note: 'Sẵn sàng nhận luồng' },
+  { id: 'D', label: 'Khán đài D', pct: 84, tone: 'warn', note: 'Gần nguy cấp sau giải lao' },
+  { id: 'VIP', label: 'VIP', pct: 66, tone: 'ok', note: 'Ổn định' },
+  { id: 'GATE', label: 'Cổng vào', pct: 72, tone: 'ok', note: 'Dòng vào bình thường' },
+  { id: 'EXIT', label: 'Lối thoát', pct: 58, tone: 'exit', note: 'Tuyến thoát ưu tiên' },
+];
+
+const DENSITY_ACTION_CONTEXT = {
+  densityTeam: { focus: ['B12', 'B2', 'D'], plan: 'Điều 2 tổ an ninh tới B12, một tổ giữ B2 và một tổ theo dõi khu D.' },
+  densityReduce: { focus: ['B12', 'B2', 'C1'], plan: 'Giảm dòng vào B12, mở tuyến B2/C1 và chuyển khán giả sang khu C1.' },
+  heatmap: { focus: ['A', 'B12', 'B2', 'D'], plan: 'Bật lớp bản đồ nhiệt toàn sân, ưu tiên các khu vàng/đỏ trong 60 giây tới.' },
+  heatmapB12: { focus: ['A', 'B12', 'B2', 'D'], plan: 'Bật lớp bản đồ nhiệt toàn sân, ưu tiên các khu vàng/đỏ trong 60 giây tới.' },
+  isolateDense: { focus: ['B12', 'B2'], plan: 'Khoanh vùng các ô đông nhất quanh B12 và giữ hành lang B2 không bị quay đầu.' },
+  nearestExit: { focus: ['B12', 'B2', 'C1', 'EXIT'], plan: 'Mở lối thoát gần nhất, dẫn luồng từ B12 qua B2 và C1.' },
+  dispatchTeam: { focus: ['B12', 'A', 'D'], plan: 'Gửi đội cơ động gần nhất tới B12, đội dự phòng kiểm tra A/D trong vòng 2 phút.' },
+  split: { focus: ['B12', 'B2', 'C1'], plan: 'Chia luồng B12 sang B2/C1, giữ C1 làm tuyến nhận luồng an toàn.' },
+  reverse: { focus: ['B12', 'C1', 'EXIT'], plan: 'Đảo chiều luồng phụ, khóa nhánh quay lại B12 và ưu tiên thoát qua C1.' },
+  paGuide: { focus: ['B12', 'B2', 'C1'], plan: 'Phát PA hướng dẫn rời khu đông theo hai tuyến B2/C1.' },
+  paSplit: { focus: ['B12', 'B2', 'C1'], plan: 'Phát kịch bản PA phân luồng ngắn, chia đều khán giả sang hai cửa.' },
+};
+
+const DENSITY_ACTION_UI = {
+  densityTeam: {
+    variant: 'crew',
+    metrics: [['03', 'Tổ sẵn sàng'], ['02\'', 'ETA B12'], ['B12/D', 'Khu ưu tiên']],
+    detail: `<div class="event-density-crew">
+      <span><b>Alpha-02</b><em>B12 tầng 2</em><strong>Đến ngay</strong></span>
+      <span><b>Bravo-01</b><em>Cổng B2</em><strong>Giữ luồng</strong></span>
+      <span><b>Delta-03</b><em>Khán đài D</em><strong>Dự phòng</strong></span>
+    </div>`,
+  },
+  densityReduce: {
+    variant: 'flow',
+    metrics: [['-28%', 'Dòng vào B12'], ['+420', 'Chuyển sang C1'], ['84%', 'Ngưỡng mục tiêu']],
+    detail: `<div class="event-density-flow">
+      <span><b>B12 vào</b><i style="width:42%"></i><em>-28%</em></span>
+      <span><b>B2 thoát</b><i style="width:76%"></i><em>+18%</em></span>
+      <span><b>C1 nhận</b><i style="width:68%"></i><em>+420</em></span>
+    </div>`,
+  },
+  heatmap: {
+    variant: 'heat',
+    metrics: [['01', 'Khu đỏ'], ['03', 'Khu vàng'], ['60s', 'Refresh']],
+    detail: `<div class="event-density-heat">
+      <span><b>92%</b><i></i><em>B12 đỏ</em></span>
+      <span><b>86%</b><i></i><em>B2 vàng</em></span>
+      <span><b>84%</b><i></i><em>D vàng</em></span>
+      <span><b>82%</b><i></i><em>A vàng</em></span>
+    </div>`,
+  },
+  heatmapB12: {
+    variant: 'heat',
+    metrics: [['01', 'Khu đỏ'], ['03', 'Khu vàng'], ['60s', 'Refresh']],
+    detail: `<div class="event-density-heat">
+      <span><b>92%</b><i></i><em>B12 đỏ</em></span>
+      <span><b>86%</b><i></i><em>B2 vàng</em></span>
+      <span><b>84%</b><i></i><em>D vàng</em></span>
+      <span><b>82%</b><i></i><em>A vàng</em></span>
+    </div>`,
+  },
+  isolateDense: {
+    variant: 'isolate',
+    metrics: [['05', 'Ô cô lập'], ['03', 'Barrier'], ['40m', 'Bán kính']],
+    detail: `<div class="event-density-isolate">
+      ${['B12-1', 'B12-2', 'B12-3', 'B2-1', 'D-2', 'C1'].map((cell, i) =>
+    `<span class="${i < 5 ? 'event-density-isolate__cell--lock' : ''}"><b>${cell}</b><em>${i < 5 ? 'LOCK' : 'OPEN'}</em></span>`).join('')}
+    </div>`,
+  },
+  nearestExit: {
+    variant: 'exit',
+    metrics: [['02', 'EXIT mở'], ['04\'', 'ETA sơ tán'], ['1.2k', 'Người/phút']],
+    detail: `<div class="event-density-exit-route">
+      <span>B12</span><i></i><span>B2</span><i></i><span>C1</span><i></i><span>EXIT</span>
+    </div>`,
+  },
+  dispatchTeam: {
+    variant: 'dispatch',
+    metrics: [['02', 'Đội cơ động'], ['01\'30', 'ETA gần nhất'], ['VOC-21', 'Kênh lệnh']],
+    detail: `<div class="event-density-dispatch">
+      <span><i class="ti ti-motorbike"></i><b>Đội nhanh 1</b><em>Từ cổng B2 tới B12</em></span>
+      <span><i class="ti ti-shield"></i><b>Đội an ninh 4</b><em>Chốt mép khán đài A/D</em></span>
+    </div>`,
+  },
+  split: {
+    variant: 'flow',
+    metrics: [['2 tuyến', 'B2/C1 nhận'], ['04\'', 'Giảm áp'], ['-18%', 'B12 dự kiến']],
+    detail: `<div class="event-density-flow">
+      <span><b>B12</b><i style="width:48%"></i><em>giảm</em></span>
+      <span><b>B2</b><i style="width:74%"></i><em>nhận</em></span>
+      <span><b>C1</b><i style="width:66%"></i><em>nhận</em></span>
+    </div>`,
+  },
+  reverse: {
+    variant: 'exit',
+    metrics: [['01', 'Luồng đảo'], ['03', 'Chốt khóa'], ['C1', 'Tuyến chính']],
+    detail: `<div class="event-density-exit-route">
+      <span>B12</span><i></i><span>C1</span><i></i><span>EXIT</span><i></i><span>PA</span>
+    </div>`,
+  },
+  paGuide: {
+    variant: 'pa',
+    metrics: [['03', 'Lần phát'], ['45s', 'Chu kỳ'], ['B/C', 'Vùng loa']],
+    detail: `<div class="event-density-pa">
+      <span><b>PA B</b><em>Rời B12 theo hướng B2</em></span>
+      <span><b>LED C1</b><em>Hiển thị tuyến nhận luồng</em></span>
+      <span><b>PA Gate</b><em>Nhắc không dừng ở lối hẹp</em></span>
+    </div>`,
+  },
+  paSplit: {
+    variant: 'pa',
+    metrics: [['02', 'Cửa hướng dẫn'], ['03', 'Thông điệp'], ['LIVE', 'PA ưu tiên']],
+    detail: `<div class="event-density-pa">
+      <span><b>B2</b><em>Đi theo hàng phải</em></span>
+      <span><b>C1</b><em>Tuyến nhận khách phụ</em></span>
+      <span><b>LED</b><em>Đồng bộ mũi tên luồng</em></span>
+    </div>`,
+  },
+};
+
+function densityToneLabel(tone) {
+  if (tone === 'hot') return 'Cần điều ngay';
+  if (tone === 'warn') return 'Gần nguy cấp';
+  if (tone === 'exit') return 'Lối thoát';
+  return 'Ổn định';
+}
+
+function densityMapGrid({ compact = false, focus = [] } = {}) {
+  const focusSet = new Set(focus);
+  const cells = CROWD_DENSITY_ZONES.map((zone) => {
+    const active = focusSet.has(zone.id);
+    const alert = zone.tone === 'hot' || zone.tone === 'warn';
+    return `<button type="button" class="event-density-zone event-density-zone--${zone.tone}${active ? ' event-density-zone--active' : ''}" data-density-zone="${zone.id}">
+      <b>${zone.id}</b>
+      ${alert ? '<i>!</i>' : ''}
+      <span>${compact ? `${zone.pct}%` : zone.label}</span>
+    </button>`;
+  }).join('');
+  return `<div class="event-density-map${compact ? ' event-density-map--compact' : ''}">
+    <div class="event-density-map__pitch">SÂN</div>
+    <div class="event-density-map__grid">${cells}</div>
+  </div>`;
+}
+
+function densityMiniPanel() {
+  const hot = CROWD_DENSITY_ZONES.find((zone) => zone.tone === 'hot') || CROWD_DENSITY_ZONES[0];
+  const warnCount = CROWD_DENSITY_ZONES.filter((zone) => zone.tone === 'warn').length;
+  return `<div class="event-density-overview event-density-overview--summary">
+    <div class="event-risk__kpis">
+      <span><b>${hot.pct}%</b><em>Đỏ ${hot.id}</em></span>
+      <span><b>${warnCount}</b><em>Vàng</em></span>
+      <span><b>04'</b><em>ETA</em></span>
+    </div>
+    <div class="event-density-mini-diagram" aria-label="Sơ đồ mật độ">
+      <span class="event-density-mini-diagram__node event-density-mini-diagram__node--hot"><i class="ti ti-alert-triangle"></i><b>${hot.id}</b></span>
+      <i class="event-density-mini-diagram__line"></i>
+      <span class="event-density-mini-diagram__node event-density-mini-diagram__node--warn"><i class="ti ti-route"></i><b>B2/C1</b></span>
+      <i class="event-density-mini-diagram__line"></i>
+      <span class="event-density-mini-diagram__node event-density-mini-diagram__node--exit"><i class="ti ti-door-exit"></i><b>EXIT</b></span>
+    </div>
+  </div>`;
+}
+
+function densityModalMap(actionKey = 'densityTeam') {
+  const context = DENSITY_ACTION_CONTEXT[actionKey] || DENSITY_ACTION_CONTEXT.densityTeam;
+  const ui = DENSITY_ACTION_UI[actionKey] || DENSITY_ACTION_UI.densityTeam;
+  const legend = [
+    ['hot', 'Đỏ', 'Cần điều ngay'],
+    ['warn', 'Vàng', 'Gần nguy cấp'],
+    ['ok', 'Xanh', 'Ổn định'],
+  ].map(([tone, label, desc]) => `<span class="event-density-legend__item event-density-legend__item--${tone}"><b>${label}</b><em>${desc}</em></span>`).join('');
+  const zones = CROWD_DENSITY_ZONES.map((zone) =>
+    `<span class="event-density-zone-row event-density-zone-row--${zone.tone}">
+      <b>${zone.id}</b><strong>${zone.pct}%</strong><em>${densityToneLabel(zone.tone)}</em>
+    </span>`,
+  ).join('');
+  const metrics = ui.metrics.map(([value, label]) =>
+    `<span><b>${value}</b><em>${label}</em></span>`,
+  ).join('');
+  return `<div class="event-density-modal-map event-density-modal-map--${ui.variant}" data-event-density-map>
+    ${densityMapGrid({ focus: context.focus })}
+    <div class="event-density-modal-map__side">
+      <div class="event-density-action-metrics">${metrics}</div>
+      <div class="event-density-action-detail event-density-action-detail--${ui.variant}">${ui.detail}</div>
+      <div class="event-density-legend">${legend}</div>
+    </div>
+    <div class="event-density-zone-list">${zones}</div>
+    <div class="event-density-plan" data-event-density-plan>${context.plan}</div>
+  </div>`;
+}
+
 function eventLineDonutCombo(bars, centerValue) {
   const max = Math.max(...bars.map((b) => b.value));
   const points = bars.map((b, i) => {
@@ -128,7 +322,7 @@ function renderAttendanceView(view) {
 
 function evacuationRoutePanel() {
   return `<section class="hud-block event-route">
-    ${hudHead('Lối thoát dẫm đạp')}
+    ${hudHead('Điều phối lối thoát')}
     <div class="event-route__diagram">
       <span class="event-route__node event-route__node--hot">B12</span>
       <span class="event-route__line event-route__line--a"></span>
@@ -199,12 +393,12 @@ function overloadPressurePanel(crowd) {
     tone: i === 1 ? 'hot' : s.pct >= 88 ? 'warn' : 'ok',
   }));
   return `<section class="hud-block event-overload">
-    ${hudHead('Quá tải & dẫm đạp')}
+    ${hudHead('Mật độ khán đài')}
     <div class="event-overload__main">
-      ${eventRadarChart([0.86, 0.92, 0.74, 0.68, 0.81, 0.58], ['B12', 'DEN', 'FLOW', 'EXIT', 'PA', 'SEC'])}
+      ${eventRadarChart([0.86, 0.92, 0.74, 0.68, 0.81, 0.58], ['A', 'B12', 'C1', 'EXIT', 'D', 'B2'])}
       <div class="event-overload__meter">
         <strong>92%</strong>
-        <span>Điểm nóng B12</span>
+        <span>Điểm đỏ B12</span>
       </div>
     </div>
     <div class="event-overload__lanes">${sectors.map((s) =>
@@ -213,14 +407,14 @@ function overloadPressurePanel(crowd) {
     </div>`,
   ).join('')}</div>
     <div class="event-risk__actions">
-      <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="security" data-dispatch-type-preset="crowd">
-        <i class="ti ti-shield-exclamation"></i><span>Báo an ninh</span>
+      <button type="button" class="event-risk__btn event-risk__btn--hot" data-event-action-open="densityTeam">
+        <i class="ti ti-users-group"></i><span>Điều tổ</span>
       </button>
-      <button type="button" class="event-risk__btn" data-dispatch-open="security" data-dispatch-type-preset="evac">
-        <i class="ti ti-door-exit"></i><span>Mở lối thoát</span>
+      <button type="button" class="event-risk__btn" data-event-action-open="densityReduce">
+        <i class="ti ti-arrows-minimize"></i><span>Giảm mật độ</span>
       </button>
-      <button type="button" class="event-risk__btn" data-event-action-open="split">
-        <i class="ti ti-arrows-split"></i><span>Chia luồng</span>
+      <button type="button" class="event-risk__btn" data-event-action-open="heatmap">
+        <i class="ti ti-map-search"></i><span>Bản đồ nhiệt</span>
       </button>
     </div>
   </section>`;
@@ -242,37 +436,9 @@ function stampedePanel(stampede) {
 }
 
 function stampedeDetailPanel(stampede) {
-  const cells = Array.from({ length: 24 }, (_, i) => {
-    const hot = [6, 7, 11, 12, 13].includes(i);
-    const warn = [2, 5, 8, 10, 14, 17, 18].includes(i);
-    const exit = [0, 4, 19, 23].includes(i);
-    const cls = exit ? 'exit' : hot ? 'hot' : warn ? 'warn' : 'ok';
-    const label = exit ? 'EXIT' : hot ? 'B12' : warn ? 'DENSE' : '';
-    return `<span class="event-risk-cell event-risk-cell--${cls}">${label}</span>`;
-  }).join('');
   return `<section class="hud-block event-risk event-risk--stampede">
-    ${hudHead('Dẫm đạp / quá tải')}
-    <div class="event-risk__radar">${eventRadarChart([0.92, 0.78, 0.64, 0.86, 0.58, 0.72], ['DEN', 'GATE', 'FLOW', 'B12', 'PA', 'EXIT'])}</div>
-    <div class="event-risk__map">
-      <div class="event-risk__pitch">SÂN</div>
-      <div class="event-risk__grid">${cells}</div>
-    </div>
-    <div class="event-risk__kpis">
-      <span><b>${stampede?.pct || 0}%</b><em>Mật độ B12</em></span>
-      <span><b>02</b><em>Cổng phụ mở</em></span>
-      <span><b>04'</b><em>ETA sơ tán</em></span>
-    </div>
-    <div class="event-risk__actions">
-      <button type="button" class="event-risk__btn event-risk__btn--hot" data-dispatch-open="security" data-dispatch-type-preset="crowd">
-        <i class="ti ti-shield-exclamation"></i><span>Báo an ninh</span>
-      </button>
-      <button type="button" class="event-risk__btn" data-dispatch-open="security" data-dispatch-type-preset="evac">
-        <i class="ti ti-door-exit"></i><span>Mở lối thoát</span>
-      </button>
-      <button type="button" class="event-risk__btn" data-event-action-open="paSplit">
-        <i class="ti ti-volume"></i><span>PA phân luồng</span>
-      </button>
-    </div>
+    ${hudHead('Bản đồ mật độ')}
+    ${densityMiniPanel()}
   </section>`;
 }
 
@@ -409,12 +575,68 @@ function renderPaPanel(d, key) {
 }
 
 const EVENT_ACTIONS = {
+  densityTeam: {
+    tag: 'CROWD OPS',
+    title: 'Điều tổ an ninh theo bản đồ mật độ',
+    icon: 'ti-users-group',
+    summary: 'Điều tổ theo bản đồ toàn sân: khu đỏ nhận đội ngay, khu vàng có đội giữ luồng dự phòng.',
+    steps: ['Điều 2 tổ tới B12', 'Giữ luồng B2 và khu D', 'Báo VOC sau 3 phút'],
+    primary: 'Điều tổ',
+  },
+  densityReduce: {
+    tag: 'DENSITY OPS',
+    title: 'Giảm mật độ khán đài',
+    icon: 'ti-arrows-minimize',
+    summary: 'Giảm tải toàn sân bằng cách làm chậm dòng vào khu đỏ, mở tuyến nhận luồng ở B2/C1 và theo dõi các khu vàng.',
+    steps: ['Tạm giảm dòng vào B12', 'Ưu tiên tuyến B2/C1', 'Theo dõi mật độ từng phút'],
+    primary: 'Kích hoạt giảm mật độ',
+  },
+  heatmap: {
+    tag: 'HEATMAP',
+    title: 'Bản đồ nhiệt toàn sân',
+    icon: 'ti-map-search',
+    summary: 'Mở lớp bản đồ nhiệt toàn sân để thấy khu đỏ cần điều ngay và khu vàng gần nguy cấp.',
+    steps: ['Bật lớp mật độ toàn sân', 'So sánh B12/B2/D', 'Cập nhật VOC mỗi 60 giây'],
+    primary: 'Xem bản đồ nhiệt',
+  },
+  heatmapB12: {
+    tag: 'HEATMAP',
+    title: 'Bản đồ nhiệt toàn sân',
+    icon: 'ti-map-search',
+    summary: 'Mở lớp bản đồ nhiệt toàn sân để thấy khu đỏ cần điều ngay và khu vàng gần nguy cấp.',
+    steps: ['Bật lớp mật độ toàn sân', 'So sánh B12/B2/D', 'Cập nhật VOC mỗi 60 giây'],
+    primary: 'Xem bản đồ nhiệt',
+  },
+  isolateDense: {
+    tag: 'GRID OPS',
+    title: 'Cô lập ô DENSE',
+    icon: 'ti-grid-dots',
+    summary: 'Khoanh vùng các điểm đỏ/vàng trên bản đồ mật độ toàn sân để chặn dòng quay lại và giữ hành lang thoát.',
+    steps: ['Đánh dấu ô đỏ/vàng', 'Chặn nhánh quay lại B12', 'Mở hành lang sang EXIT'],
+    primary: 'Cô lập ô DENSE',
+  },
+  nearestExit: {
+    tag: 'EXIT OPS',
+    title: 'Mở EXIT gần nhất',
+    icon: 'ti-door-exit',
+    summary: 'Ưu tiên mở cửa thoát gần nhất cho khu đỏ và khu vàng gần nguy cấp để giảm áp lực toàn tuyến.',
+    steps: ['Chọn EXIT gần nhất', 'Điều bảo vệ giữ luồng', 'Theo dõi ETA sơ tán'],
+    primary: 'Mở EXIT gần nhất',
+  },
+  dispatchTeam: {
+    tag: 'DISPATCH',
+    title: 'Gửi đội cơ động tới vùng đông',
+    icon: 'ti-users-group',
+    summary: 'Chọn đội gần nhất theo bản đồ mật độ, ưu tiên tiếp cận B12 và kiểm tra các khu vàng A/D.',
+    steps: ['Đội nhanh 1 tới B12', 'Đội an ninh 4 giữ A/D', 'Kênh VOC-21 xác nhận'],
+    primary: 'Gửi đội cơ động',
+  },
   split: {
     tag: 'FLOW OPS',
     title: 'Chia luồng khán giả',
     icon: 'ti-arrows-split',
-    summary: 'Kích hoạt phân luồng từ B12 sang B2/C1, giảm áp lực điểm nóng trong 4 phút.',
-    steps: ['Mở barrier mềm B2', 'Điều 2 tổ an ninh', 'Theo dõi heatmap B12'],
+    summary: 'Kích hoạt phân luồng từ khu đỏ sang các tuyến nhận luồng, giảm áp lực điểm nóng trong 4 phút.',
+    steps: ['Mở rào mềm B2', 'Điều 2 tổ an ninh', 'Theo dõi bản đồ nhiệt'],
     primary: 'Kích hoạt chia luồng',
   },
   reverse: {
@@ -445,13 +667,14 @@ const EVENT_ACTIONS = {
 
 function eventActionModal() {
   return `<div class="event-action-modal" data-event-action-modal hidden>
-    <div class="event-action-modal__panel" role="dialog" aria-modal="true" aria-label="Điều phối sự kiện">
+    <div class="event-action-modal__panel event-action-modal__panel--density" role="dialog" aria-modal="true" aria-label="Điều phối sự kiện">
       <button type="button" class="event-action-modal__close" data-event-action-close aria-label="Đóng"><i class="ti ti-x"></i></button>
       <div class="event-action-modal__head">
         <span class="event-action-modal__icon"><i class="ti ti-arrows-split" data-event-action-icon></i></span>
         <div><small data-event-action-tag>FLOW OPS</small><h3 data-event-action-title>Chia luồng khán giả</h3></div>
       </div>
       <p data-event-action-summary></p>
+      <div data-event-density-map-mount>${densityModalMap('densityTeam')}</div>
       <div class="event-action-modal__route">
         <span>B12</span><i></i><span>B2</span><i></i><span>C1</span>
       </div>
@@ -610,7 +833,7 @@ export function bindEventsHudTabs(root, data) {
 
   selectFireZone('fb');
 
-  const fillAction = (action) => {
+  const fillAction = (action, actionKey = 'densityTeam') => {
     if (!modal || !action) return;
     if (modal.parentElement !== document.body) document.body.appendChild(modal);
     modal.querySelector('[data-event-action-icon]').className = `ti ${action.icon}`;
@@ -619,6 +842,8 @@ export function bindEventsHudTabs(root, data) {
     modal.querySelector('[data-event-action-summary]').textContent = action.summary;
     modal.querySelector('[data-event-action-primary]').textContent = action.primary;
     modal.querySelector('[data-event-action-status]').textContent = 'Chờ xác nhận điều phối.';
+    const densityMount = modal.querySelector('[data-event-density-map-mount]');
+    if (densityMount) densityMount.innerHTML = densityModalMap(actionKey);
     modal.querySelector('[data-event-action-steps]').innerHTML = action.steps
       .map((step, i) => `<span><b>${String(i + 1).padStart(2, '0')}</b>${step}</span>`)
       .join('');
@@ -634,12 +859,17 @@ export function bindEventsHudTabs(root, data) {
 
     const btn = event.target.closest('.event-risk__btn');
     if (!btn || btn.dataset.dispatchOpen) return;
+    const actionKey = btn.dataset.eventActionOpen === 'heatmapB12' ? 'heatmap' : btn.dataset.eventActionOpen;
+    if (actionKey && EVENT_ACTIONS[actionKey]) {
+      fillAction(EVENT_ACTIONS[actionKey], actionKey);
+      return;
+    }
     const icon = btn.querySelector('.ti');
     const cls = icon?.className || '';
-    if (cls.includes('ti-arrows-split')) fillAction(EVENT_ACTIONS.split);
-    else if (cls.includes('ti-arrow-guide')) fillAction(EVENT_ACTIONS.reverse);
-    else if (cls.includes('ti-speakerphone')) fillAction(EVENT_ACTIONS.paGuide);
-    else if (cls.includes('ti-volume')) fillAction(EVENT_ACTIONS.paSplit);
+    if (cls.includes('ti-arrows-split')) fillAction(EVENT_ACTIONS.split, 'split');
+    else if (cls.includes('ti-arrow-guide')) fillAction(EVENT_ACTIONS.reverse, 'reverse');
+    else if (cls.includes('ti-speakerphone')) fillAction(EVENT_ACTIONS.paGuide, 'paGuide');
+    else if (cls.includes('ti-volume')) fillAction(EVENT_ACTIONS.paSplit, 'paSplit');
   });
 
   document.addEventListener('click', (event) => {

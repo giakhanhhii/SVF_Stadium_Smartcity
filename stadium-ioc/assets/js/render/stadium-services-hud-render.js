@@ -170,7 +170,7 @@ const serviceActions = {
     title: 'Mở làn phụ',
     summary: 'Mở làn phụ để thoát xe sau trận, ưu tiên hướng ra trục đường chính.',
     stats: [['Làn phụ', 'Ready'], ['Nhân sự', '2 chốt'], ['Rủi ro', 'Thấp']],
-    steps: ['Bố trí 2 chốt điều tiết', 'Mở barrier làn phụ', 'Theo dõi tốc độ thoát xe'],
+    steps: ['Bố trí 2 chốt điều tiết', 'Mở rào làn phụ', 'Theo dõi tốc độ thoát xe'],
     primary: 'Mở làn phụ',
     done: 'Đã gửi lệnh mở làn phụ quanh sân.',
   },
@@ -275,11 +275,11 @@ function serviceQueueMap(view) {
   const max = Math.max(...view.bars.map((bar) => bar.value), 1);
   const cells = view.bars.map((bar) => {
     const tone = bar.value >= max * 0.78 ? 'hot' : bar.value >= max * 0.52 ? 'warn' : 'ok';
-    return `<div class="svc-queue-cell svc-queue-cell--${tone}">
+    return `<button type="button" class="svc-queue-cell svc-queue-cell--${tone}">
       <span>${bar.time}</span>
       <i style="height:${Math.max(18, (bar.value / max) * 100)}%"></i>
       <b>${bar.value}</b>
-    </div>`;
+    </button>`;
   }).join('');
   return `<div class="svc-mode-viz">
     <div class="svc-mode-viz__stat"><i class="ti ${view.icon}"></i><strong>${view.value}</strong><span>${view.label}</span></div>
@@ -339,7 +339,7 @@ function serviceAlertBoard(alerts = []) {
 function serviceTrafficFlow(traffic) {
   const actions = ['trafficP3', 'trafficLed', 'trafficLane'];
   const lanes = traffic.lanes.map((lane, index) =>
-    `<button type="button" class="svc-lane svc-lane--${index === 0 ? 'hot' : index === 1 ? 'info' : 'ok'}" data-service-action="${actions[index]}">${lane}</button>`,
+    `<button type="button" class="svc-lane svc-lane--info" data-service-action="${actions[index]}">${lane}</button>`,
   ).join('');
   return `<div class="svc-traffic-flow">
     <svg viewBox="0 0 150 62" aria-hidden="true">
@@ -390,7 +390,6 @@ export function renderServicesRight(d) {
       <div class="hud-env-row">${ringSvg(fbView.ringPct, fbView.ringLabel)}<div class="hud-env-bars">${bars}</div></div>
     </section>
     <section class="hud-block">${hudHead(d.traffic.title)}${serviceTrafficFlow(d.traffic)}</section>
-    <section class="hud-block hud-block--grow">${hudHead(d.revenue.title)}${serviceRevenueViz(d.revenue)}</section>
     ${serviceActionModal()}
     ${renderDispatchDialog(MEDICAL_DISPATCH)}`;
 }

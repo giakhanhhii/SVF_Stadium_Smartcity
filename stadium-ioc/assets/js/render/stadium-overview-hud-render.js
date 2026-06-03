@@ -3,6 +3,173 @@ import {
   distributionMinis, distributionStack, radial3dChart,
 } from './radial3d-chart.js';
 
+const overviewSecurityActions = {
+  camera: {
+    title: 'Camera sân vận động',
+    tag: 'SECURITY CAM',
+    summary: 'Chuỗi góc nhìn từ ngoài sân vào khu vực bên trong.',
+    primary: '32/32 online',
+    icon: 'ti-camera',
+    cameras: [
+      { id: 'outer-ring', title: 'Vành đai ngoài', zone: 'Ngoại vi', status: 'Live', meta: 'Cam EXT-04 · 110°', icon: 'ti-building-stadium', feed: 'Bãi xe P4, đường vào chính, hàng rào phía Đông' },
+      { id: 'gate-b', title: 'Cổng B / kiểm soát vé', zone: 'Cổng', status: 'Đông', meta: 'Cam G-B12 · 92%', icon: 'ti-ticket', feed: 'Luồng vào cổng B, queue line, điểm quét vé' },
+      { id: 'stand-b12', title: 'Khán đài B12', zone: 'Khán đài', status: 'Ưu tiên', meta: 'Cam ST-B12 · AI crowd', icon: 'ti-users-group', feed: 'Mật độ ghế B12, lối đi dọc, cầu thang thoát hiểm' },
+      { id: 'pitch-core', title: 'Lòng sân', zone: 'Nội sân', status: 'Ổn định', meta: 'Cam IN-02 · 4K', icon: 'ti-camera-rotate', feed: 'Khu vực thi đấu, đường biên, lối kỹ thuật' },
+      { id: 'voc-wall', title: 'VOC camera wall', zone: 'Trung tâm', status: 'Đồng bộ', meta: 'Wall 8 feed · SLA <4p', icon: 'ti-layout-dashboard', feed: 'Tổng hợp camera ngoại vi, cổng, khán đài và nội sân' },
+    ],
+  },
+  alerts: {
+    title: 'Cảnh báo an ninh',
+    tag: 'LIVE ALERTS',
+    summary: '2 cảnh báo đang mở, ưu tiên theo mật độ và luồng vào cổng.',
+    primary: '2 cảnh báo',
+    icon: 'ti-bell-ringing',
+    items: [
+      ['Gate B', 'Mật độ cao tại queue B12', '5 phút'],
+      ['P4', 'Bãi xe gần ngưỡng 88%', '9 phút'],
+    ],
+  },
+  response: {
+    title: 'Phản ứng nhanh',
+    tag: 'SLA RESPONSE',
+    summary: 'Thời gian phản ứng trung bình của đội an ninh đang dưới 4 phút.',
+    primary: '<4p',
+    icon: 'ti-clock-check',
+    items: [
+      ['VOC', 'Điều phối đội gần nhất', '01:20'],
+      ['An ninh B', 'Có mặt tại cổng B', '03:10'],
+      ['PA', 'Sẵn sàng hướng dẫn luồng', 'Online'],
+    ],
+  },
+};
+
+const overviewEventActions = {
+  b12: {
+    title: 'B12 crowd load',
+    tag: 'EVENT FLOW',
+    summary: 'Khán đài B12 đang có 48 ca cần theo dõi, ưu tiên mở luồng ra B2.',
+    primary: '48 ca',
+    icon: 'ti-users-group',
+    items: [
+      ['Mật độ', '92% vùng lối đi dọc', 'Cao'],
+      ['Điều phối', '2 đội an ninh tại B12', 'Đang xử lý'],
+      ['Khuyến nghị', 'Mở thêm nhánh thoát B2', 'Ưu tiên'],
+    ],
+  },
+  b2: {
+    title: 'B2 exit flow',
+    tag: 'EXIT OPS',
+    summary: 'Cổng B2 đang nhận tải thoát chính, còn trong ngưỡng điều phối.',
+    primary: '84%',
+    icon: 'ti-door-exit',
+    items: [
+      ['Lưu lượng', '84% công suất làn', 'Ổn định'],
+      ['Nhân sự', '4 bảo vệ điều tiết', 'Online'],
+      ['PA', 'Thông báo hướng dẫn ra B2', 'Sẵn sàng'],
+    ],
+  },
+  c1: {
+    title: 'C1 relief route',
+    tag: 'ROUTE READY',
+    summary: 'C1 là tuyến giảm tải dự phòng cho khán đài B và khu cổng chính.',
+    primary: 'OK',
+    icon: 'ti-route',
+    items: [
+      ['Trạng thái', 'Lối C1 thông thoáng', 'OK'],
+      ['Camera', 'Cam C1-02 xác nhận', 'Live'],
+      ['Kịch bản', 'Chia 30% luồng sang C1', 'Có thể kích hoạt'],
+    ],
+  },
+  flow: {
+    title: 'Luồng khán giả',
+    tag: 'CROWD ROUTING',
+    summary: 'Gate B đang cao, hệ thống đề xuất chia luồng B2/C1 để giảm áp lực.',
+    primary: 'Gate B cao',
+    icon: 'ti-route',
+    items: [
+      ['Gate B', 'Mật độ vào/ra tăng nhanh', 'Cao'],
+      ['B2', 'Tuyến thoát chính còn 16% dư địa', 'Theo dõi'],
+      ['C1', 'Tuyến giảm tải sẵn sàng', 'OK'],
+    ],
+  },
+  sla: {
+    title: 'SLA điều phối',
+    tag: 'OPS SLA',
+    summary: 'Mục tiêu phản ứng điều phối dưới 4 phút, hiện đang ở mức 3 phút.',
+    primary: '3 phút',
+    icon: 'ti-clock-bolt',
+    items: [
+      ['VOC', 'Gửi lệnh điều phối', '00:30'],
+      ['An ninh B', 'Xác nhận hiện trường', '01:45'],
+      ['PA', 'Sẵn sàng phát hướng dẫn', '03:00'],
+    ],
+  },
+  hotspots: {
+    title: 'Điểm nóng sự kiện',
+    tag: 'HOTSPOT MAP',
+    summary: 'Có 2 điểm nóng cần giám sát liên tục trong giờ cao điểm.',
+    primary: '2',
+    icon: 'ti-map-pin-exclamation',
+    items: [
+      ['B12', 'Mật độ khán giả cao', 'Ưu tiên'],
+      ['Gate B', 'Hàng chờ tăng', 'Theo dõi'],
+      ['F&B B', 'Dòng người giao cắt', 'Ổn định'],
+    ],
+  },
+};
+
+overviewEventActions.fireRisk = {
+  title: 'Nguy cơ cháy nổ',
+  tag: 'FIRE RISK',
+  summary: 'Khu F&B B đang có tín hiệu khói và nhiệt tăng, cần theo dõi nguy cơ cháy nổ trong ca sự kiện.',
+  primary: 'F&B B',
+  icon: 'ti-flame',
+  items: [
+    ['F&B B', 'Khói và nhiệt tăng', 'Ưu tiên'],
+    ['Kho LED', '41°C, còn trong ngưỡng', 'Theo dõi'],
+    ['Kịch bản', 'Báo cháy, hút khói, cắt điện khu B', 'Sẵn sàng'],
+  ],
+};
+
+const overviewReportActions = {
+  queue: {
+    title: 'Hàng chờ VOC',
+    tag: 'REPORT QUEUE',
+    summary: 'Các báo cáo đang chờ VOC kiểm tra, phân loại và chuyển đội xử lý.',
+    primary: '6 việc',
+    icon: 'ti-inbox',
+    items: [
+      ['VOC-21', 'Camera cổng D mất tín hiệu', 'Đang kiểm tra'],
+      ['VOC-22', 'Mật độ Gate B tăng nhanh', 'Ưu tiên'],
+      ['VOC-23', 'F&B C12 bổ sung nước', 'Theo dõi'],
+    ],
+  },
+  closedReports: {
+    title: 'Báo cáo đã đóng',
+    tag: 'CLOSED CASES',
+    summary: '21 trên 28 báo cáo đã hoàn tất, còn lại đang theo dõi hoặc cần xác nhận.',
+    primary: '21/28',
+    icon: 'ti-circle-check',
+    items: [
+      ['An ninh', '12 báo cáo đóng', 'SLA 96%'],
+      ['Dịch vụ', '5 báo cáo đóng', 'SLA 91%'],
+      ['Hạ tầng', '4 báo cáo đóng', 'SLA 88%'],
+    ],
+  },
+  priorityReports: {
+    title: 'Báo cáo ưu tiên',
+    tag: 'PRIORITY',
+    summary: '2 ticket ưu tiên cần được VOC theo dõi sát trong ca trực hiện tại.',
+    primary: '2 ticket',
+    icon: 'ti-alert-triangle',
+    items: [
+      ['P1', 'Gate B mật độ cao', 'Cần cập nhật 5 phút/lần'],
+      ['P2', 'Camera D chập chờn', 'Đợi xác nhận khôi phục'],
+      ['Next', 'Tự động nhắc trưởng ca', 'Sẵn sàng'],
+    ],
+  },
+};
+
 function radarChart(values, labels) {
   const cx = 74;
   const cy = 66;
@@ -118,18 +285,18 @@ function overviewVenueChart(total, groups, capacityLabel) {
 
 function overviewRouteDiagram(items) {
   const [start, middle, end] = items;
-  return `<div class="overview-route-diagram" aria-hidden="true">
-    <span class="overview-route-diagram__node overview-route-diagram__node--hot">
+  return `<div class="overview-route-diagram">
+    <button type="button" class="overview-route-diagram__node overview-route-diagram__node--hot" data-overview-event-action="${start.action}">
       <b>${start.label}</b><em>${start.value}</em>
-    </span>
+    </button>
     <span class="overview-route-diagram__line"></span>
-    <span class="overview-route-diagram__node overview-route-diagram__node--mid">
+    <button type="button" class="overview-route-diagram__node overview-route-diagram__node--mid" data-overview-event-action="${middle.action}">
       <b>${middle.label}</b><em>${middle.value}</em>
-    </span>
+    </button>
     <span class="overview-route-diagram__line overview-route-diagram__line--ok"></span>
-    <span class="overview-route-diagram__node overview-route-diagram__node--ok">
+    <button type="button" class="overview-route-diagram__node overview-route-diagram__node--ok" data-overview-event-action="${end.action}">
       <b>${end.label}</b><em>${end.value}</em>
-    </span>
+    </button>
   </div>`;
 }
 
@@ -161,11 +328,24 @@ function overviewNodeMap(nodes) {
 
 function overviewInfoList(items) {
   return `<div class="overview-info-list">
-    ${items.map((item) => `<span>
+    ${items.map((item) => {
+    const inferredAction = {
+      'ti-route': 'flow',
+      'ti-clock-bolt': 'sla',
+      'ti-map-pin-exclamation': 'hotspots',
+      'ti-inbox': 'queue',
+      'ti-circle-check': 'closedReports',
+      'ti-alert-triangle': 'priorityReports',
+    }[item.icon];
+    const action = item.action || inferredAction;
+    const attrs = action ? ` type="button" data-overview-action="${action}"` : '';
+    const tag = action ? 'button' : 'span';
+    return `<${tag}${attrs}>
       <i class="ti ${item.icon}"></i>
       <b>${item.label}</b>
       <strong>${item.value}</strong>
-    </span>`).join('')}
+    </${tag}>`;
+  }).join('')}
   </div>`;
 }
 
@@ -206,9 +386,9 @@ export function renderOverviewLeft(d) {
       chart: `<div class="overview-domain__stack">
         ${radarChart([0.88, 0.76, 0.64, 0.72, 0.94], ['SLA', 'Cổng', 'KT', 'VIP', 'Đám'])}
         ${overviewInfoList([
-          { icon: 'ti-camera', label: 'Camera', value: '32/32' },
-          { icon: 'ti-bell-ringing', label: 'Cảnh báo', value: '2' },
-          { icon: 'ti-clock-check', label: 'Phản ứng', value: '<4p' },
+          { icon: 'ti-camera', label: 'Camera', value: '32/32', action: 'camera' },
+          { icon: 'ti-bell-ringing', label: 'Cảnh báo', value: '2', action: 'alerts' },
+          { icon: 'ti-clock-check', label: 'Phản ứng', value: '<4p', action: 'response' },
         ])}
       </div>`,
       kpis: [
@@ -224,7 +404,7 @@ export function renderOverviewLeft(d) {
         { label: 'Bãi xe P4', value: 88, meta: 'Cao' },
         { label: 'F&B C12', value: 72, meta: '6p' },
         { label: 'Y tế', value: 79, meta: 'SLA' },
-        { label: 'Vé', value: 98, meta: 'OK' },
+        { label: 'Vé', value: 98, meta: 'Ổn định' },
       ]),
       diagram: overviewMetricDiagram([
         { value: '88%', label: 'P4' },
@@ -246,14 +426,14 @@ export function renderOverviewRight(d) {
       title: 'Sự kiện',
       chart: `<div class="overview-domain__stack">
         ${overviewRouteDiagram([
-          { label: 'B12', value: '48 ca' },
-          { label: 'B2', value: '84%' },
-          { label: 'C1', value: 'OK' },
+          { label: 'B12', value: '48 ca', action: 'b12' },
+          { label: 'B2', value: '84%', action: 'b2' },
+          { label: 'C1', value: 'OK', action: 'c1' },
         ])}
         ${overviewInfoList([
-          { icon: 'ti-route', label: 'Luồng khán giả', value: 'Gate B cao' },
-          { icon: 'ti-clock-bolt', label: 'SLA điều phối', value: '3 phút' },
-          { icon: 'ti-map-pin-exclamation', label: 'Điểm nóng', value: '2' },
+          { icon: 'ti-route', label: 'Quá tải / dẫm đạp', value: 'B12 92%', action: 'flow' },
+          { icon: 'ti-flame', label: 'Nguy cơ cháy nổ', value: 'F&B B', action: 'fireRisk' },
+          { icon: 'ti-clock-bolt', label: 'SLA phản ứng', value: '3 phút', action: 'sla' },
         ])}
       </div>`,
       kpis: [
@@ -304,8 +484,80 @@ export function renderOverviewRight(d) {
   return cards.map(domainCard).join('');
 }
 
+function renderOverviewSecurityModal(type = 'camera', selectedCameraId = 'outer-ring') {
+  const config = overviewSecurityActions[type] || overviewEventActions[type] || overviewReportActions[type] || overviewSecurityActions.camera;
+  const selectedCamera = config.cameras?.find((cam) => cam.id === selectedCameraId) || config.cameras?.[0];
+  const cameraGrid = config.cameras ? `<div class="overview-security-modal__camera-grid">
+    ${config.cameras.map((cam) => `<button type="button" class="overview-security-modal__camera${cam.id === selectedCamera?.id ? ' overview-security-modal__camera--active' : ''}" data-overview-camera="${cam.id}">
+      <i class="ti ${cam.icon}"></i>
+      <span><b>${cam.title}</b><em>${cam.zone} · ${cam.meta}</em></span>
+      <strong>${cam.status}</strong>
+    </button>`).join('')}
+  </div>` : '';
+  const detail = selectedCamera ? `<div class="overview-security-modal__feed">
+    <div class="overview-security-modal__viewport">
+      <i class="ti ${selectedCamera.icon}"></i>
+      <span>${selectedCamera.zone}</span>
+      <b>${selectedCamera.title}</b>
+    </div>
+    <div class="overview-security-modal__feed-copy">
+      <small>${selectedCamera.status}</small>
+      <h4>${selectedCamera.title}</h4>
+      <p>${selectedCamera.feed}</p>
+      <div>
+        <span>${selectedCamera.meta}</span>
+        <span>AI tracking</span>
+        <span>VOC sync</span>
+      </div>
+    </div>
+  </div>` : `<div class="overview-security-modal__list">
+    ${config.items.map(([zone, text, meta]) => `<span>
+      <b>${zone}</b><em>${text}</em><strong>${meta}</strong>
+    </span>`).join('')}
+  </div>`;
+  return `<div class="overview-security-modal" data-overview-security-modal>
+    <button type="button" class="overview-security-modal__backdrop" data-overview-security-close aria-label="Đóng"></button>
+    <section class="overview-security-modal__panel" role="dialog" aria-modal="true" aria-label="${config.title}">
+      <button type="button" class="overview-security-modal__close" data-overview-security-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="overview-security-modal__head">
+        <i class="ti ${config.icon}"></i>
+        <div><small>${config.tag}</small><h3>${config.title}</h3><p>${config.summary}</p></div>
+        <strong>${config.primary}</strong>
+      </header>
+      ${cameraGrid}
+      ${detail}
+    </section>
+  </div>`;
+}
+
 export function mountOverviewOpsBind(root) {
   root?.querySelectorAll('.overview-domain').forEach((card) => {
     card.setAttribute('data-overview-domain-ready', 'true');
+  });
+  if (!root || root.dataset.overviewSecurityBound) return;
+  root.dataset.overviewSecurityBound = 'true';
+
+  const openModal = (type = 'camera', cameraId = 'outer-ring') => {
+    document.querySelector('[data-overview-security-modal]')?.remove();
+    document.body.insertAdjacentHTML('beforeend', renderOverviewSecurityModal(type, cameraId));
+  };
+
+  root.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-overview-action], [data-overview-event-action]');
+    if (!trigger || !root.contains(trigger)) return;
+    openModal(trigger.dataset.overviewAction || trigger.dataset.overviewEventAction || 'camera');
+  });
+
+  document.addEventListener('click', (event) => {
+    const close = event.target.closest('[data-overview-security-close]');
+    if (close) {
+      close.closest('[data-overview-security-modal]')?.remove();
+      return;
+    }
+    const camera = event.target.closest('[data-overview-camera]');
+    const modal = event.target.closest('[data-overview-security-modal]');
+    if (camera && modal) {
+      modal.outerHTML = renderOverviewSecurityModal('camera', camera.dataset.overviewCamera);
+    }
   });
 }

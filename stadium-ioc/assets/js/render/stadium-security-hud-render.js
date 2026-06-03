@@ -210,9 +210,9 @@ export function renderSecurityLeft(d) {
 export function renderSecurityRight(d) {
   return `
     <section class="hud-block">${hudHead('Cảnh báo')}${alertChart(d.alerts)}</section>
-    <section class="hud-block" data-security-access-panel>${renderAccessView(d.access, 'main')}</section>
-    <section class="hud-block" data-security-zone-panel>${renderZonesView(d.zones, 'live')}</section>
-    <section class="hud-block hud-block--grow">${hudHead(d.response.title)}
+    <section class="hud-block hud-block--security-access" data-security-access-panel>${renderAccessView(d.access, 'main')}</section>
+    <section class="hud-block hud-block--security-zones" data-security-zone-panel>${renderZonesView(d.zones, 'live')}</section>
+    <section class="hud-block hud-block--grow hud-block--security-response">${hudHead(d.response.title)}
       ${statTiles(d.response.stats)}${areaChartSvg(d.response.chart, 'secGrad')}
     </section>`;
 }
@@ -234,11 +234,11 @@ export function renderSecurityExteriorRight(d) {
   return `
     <section class="hud-block">${hudHead('Cảnh báo ngoại vi')}${alertChart(d.alerts)}</section>
     <section class="hud-block" data-security-parking-panel>${renderParkingView(d.parking, 'parking')}</section>
-    <section class="hud-block">${hudHead(d.patrol.title)}
+    <section class="hud-block hud-block--security-patrol">${hudHead(d.patrol.title)}
       ${patrolChart(d.patrol)}
       <div class="hud-vent-row">${d.patrol.lanes.map((v, index) => `<button class="hud-vent-btn" data-security-patrol-action="${index}">${v}</button>`).join('')}</div>
     </section>
-    <section class="hud-block hud-block--grow">${hudHead(d.traffic.title)}
+    <section class="hud-block hud-block--grow hud-block--traffic-24h">${hudHead(d.traffic.title)}
       ${statTiles(d.traffic.stats)}${areaChartSvg(d.traffic.chart, 'secExtGrad')}
     </section>`;
 }

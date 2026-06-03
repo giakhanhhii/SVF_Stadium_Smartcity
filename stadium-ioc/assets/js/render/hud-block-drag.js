@@ -30,7 +30,12 @@ function storageKey(root, panel) {
 }
 
 function directBlocks(panel) {
-  return [...panel.children].filter((child) => child.classList?.contains('hud-block'));
+  return [...panel.children].filter((child) =>
+    child.classList?.contains('hud-block')
+    || Object.hasOwn(child.dataset || {}, 'securityModePanel')
+    || Object.hasOwn(child.dataset || {}, 'securityExteriorModePanel')
+    || Object.hasOwn(child.dataset || {}, 'servicesModePanel'),
+  );
 }
 
 function saveOrder(root, panel) {
@@ -56,7 +61,7 @@ function restoreOrder(root, panel) {
 }
 
 function closestBlock(target, panel) {
-  const block = target.closest?.('.hud-block');
+  const block = target.closest?.('.hud-block, [data-security-mode-panel], [data-security-exterior-mode-panel], [data-services-mode-panel]');
   return block?.parentElement === panel ? block : null;
 }
 
@@ -82,12 +87,14 @@ function blockAfterPointer(panel, y) {
 }
 
 function movePlaceholder(panel, pointerY) {
+  const scrollTop = panel.scrollTop;
   const after = blockAfterPointer(panel, pointerY);
   if (after) {
     panel.insertBefore(activeDrag.placeholder, after);
   } else {
     panel.appendChild(activeDrag.placeholder);
   }
+  panel.scrollTop = scrollTop;
 }
 
 function autoScrollPanel(panel, pointerY) {
@@ -103,32 +110,36 @@ function autoScrollPanel(panel, pointerY) {
 function beginFloatingDrag(event) {
   const { block, panel } = activeDrag;
   const rect = block.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
   const placeholder = createPlaceholder(block);
+  const scrollTop = panel.scrollTop;
 
   activeDrag.placeholder = placeholder;
   activeDrag.offsetX = event.clientX - rect.left;
   activeDrag.offsetY = event.clientY - rect.top;
   activeDrag.width = rect.width;
   activeDrag.height = rect.height;
+  activeDrag.panelLeft = panelRect.left;
+  activeDrag.panelTop = panelRect.top;
 
   panel.insertBefore(placeholder, block);
   panel.classList.add('sidebar-hud--dragging');
   block.classList.add('hud-block--dragging');
-  block.style.position = 'fixed';
-  block.style.left = `${rect.left}px`;
-  block.style.top = `${rect.top}px`;
+  block.style.position = 'absolute';
+  block.style.left = `${Math.round(rect.left - panelRect.left)}px`;
+  block.style.top = `${Math.round(rect.top - panelRect.top + panel.scrollTop)}px`;
   block.style.width = `${rect.width}px`;
   block.style.height = `${rect.height}px`;
   block.style.zIndex = '120';
   block.style.pointerEvents = 'none';
   block.style.margin = '0';
-  document.body.appendChild(block);
+  panel.scrollTop = scrollTop;
 }
 
 function updateFloatingBlock(event) {
-  const { block, offsetX, offsetY } = activeDrag;
-  block.style.left = `${Math.round(event.clientX - offsetX)}px`;
-  block.style.top = `${Math.round(event.clientY - offsetY)}px`;
+  const { block, panel, offsetX, offsetY, panelLeft, panelTop } = activeDrag;
+  block.style.left = `${Math.round(event.clientX - panelLeft - offsetX)}px`;
+  block.style.top = `${Math.round(event.clientY - panelTop - offsetY + panel.scrollTop)}px`;
 }
 
 function resetFloatingStyles(block) {

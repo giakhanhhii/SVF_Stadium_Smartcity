@@ -194,6 +194,43 @@ function statTiles(stats) {
   ).join('')}</div>`;
 }
 
+function fifaSafetyMatrix() {
+  const axes = [
+    { label: 'VOC', value: 96 },
+    { label: 'CAM', value: 92 },
+    { label: 'CỔNG', value: 88 },
+    { label: 'VÀNH', value: 90 },
+    { label: 'TUẦN', value: 84 },
+    { label: 'Y TẾ', value: 76 },
+  ];
+  const cells = Array.from({ length: 24 }, (_, i) => {
+    const tone = [5, 17].includes(i) ? 'warn' : [2, 8, 13].includes(i) ? 'hot' : 'ok';
+    return `<span class="fifa-sec-cell fifa-sec-cell--${tone}"></span>`;
+  }).join('');
+  const points = axes.map((item, index) => {
+    const angle = (-90 + index * 60) * Math.PI / 180;
+    const radius = 38 * (item.value / 100);
+    return `${(50 + Math.cos(angle) * radius).toFixed(1)},${(50 + Math.sin(angle) * radius).toFixed(1)}`;
+  }).join(' ');
+  return `<div class="fifa-sec-readiness">
+    <svg class="fifa-sec-radar" viewBox="0 0 100 100" aria-hidden="true">
+      <polygon class="fifa-sec-radar__grid" points="50,12 82.9,31 82.9,69 50,88 17.1,69 17.1,31"/>
+      <polygon class="fifa-sec-radar__grid fifa-sec-radar__grid--inner" points="50,27 69.9,38.5 69.9,61.5 50,73 30.1,61.5 30.1,38.5"/>
+      ${axes.map((item, index) => {
+    const angle = (-90 + index * 60) * Math.PI / 180;
+    const x = 50 + Math.cos(angle) * 46;
+    const y = 50 + Math.sin(angle) * 46;
+    return `<line x1="50" y1="50" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><text x="${x.toFixed(1)}" y="${y.toFixed(1)}">${item.label}</text>`;
+  }).join('')}
+      <polygon class="fifa-sec-radar__shape" points="${points}"/>
+    </svg>
+    <div class="fifa-sec-bars">${axes.map((item) => `
+      <span><b>${item.label}</b><i><em style="width:${item.value}%"></em></i><strong>${item.value}%</strong></span>
+    `).join('')}</div>
+    <div class="fifa-sec-matrix">${cells}</div>
+  </div>`;
+}
+
 export function renderSecurityLeft(d) {
   return `
     <section class="hud-block">${hudHead(d.crowd.title)}
@@ -210,6 +247,7 @@ export function renderSecurityLeft(d) {
 export function renderSecurityRight(d) {
   return `
     <section class="hud-block">${hudHead('Cảnh báo')}${alertChart(d.alerts)}</section>
+    <section class="hud-block hud-block--fifa-sec">${hudHead('Sẵn sàng an ninh')}${fifaSafetyMatrix()}</section>
     <section class="hud-block hud-block--security-access" data-security-access-panel>${renderAccessView(d.access, 'main')}</section>
     <section class="hud-block hud-block--security-zones" data-security-zone-panel>${renderZonesView(d.zones, 'live')}</section>
     <section class="hud-block hud-block--grow hud-block--security-response">${hudHead(d.response.title)}

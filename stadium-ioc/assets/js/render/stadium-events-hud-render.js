@@ -188,12 +188,34 @@ function densityMiniPanel() {
       <span><b>${warnCount}</b><em>Vàng</em></span>
       <span><b>04'</b><em>ETA</em></span>
     </div>
-    <div class="event-density-mini-diagram" aria-label="Sơ đồ mật độ">
-      <span class="event-density-mini-diagram__node event-density-mini-diagram__node--hot"><i class="ti ti-alert-triangle"></i><b>${hot.id}</b></span>
-      <i class="event-density-mini-diagram__line"></i>
-      <span class="event-density-mini-diagram__node event-density-mini-diagram__node--warn"><i class="ti ti-route"></i><b>B2/C1</b></span>
-      <i class="event-density-mini-diagram__line"></i>
-      <span class="event-density-mini-diagram__node event-density-mini-diagram__node--exit"><i class="ti ti-door-exit"></i><b>EXIT</b></span>
+    <div class="event-density-mini-diagram event-density-mini-diagram--map" aria-label="Bản đồ mật độ hệ thống">
+      <svg class="event-density-system-map" viewBox="0 0 240 82" aria-hidden="true">
+        <defs>
+          <linearGradient id="densityMapBlue" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0a5f95"/>
+            <stop offset="100%" stop-color="#18d8f5"/>
+          </linearGradient>
+          <linearGradient id="densityMapHot" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#0872a6"/>
+            <stop offset="100%" stop-color="#7edfff"/>
+          </linearGradient>
+        </defs>
+        <ellipse class="event-density-system-map__outer" cx="118" cy="40" rx="84" ry="31"/>
+        <ellipse class="event-density-system-map__inner" cx="118" cy="40" rx="48" ry="18"/>
+        <path class="event-density-system-map__stand event-density-system-map__stand--hot" d="M73 16c21-12 71-12 93 0l-17 15c-18-8-43-8-62 0z"/>
+        <path class="event-density-system-map__stand" d="M166 17c19 9 28 23 25 39l-26-9c2-9-2-17-15-25z"/>
+        <path class="event-density-system-map__stand" d="M72 17c-19 9-28 23-25 39l26-9c-2-9 2-17 15-25z"/>
+        <path class="event-density-system-map__route" d="M84 59C99 70 137 71 154 58"/>
+        <path class="event-density-system-map__route event-density-system-map__route--exit" d="M154 58h42"/>
+        <circle class="event-density-system-map__node event-density-system-map__node--hot" cx="118" cy="16" r="7"/>
+        <circle class="event-density-system-map__node" cx="84" cy="59" r="5"/>
+        <circle class="event-density-system-map__node" cx="154" cy="58" r="5"/>
+        <circle class="event-density-system-map__node event-density-system-map__node--exit" cx="202" cy="58" r="7"/>
+        <text x="118" y="18">B12</text>
+        <text x="84" y="72">B2</text>
+        <text x="154" y="72">C1</text>
+        <text x="202" y="72">RA</text>
+      </svg>
     </div>
   </div>`;
 }
@@ -379,6 +401,48 @@ function fireSensorTrendPanel() {
   </section>`;
 }
 
+function fifaEventReadinessPanel() {
+  const routes = [
+    { label: 'B12', value: 92, tone: 'hot' },
+    { label: 'B2', value: 74, tone: 'warn' },
+    { label: 'C1', value: 58, tone: 'ok' },
+    { label: 'RA', value: 42, tone: 'ok' },
+  ];
+  const systems = [
+    { label: 'THOÁT', value: 82 },
+    { label: 'CHÁY', value: 86 },
+    { label: 'PA', value: 100 },
+    { label: 'Y TẾ', value: 78 },
+    { label: 'ĐIỆN', value: 72 },
+  ];
+  const cells = Array.from({ length: 30 }, (_, i) => {
+    const tone = [3, 7, 11].includes(i) ? 'hot' : [14, 19, 24, 27].includes(i) ? 'warn' : 'ok';
+    return `<span class="fifa-event-cell fifa-event-cell--${tone}"></span>`;
+  }).join('');
+  const total = Math.round(systems.reduce((sum, item) => sum + item.value, 0) / systems.length);
+  return `<section class="hud-block hud-block--fifa-event">
+    ${hudHead('Năng lực ứng phó')}
+    <div class="fifa-event-readiness">
+      <div class="fifa-event-score">
+        <svg viewBox="0 0 96 96" aria-hidden="true">
+          <circle cx="48" cy="48" r="34"></circle>
+          <circle cx="48" cy="48" r="34" style="stroke-dashoffset:${214 * (1 - total / 100)}"></circle>
+        </svg>
+        <strong>${total}%</strong>
+      </div>
+      <div class="fifa-event-routes">${routes.map((route) => `
+        <span class="fifa-event-route fifa-event-route--${route.tone}">
+          <b>${route.label}</b><i><em style="width:${route.value}%"></em></i><strong>${route.value}%</strong>
+        </span>
+      `).join('')}</div>
+      <div class="fifa-event-bars">${systems.map((item) => `
+        <span><b>${item.label}</b><i style="height:${item.value}%"></i><strong>${item.value}%</strong></span>
+      `).join('')}</div>
+      <div class="fifa-event-matrix">${cells}</div>
+    </div>
+  </section>`;
+}
+
 export function renderEventsLeft(d) {
   return `
     ${overloadPressurePanel(d.crowd)}
@@ -393,7 +457,7 @@ function overloadPressurePanel(crowd) {
     tone: i === 1 ? 'hot' : s.pct >= 88 ? 'warn' : 'ok',
   }));
   return `<section class="hud-block event-overload">
-    ${hudHead('Mật độ khán đài')}
+    ${hudHead('Quản lý quá tải & dẫm đạp')}
     <div class="event-overload__main">
       ${eventRadarChart([0.86, 0.92, 0.74, 0.68, 0.81, 0.58], ['A', 'B12', 'C1', 'EXIT', 'D', 'B2'])}
       <div class="event-overload__meter">
@@ -743,6 +807,7 @@ function fireControlModals() {
 export function renderEventsRight(d) {
   return `
     ${stampedeDetailPanel(d.stampede)}
+    ${fifaEventReadinessPanel()}
     ${fireRiskPanel()}
     ${eventActionModal()}
     ${fireControlModals()}

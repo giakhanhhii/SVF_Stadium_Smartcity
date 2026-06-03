@@ -293,8 +293,8 @@ function renderServiceModeView(view) {
 
 export function renderServicesLeft(d) {
   return `
-    <section class="hud-block">${hudHead(d.parking.title)}${serviceParkingMap(d.parking)}</section>
     <section class="hud-block">${hudHead(d.services.title)}${serviceNodeMap(d.services.feeds)}</section>
+    <section class="hud-block">${hudHead(d.parking.title)}${serviceParkingMap(d.parking)}</section>
     <div class="hud-tabs hud-tabs--dual" data-services-mode-tabs>
       <button class="hud-tab hud-tab--active" data-services-mode="parking">${d.modeTabs[0]}</button>
       <button class="hud-tab" data-services-mode="commerce">${d.modeTabs[1]}</button>

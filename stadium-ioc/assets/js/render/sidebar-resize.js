@@ -1,11 +1,20 @@
 const STORAGE_KEY = 'stadiumSidebarWidths';
-const DEFAULT_WIDTH = 280;
-const MIN_WIDTH = 240;
+const DEFAULT_WIDTH = 320;
+const MIN_WIDTH = 280;
 const MAX_WIDTH = 460;
 const MIN_CENTER_WIDTH = 520;
 
 let activeDrag = null;
 let pendingFrame = null;
+
+function pageIdFromCommand(command) {
+  const page = command?.closest('.page-view');
+  return page?.id?.replace(/^page-/, '') || 'default';
+}
+
+function defaultWidthForPage(pageId) {
+  return pageId === 'overview' ? 320 : DEFAULT_WIDTH;
+}
 
 function setLiveWidths(command, left, right) {
   command.style.gridTemplateColumns = `${left}px minmax(0, 1fr) ${right}px`;
@@ -39,30 +48,58 @@ function preventDragSelection(event) {
   event.stopPropagation();
 }
 
-function readSavedWidths() {
+function readSavedWidths(pageId = 'default') {
+  const fallback = defaultWidthForPage(pageId);
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const pageSaved = saved?.[pageId];
+    if (pageSaved && typeof pageSaved === 'object') {
+      return {
+        left: Number(pageSaved.left) || fallback,
+        right: Number(pageSaved.right) || fallback,
+      };
+    }
+
+    // Backward compatibility for the previous shared { left, right } shape.
+    if (Number.isFinite(Number(saved.left)) || Number.isFinite(Number(saved.right))) {
+      return {
+        left: Math.max(Number(saved.left) || fallback, fallback),
+        right: Math.max(Number(saved.right) || fallback, fallback),
+      };
+    }
+
     return {
-      left: Number(saved.left) || DEFAULT_WIDTH,
-      right: Number(saved.right) || DEFAULT_WIDTH,
+      left: fallback,
+      right: fallback,
     };
   } catch {
-    return { left: DEFAULT_WIDTH, right: DEFAULT_WIDTH };
+    return { left: fallback, right: fallback };
   }
 }
 
-function saveWidths(widths) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(widths));
+function saveWidths(pageId, widths) {
+  let saved = {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) saved = parsed;
+  } catch {
+    saved = {};
+  }
+
+  saved[pageId] = widths;
+  delete saved.left;
+  delete saved.right;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
 }
 
 function clampWidth(value, command, otherWidth) {
-  const minWidth = command.closest('#page-overview') ? 340 : MIN_WIDTH;
+  const minWidth = MIN_WIDTH;
   const maxByCenter = command.clientWidth - otherWidth - MIN_CENTER_WIDTH;
   const max = Math.max(minWidth, Math.min(MAX_WIDTH, maxByCenter));
   return Math.round(Math.min(Math.max(value, minWidth), max));
 }
 
-function applyWidths(command, widths = readSavedWidths()) {
+function applyWidths(command, widths = readSavedWidths(pageIdFromCommand(command))) {
   if (!command) return;
   if (command.clientWidth < 960) {
     command.style.gridTemplateColumns = '';
@@ -128,10 +165,10 @@ function stopDrag() {
   }
   applyWidths(activeDrag.command, { left, right });
   const widths = {
-    left: Number(activeDrag.command.dataset.sidebarLeftWidth) || DEFAULT_WIDTH,
-    right: Number(activeDrag.command.dataset.sidebarRightWidth) || DEFAULT_WIDTH,
+    left: Number(activeDrag.command.dataset.sidebarLeftWidth) || defaultWidthForPage(activeDrag.pageId),
+    right: Number(activeDrag.command.dataset.sidebarRightWidth) || defaultWidthForPage(activeDrag.pageId),
   };
-  saveWidths(widths);
+  saveWidths(activeDrag.pageId, widths);
   shield?.remove();
   window.getSelection()?.removeAllRanges();
   document.onselectstart = previousSelectStart;
@@ -164,6 +201,7 @@ function startDrag(event) {
 
   activeDrag = {
     side,
+    pageId: pageIdFromCommand(command),
     command,
     handle,
     shield,

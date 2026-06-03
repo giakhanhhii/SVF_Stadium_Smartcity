@@ -1,7 +1,8 @@
 import { hudHead } from './hud-charts.js';
 import {
-  distributionMinis, distributionStack, radial3dChart,
+  distributionStack, radial3dChart,
 } from './radial3d-chart.js';
+import { securityExteriorHud } from '../data/security-exterior-hud.js';
 
 const overviewSecurityActions = {
   camera: {
@@ -263,7 +264,43 @@ function facilityBars(items) {
   </div>`;
 }
 
-function overviewVenueChart(total, groups, capacityLabel) {
+function overviewIngressDiagram(ingress) {
+  const values = [940, 1180, 1320, 1540, 1710, ingress.total];
+  const labels = ['16h', '17h', '18h', '19h', '20h', 'Hiện'];
+  const max = Math.max(...values, 1);
+  const min = Math.min(...values, 0);
+  const range = Math.max(max - min, 1);
+  const points = values.map((value, index) => {
+    const x = 10 + index * (130 / (values.length - 1));
+    const y = 66 - ((value - min) / range) * 46;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const area = `10,72 ${points.join(' ')} 140,72`;
+  return `<div class="overview-venue-total__ingress">
+      <svg class="overview-venue-total__ingress-chart" viewBox="0 0 150 82" aria-hidden="true">
+      <defs><linearGradient id="overviewIngressLineFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.34"/>
+        <stop offset="100%" stop-color="#00d4ff" stop-opacity="0.02"/>
+      </linearGradient></defs>
+      <g class="overview-venue-total__ingress-grid">
+        ${[20, 36, 52, 68].map((y) => `<line x1="10" y1="${y}" x2="140" y2="${y}"/>`).join('')}
+        ${labels.map((label, index) => `<text x="${10 + index * 26}" y="80" text-anchor="middle">${label}</text>`).join('')}
+      </g>
+      <polygon class="overview-venue-total__ingress-area" points="${area}"/>
+      <polyline class="overview-venue-total__ingress-line" points="${points.join(' ')}"/>
+      ${points.map((point, index) => {
+    const [x, y] = point.split(',');
+    return `<circle class="overview-venue-total__ingress-dot${index === points.length - 1 ? ' overview-venue-total__ingress-dot--live' : ''}" cx="${x}" cy="${y}" r="${index === points.length - 1 ? 3.2 : 2.2}"/>`;
+  }).join('')}
+      </svg>
+      <div class="overview-venue-total__ingress-main">
+        <i class="ti ti-door-enter"></i>
+        <span><b>${ingress.total.toLocaleString('vi-VN')}</b><em><span class="overview-venue-total__ingress-label-lead">khách vào sân</span><span class="overview-venue-total__ingress-label-tail">/ giờ</span></em></span>
+      </div>
+  </div>`;
+}
+
+function overviewVenueChart(total, groups, capacityLabel, ingress) {
   const groupTotal = groups.reduce((sum, g) => sum + g.value, 0) || total;
   return `<div class="stad-sec-total overview-venue-total">
     <div class="stad-sec-total__top">
@@ -279,7 +316,7 @@ function overviewVenueChart(total, groups, capacityLabel) {
       <span><b>4</b><em>Khán đài</em></span>
       <span><b>VOC</b><em>Online</em></span>
     </div>
-    ${distributionMinis(groups)}
+    ${overviewIngressDiagram(ingress)}
   </div>`;
 }
 
@@ -372,7 +409,7 @@ export function renderOverviewLeft(d) {
       id: 'venue',
       title: 'Tổng quan sân',
       chart: `<div class="overview-domain__stack overview-domain__stack--venue">
-        ${overviewVenueChart(d.venue.total, d.venue.groups, d.venue.capacityLabel)}
+        ${overviewVenueChart(d.venue.total, d.venue.groups, d.venue.capacityLabel, securityExteriorHud.left.ingress)}
       </div>`,
       kpis: [
         { value: `${d.venue.pct}%`, label: 'Lấp đầy' },

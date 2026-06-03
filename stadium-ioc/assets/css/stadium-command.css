@@ -860,15 +860,22 @@ body.sidebar-resizing::after {
 
 #page-security.security-interior-mode .hud-block--security-access {
   display: grid;
-  gap: 12px;
-}
-
-#page-security.security-interior-mode .hud-block--security-access .hud-tabs {
+  grid-template-rows: auto auto auto;
+  align-content: start;
   gap: 8px;
 }
 
+#page-security.security-interior-mode .hud-block--security-access .hud-tabs {
+  gap: 6px;
+  align-self: start;
+}
+
 #page-security.security-interior-mode .hud-block--security-access .hud-tab {
-  min-height: 38px;
+  flex: unset;
+  min-height: 0;
+  padding: 4px 8px;
+  font-size: 9px;
+  line-height: 1.2;
 }
 
 #page-security.security-interior-mode .hud-block--security-access .hud-env-row {

@@ -66,16 +66,38 @@ export function radial3dChart(groups, { idSuffix = '' } = {}) {
   </svg>`;
 }
 
-export function distributionChart(total, groups, { idSuffix = 'Dist' } = {}) {
+export function distributionChart(total, groups, { idSuffix = 'Dist', totalLabel = '', fillPercent = null } = {}) {
   const groupTotal = groups.reduce((sum, g) => sum + g.value, 0) || total;
   const stack = distributionStack(groups, groupTotal);
   const values = distributionMinis(groups);
-  return `<div class="stad-sec-total">
+
+  let badgesHtml = '';
+  if (idSuffix === 'Crowd') {
+    const pct = fillPercent !== null ? fillPercent : 87;
+    badgesHtml = `
+    <div class="overview-venue-badges">
+      <span><b>${pct}%</b><em>Lấp đầy</em></span>
+      <span><b>4</b><em>Khán đài</em></span>
+      <span><b>VOC</b><em>Online</em></span>
+    </div>`;
+  } else if (idSuffix === 'Ingress') {
+    badgesHtml = `
+    <div class="overview-venue-badges overview-venue-badges--ingress">
+      <span><b>4</b><em>cổng</em></span>
+      <span><b>Trạng thái</b><em>Ổn định</em></span>
+    </div>`;
+  }
+
+  return `<div class="stad-sec-total overview-venue-total">
     <div class="stad-sec-total__top">
       ${radial3dChart(groups, { idSuffix })}
-      <strong>${total.toLocaleString('vi-VN')}</strong>
+      <div class="overview-venue-total__main">
+        <strong>${total.toLocaleString('vi-VN')}</strong>
+        <span>${totalLabel}</span>
+      </div>
     </div>
     ${stack}
+    ${badgesHtml}
     ${values}
   </div>`;
 }

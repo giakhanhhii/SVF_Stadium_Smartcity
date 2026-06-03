@@ -106,7 +106,7 @@ function renderAccessView(block, key) {
   const view = block.views[key] || block.views.main;
   const tabs = block.tabs.map((t, i) => {
     const value = values[i];
-    return `<button class="hud-tab${value === key ? ' hud-tab--active' : ''}" data-security-access="${value}" aria-pressed="${value === key}">${t}</button>`;
+    return `<button class="hud-tab hud-tab--sm${value === key ? ' hud-tab--active' : ''}" data-security-access="${value}" aria-pressed="${value === key}">${t}</button>`;
   }).join('');
   return `${hudHead(block.title)}<div class="hud-tabs" data-security-access-tabs>${tabs}</div>
     <div class="hud-env-row">${aquaDonut(view.ringPct, view.ringLabel)}${renderMetricBars(view.metrics)}</div>`;
@@ -234,7 +234,7 @@ function fifaSafetyMatrix() {
 export function renderSecurityLeft(d) {
   return `
     <section class="hud-block">${hudHead(d.crowd.title)}
-      ${distributionChart(d.crowd.total, d.crowd.groups, { idSuffix: 'Crowd' })}
+      ${distributionChart(d.crowd.total, d.crowd.groups, { idSuffix: 'Crowd', totalLabel: d.crowd.totalLabel, fillPercent: d.crowd.fillPercent })}
     </section>
     <section class="hud-block">${hudHead(d.cameras.title)}${cameraChart(d.cameras.feeds)}</section>
     <div class="hud-tabs hud-tabs--dual" data-security-mode-tabs>
@@ -258,7 +258,7 @@ export function renderSecurityRight(d) {
 export function renderSecurityExteriorLeft(d) {
   return `
     <section class="hud-block">${hudHead(d.ingress.title)}
-      ${distributionChart(d.ingress.total, d.ingress.groups, { idSuffix: 'Ingress' })}
+      ${distributionChart(d.ingress.total, d.ingress.groups, { idSuffix: 'Ingress', totalLabel: d.ingress.totalLabel })}
     </section>
     <section class="hud-block">${hudHead(d.cameras.title)}${cameraChart(d.cameras.feeds)}</section>
     <div class="hud-tabs hud-tabs--dual" data-security-exterior-mode-tabs>

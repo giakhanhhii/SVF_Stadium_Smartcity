@@ -7,7 +7,7 @@ export const securityHud = {
     crowd: {
       title: 'Mật độ đám đông',
       total: snap.total,
-      totalLabel: 'Khán giả hiện tại',
+      totalLabel: `Khán giả / ${snap.capacityFormatted} chỗ`,
       fillPercent: snap.fillPercent,
       groups: snap.groups,
     },

@@ -9,7 +9,7 @@ export const securityExteriorHud = {
     ingress: {
       title: 'Lưu lượng vào sân',
       total: 1842,
-      totalLabel: 'Khách/giờ — cổng ngoài',
+      totalLabel: 'Khách/giờ',
       groups: [
         { label: 'Cổng A', value: 512, tone: 'cyan' },
         { label: 'Cổng B', value: 628, tone: 'purple' },

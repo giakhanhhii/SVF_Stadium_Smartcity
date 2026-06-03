@@ -86,10 +86,10 @@ export function getCrowdSnapshot() {
       capacity: sec.capacity,
       fillPercent: Math.round((state.sectors[sec.id].count / sec.capacity) * 100),
     })),
-    groups: CROWD_SECTORS.slice(0, 3).map((sec, i) => ({
+    groups: CROWD_SECTORS.map((sec, i) => ({
       label: state.sectors[sec.id].label,
       value: state.sectors[sec.id].count,
-      tone: ['cyan', 'purple', 'blue'][i],
+      tone: ['cyan', 'purple', 'blue', 'green'][i],
     })),
   };
 }

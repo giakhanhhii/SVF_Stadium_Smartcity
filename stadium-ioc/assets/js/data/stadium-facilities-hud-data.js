@@ -21,7 +21,7 @@ export const facilitiesHud = {
         { label: 'Mái vòm PTFE' },
       ],
     },
-    modeTabs: ['Giám sát', 'Điều khiển mái'],
+    modeTabs: ['Giám sát', 'Trạng thái mái'],
     roof: { title: 'Mái vòm PTFE', label: 'Trạng thái', value: 'Đang mở' },
     loadBars: {
       title: 'Tải hệ thống',
@@ -51,17 +51,6 @@ export const facilitiesHud = {
       quantity: 48,
       status: 'HVAC-B cao tải',
       lanes: ['Mở mái', 'Đóng mái', 'Dừng khẩn cấp'],
-    },
-    infra: {
-      title: 'Chỉ số hạ tầng 24h',
-      tabs: ['Nhiệt độ', 'Điện', 'Nước'],
-      stats: [
-        { label: 'Nhiệt độ TB', value: '24°C', trend: 'up', change: 'Trong ngưỡng' },
-        { label: 'Chiếu sáng sân', value: '1200 lux', trend: 'up', change: '100%' },
-        { label: 'Thang máy', value: '14/16', trend: 'down', change: '2 bảo trì' },
-        { label: 'Mái vòm', value: 'Mở', trend: 'up', change: '12–20 ph' },
-      ],
-      chart: [0.55, 0.58, 0.62, 0.68, 0.72, 0.75, 0.78, 0.82, 0.85, 0.8, 0.72, 0.65],
     },
     alerts: [
       { tag: 'CẢNH BÁO', tagBg: '#3d3010', tagColor: '#BA7517', title: 'HVAC Khán đài B — Tải 92%', time: '20 phút' },

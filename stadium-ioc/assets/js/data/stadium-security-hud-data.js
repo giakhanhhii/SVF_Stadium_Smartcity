@@ -82,8 +82,8 @@ export const securityHud = {
       tabs: ['Trực tiếp', 'Dự báo', 'Lịch sử'],
       views: {
         live: { quantity: 46, status: 'Khán đài B', lanes: ['Mở cổng B2', 'Tăng tuần tra', 'PA thông báo'] },
-        forecast: { quantity: 8, status: 'B-12 sau 10 phút', lanes: ['Giảm mật độ B', 'Điều tiết C1', 'Theo dõi heatmap'] },
-        history: { quantity: 23, status: '3 điểm lặp lại', lanes: ['Xem ca trước', 'So sánh heatmap', 'Xuất biên bản'] },
+        forecast: { quantity: 8, status: 'B-12 sau 10 phút', lanes: ['Giảm mật độ B', 'Điều tiết C1', 'Theo dõi bản đồ nhiệt'] },
+        history: { quantity: 23, status: '3 điểm lặp lại', lanes: ['Xem ca trước', 'So sánh bản đồ nhiệt', 'Xuất biên bản'] },
       },
     },
     response: {

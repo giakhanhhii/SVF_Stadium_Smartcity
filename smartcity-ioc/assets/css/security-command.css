@@ -441,3 +441,161 @@
   .security-sidebar--right { order: 3; max-height: 280px; }
   .map-container--hero { min-height: 50vh; }
 }
+
+.smartcity-command-shell {
+  display: none;
+}
+
+.page-view--overview.active,
+.page-view--traffic.active,
+.page-view--security.active {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.page-view--smartcity-shell.active {
+  display: flex;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.prototype-shell:has(.page-view--smartcity-shell.active),
+.prototype-shell:has(.page-view--traffic.active),
+.prototype-shell:has(.page-view--security.active),
+.prototype-shell:has(.page-view--overview.active) {
+  max-width: 100%;
+  box-shadow: none;
+}
+
+.smartcity-page-shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(260px, 320px);
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  background: #040810;
+}
+
+.smartcity-page-main {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--color-background-primary);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 236, 255, 0.42) transparent;
+}
+
+.smartcity-page-main::-webkit-scrollbar,
+.page-view--smartcity-shell .security-sidebar::-webkit-scrollbar,
+.page-view--smartcity-shell .sidebar-hud::-webkit-scrollbar,
+.page-view--overview .sidebar-hud::-webkit-scrollbar,
+.page-view--traffic .security-sidebar::-webkit-scrollbar,
+.page-view--security .security-sidebar::-webkit-scrollbar,
+.page-view--traffic .sidebar-hud::-webkit-scrollbar,
+.page-view--security .sidebar-hud::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.smartcity-page-main::-webkit-scrollbar-track,
+.page-view--smartcity-shell .security-sidebar::-webkit-scrollbar-track,
+.page-view--smartcity-shell .sidebar-hud::-webkit-scrollbar-track,
+.page-view--overview .sidebar-hud::-webkit-scrollbar-track,
+.page-view--traffic .security-sidebar::-webkit-scrollbar-track,
+.page-view--security .security-sidebar::-webkit-scrollbar-track,
+.page-view--traffic .sidebar-hud::-webkit-scrollbar-track,
+.page-view--security .sidebar-hud::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.smartcity-page-main::-webkit-scrollbar-thumb,
+.page-view--smartcity-shell .security-sidebar::-webkit-scrollbar-thumb,
+.page-view--smartcity-shell .sidebar-hud::-webkit-scrollbar-thumb,
+.page-view--overview .sidebar-hud::-webkit-scrollbar-thumb,
+.page-view--traffic .security-sidebar::-webkit-scrollbar-thumb,
+.page-view--security .security-sidebar::-webkit-scrollbar-thumb,
+.page-view--traffic .sidebar-hud::-webkit-scrollbar-thumb,
+.page-view--security .sidebar-hud::-webkit-scrollbar-thumb {
+  border: 0;
+  border-radius: 999px;
+  background: rgba(216, 236, 255, 0.34);
+}
+
+.page-view--traffic .security-sidebar,
+.page-view--security .security-sidebar,
+.page-view--overview .security-sidebar,
+.page-view--smartcity-shell .security-sidebar {
+  background: rgba(6, 14, 26, 0.64);
+  backdrop-filter: blur(4px) saturate(1.12);
+}
+
+.page-view--overview .smartcity-overview-map {
+  display: grid;
+  place-items: stretch;
+  background: #07101d;
+}
+
+.page-view--overview .smartcity-overview-map svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.page-view--overview .vitals-strip,
+.page-view--overview [data-mount="vitals"] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 5px;
+}
+
+.page-view--overview .vital-item,
+.page-view--overview .kpi-card,
+.page-view--overview .module-card {
+  border: 1px solid rgba(0, 180, 255, 0.15);
+  border-radius: 4px;
+  background: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(145, 226, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.page-view--overview .kpi-grid,
+.page-view--overview .module-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+.page-view--overview .module-card {
+  min-height: 74px;
+  text-align: left;
+}
+
+.page-view--overview .module-card .module-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.page-view--overview .module-card .module-name,
+.page-view--overview .kpi-card .kpi-value {
+  color: #e8f4ff;
+}
+
+.page-view--overview .kpi-section,
+.page-view--overview .modules-section {
+  padding: 0;
+}
+
+@media (max-width: 960px) {
+  .smartcity-page-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .smartcity-page-shell .security-sidebar--left,
+  .smartcity-page-shell .security-sidebar--right {
+    max-height: 180px;
+  }
+}

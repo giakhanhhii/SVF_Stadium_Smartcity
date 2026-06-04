@@ -3,10 +3,15 @@ import { bindHudTabs } from '../../../shared-ioc/assets/js/render/hud-tabs.js';
 import { hydrateAllPages } from './pages/smartcity-page-hydration.js';
 import { initPageCharts } from './charts/smartcity-chart-registry.js';
 import { initPageScenes } from './scene/smartcity-scene-registry.js';
+import { mountSmartcitySideNav } from './render/smartcity-side-nav.js';
+import { initSidebarResize } from '../../../stadium-ioc/assets/js/render/sidebar-resize.js';
+import { initHudBlockDrag } from '../../../stadium-ioc/assets/js/render/hud-block-drag.js';
 
 function onNavigate(pageId) {
   initPageCharts(pageId);
   initPageScenes(pageId);
+  initSidebarResize(pageId);
+  initHudBlockDrag(document.getElementById(`page-${pageId}`) || document);
 }
 
 createApp({
@@ -21,4 +26,6 @@ createApp({
   onNavigate,
 }).then(() => {
   bindHudTabs();
+  mountSmartcitySideNav('overview');
+  onNavigate('overview');
 }).catch(console.error);

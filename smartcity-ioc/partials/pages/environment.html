@@ -1,7 +1,10 @@
-<div class="page-view" id="page-environment" data-frame="04 — Môi trường">
-  <div data-mount="banner"></div>
-  <div data-mount="kpis"></div>
-  <div class="dash-body">
+<div class="page-view page-view--smartcity-shell" id="page-environment" data-frame="04 — Môi trường">
+  <div class="smartcity-page-shell">
+    <aside class="security-sidebar security-sidebar--left"><div data-side-nav-rail="left"></div></aside>
+    <main class="smartcity-page-main">
+      <div data-mount="banner"></div>
+      <div data-mount="kpis"></div>
+      <div class="dash-body">
     <div class="dash-map-col">
       <div class="map-header">
         <div class="map-title">Bản đồ phân bố AQI & trạm quan trắc</div>
@@ -26,6 +29,9 @@
       <div class="alerts-header"><div class="alerts-title">Trạm quan trắc — Chi tiết</div><span class="alerts-filter">Sắp xếp →</span></div>
       <div class="station-list" data-mount="stations"></div>
     </div>
+      </div>
+      <div data-mount="chart"></div>
+    </main>
+    <aside class="security-sidebar security-sidebar--right"><div data-side-nav-rail="right"></div></aside>
   </div>
-  <div data-mount="chart"></div>
 </div>

@@ -1,8 +1,11 @@
 import { parkingVehicleSummary } from './stadium-parking-vehicles-data.js';
+import { getCrowdSnapshot } from './crowd-state.js';
+
+const snap = getCrowdSnapshot();
 
 export const overviewData = {
   vitals: [
-    { label: 'Sức chứa hiện tại', value: '87%', valueColor: '#0F6E56', status: '34.800 / 40.000', statusColor: '#854F0B' },
+    { label: 'Sức chứa hiện tại', value: `${snap.fillPercent}%`, valueColor: '#0F6E56', status: `${snap.totalFormatted} / ${snap.capacityFormatted}`, statusColor: '#854F0B' },
     { label: 'Mái vòm PTFE', value: 'MỞ', valueColor: '#EF9F27', status: '● 100% · Sẵn sàng', statusColor: '#0F6E56' },
     { label: 'Mật độ đám đông', value: '72', valueColor: '#BA7517', status: '● Khu B cao', statusColor: '#854F0B' },
     { label: 'Cơ sở hạ tầng', value: '94', valueColor: '#0F6E56', status: '● HVAC ổn định', statusColor: '#0F6E56' },
@@ -10,7 +13,7 @@ export const overviewData = {
     { label: 'Cảnh báo đang mở', value: '4', valueColor: '#A32D2D', status: '1 ưu tiên cao', statusColor: '#A32D2D' },
   ],
   kpis: [
-    { icon: 'ti-users', label: 'Khán giả trong sân', value: '34.812', delta: '▲ 12% so với trận trước', deltaColor: 'var(--color-text-success)', accent: '#0F6E56' },
+    { icon: 'ti-users', label: 'Khán giả trong sân', value: snap.totalFormatted, delta: `${snap.fillPercent}% / ${snap.capacityFormatted} chỗ`, deltaColor: 'var(--color-text-success)', accent: '#0F6E56' },
     { icon: 'ti-door-enter', label: 'Lưu lượng vào/ra', value: '2.840<span class="text-secondary-sm"> người/h</span>', delta: '● Cổng A, C bận', deltaColor: 'var(--color-text-warning)', accent: '#185FA5' },
     { icon: 'ti-temperature', label: 'Nhiệt độ sân', value: '24°C<span class="text-secondary-sm"> — Bình thường</span>', delta: 'Độ ẩm 58%', deltaColor: 'var(--color-text-success)', accent: '#BA7517' },
     { icon: 'ti-alert-triangle', label: 'Sự cố đang xử lý', value: '4', delta: '1 khẩn cấp — Khu VIP', deltaColor: 'var(--color-text-danger)', accent: '#A32D2D' },

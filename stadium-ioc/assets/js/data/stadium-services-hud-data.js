@@ -13,8 +13,24 @@ export const servicesHud = {
       groups: parkingVehicleLots.map((lot, index) => ({
         label: lot.id,
         value: lot.usagePct,
+        capacity: lot.capacity,
+        vehicles: lot.total,
+        cars: lot.cars,
+        motorbikes: lot.motorbikes,
+        wait: [3, 5, 4, 8][index] || 4,
         tone: ['cyan', 'purple', 'blue', 'cyan'][index] || 'cyan',
       })),
+      ops: [
+        { label: 'Xe trong bãi', value: `${parkingVehicleSummary.total}/${parkingVehicleSummary.capacity}` },
+        { label: 'Chờ lâu nhất', value: `P${busiestParkingLot.id.replace('P', '')} · 8 ph` },
+        { label: 'Làn mở', value: '7/9' },
+        { label: 'Bảng LED', value: '6/6' },
+      ],
+      actions: [
+        { label: 'Chuyển P3', icon: 'ti-route', action: 'trafficP3' },
+        { label: 'Cập nhật LED', icon: 'ti-device-tv', action: 'trafficLed' },
+        { label: 'Mở làn phụ', icon: 'ti-road', action: 'trafficLane' },
+      ],
     },
     services: {
       title: 'Điểm dịch vụ',
@@ -43,6 +59,11 @@ export const servicesHud = {
           { time: 'P4', value: 8 },
           { time: 'Taxi', value: 4 },
           { time: 'Bus', value: 2 },
+        ],
+        actions: [
+          { label: 'Giữ chỗ P2', icon: 'ti-lock', action: 'parkingHoldP2' },
+          { label: 'Điều chốt P2', icon: 'ti-user-shield', action: 'parkingMarshalP2' },
+          { label: 'Ưu tiên taxi/bus', icon: 'ti-bus', action: 'parkingPriorityTransit' },
         ],
       },
       commerce: {
@@ -87,9 +108,9 @@ export const servicesHud = {
         },
         wifi: {
           ringPct: 96,
-          ringLabel: 'WiFi OK',
+          ringLabel: 'WiFi ổn',
           metrics: [
-            { label: 'Thiết bị online', value: '12.4K', pct: 86 },
+            { label: 'Thiết bị trực tuyến', value: '12.4K', pct: 86 },
             { label: 'Băng thông', value: 'Ổn định', pct: 96 },
           ],
         },
@@ -104,22 +125,22 @@ export const servicesHud = {
     },
     medical: {
       title: 'Y tế sân vận động',
-      status: 'FIFA Medical: READY',
+      status: 'Y tế FIFA: SẴN SÀNG',
       stats: [
-        { label: 'Medical posts', value: '3/3', trend: 'up', change: 'Mở trực' },
+        { label: 'Trạm y tế', value: '3/3', trend: 'up', change: 'Mở trực' },
         { label: 'AED points', value: '12/12', trend: 'up', change: 'Online' },
-        { label: 'EMS teams', value: '2 đội', trend: 'up', change: 'Standby' },
+        { label: 'Đội EMS', value: '2 đội', trend: 'up', change: 'Trực chờ' },
         { label: 'Response SLA', value: '< 4 ph', trend: 'up', change: 'FOP & khán đài' },
       ],
     },
     fire: {
-      title: 'Cứu hỏa & sơ tán',
-      status: 'Fire command: NORMAL',
+      title: 'Phòng cháy chữa cháy',
+      status: 'PCCC: TỐT',
       stats: [
-        { label: 'Fire panel', value: 'Normal', trend: 'up', change: '0 alarm' },
+        { label: 'Tủ báo cháy', value: 'Tốt', trend: 'up', change: '0 cảnh báo' },
         { label: 'Hydrant / Pump', value: '18/18', trend: 'up', change: 'Áp ổn định' },
-        { label: 'Exit routes', value: '24/24', trend: 'up', change: 'Clear' },
-        { label: 'Drill crew', value: '4 tổ', trend: 'up', change: 'VOC ready' },
+        { label: 'Lối thoát', value: '24/24', trend: 'up', change: 'Thông thoáng' },
+        { label: 'Tổ diễn tập', value: '4 tổ', trend: 'up', change: 'VOC sẵn sàng' },
       ],
     },
     revenue: {

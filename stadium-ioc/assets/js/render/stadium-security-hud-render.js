@@ -194,6 +194,44 @@ function statTiles(stats) {
   ).join('')}</div>`;
 }
 
+function traffic24hPanel(traffic) {
+  const kpis = [
+    { label: 'Xe/h', value: '420', tone: 'warn' },
+    { label: 'Ùn', value: '2', tone: 'hot' },
+    { label: 'Shuttle', value: '18/20', tone: 'ok' },
+    { label: 'Ra TB', value: '18 ph', tone: 'ok' },
+  ];
+  const routes = [
+    { label: 'Cổng B', value: '46 xe/ph', pct: 78, tone: 'warn' },
+    { label: 'Bãi P4', value: '58 xe/ph', pct: 92, tone: 'hot' },
+    { label: 'P3 dự phòng', value: '21 xe/ph', pct: 34, tone: 'ok' },
+  ];
+  const labels = ['16h', '18h', '20h', '22h'];
+  return `<div class="traffic24-panel">
+    <div class="traffic24-status">
+      <i class="ti ti-traffic-lights"></i>
+      <span>P4 / Cổng B tải cao</span>
+    </div>
+    <div class="traffic24-kpis">
+      ${kpis.map((item) => `<span class="traffic24-kpi traffic24-kpi--${item.tone}">
+        <b>${item.value}</b><em>${item.label}</em>
+      </span>`).join('')}
+    </div>
+    <div class="traffic24-routes">
+      ${routes.map((route) => `<span class="traffic24-route traffic24-route--${route.tone}">
+        <b>${route.label}</b><i><em style="width:${route.pct}%"></em></i><strong>${route.value}</strong>
+      </span>`).join('')}
+    </div>
+    <div class="traffic24-actions">
+      <span>Lệnh</span><b>P3</b><b>Bus</b><b>LED</b>
+    </div>
+    <div class="traffic24-chart">
+      ${areaChartSvg(traffic.chart, 'secExtGrad')}
+      <div class="traffic24-chart__axis">${labels.map((label) => `<span>${label}</span>`).join('')}</div>
+    </div>
+  </div>`;
+}
+
 function fifaSafetyMatrix() {
   const axes = [
     { label: 'VOC', value: 96 },
@@ -277,7 +315,7 @@ export function renderSecurityExteriorRight(d) {
       <div class="hud-vent-row">${d.patrol.lanes.map((v, index) => `<button class="hud-vent-btn" data-security-patrol-action="${index}">${v}</button>`).join('')}</div>
     </section>
     <section class="hud-block hud-block--grow hud-block--traffic-24h">${hudHead(d.traffic.title)}
-      ${statTiles(d.traffic.stats)}${areaChartSvg(d.traffic.chart, 'secExtGrad')}
+      ${traffic24hPanel(d.traffic)}
     </section>`;
 }
 

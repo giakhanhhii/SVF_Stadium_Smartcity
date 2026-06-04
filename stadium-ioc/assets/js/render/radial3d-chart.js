@@ -83,7 +83,7 @@ export function distributionChart(total, groups, { idSuffix = 'Dist', totalLabel
   } else if (idSuffix === 'Ingress') {
     badgesHtml = `
     <div class="overview-venue-badges overview-venue-badges--ingress">
-      <span><b>4</b><em>cổng</em></span>
+      <span><b>4</b><em>Cổng</em></span>
       <span><b>Trạng thái</b><em>Ổn định</em></span>
     </div>`;
   }

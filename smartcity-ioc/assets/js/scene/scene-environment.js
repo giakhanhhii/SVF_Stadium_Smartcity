@@ -1,68 +1,127 @@
 import * as THREE from 'three';
-import { Reflector } from 'three/addons/objects/Reflector.js';
 import { buildingSceneData } from '../data/building-scene.js';
 
 function addSkyline(scene) {
-  const mat = new THREE.MeshPhysicalMaterial({
-    color: 0x6ab8d8,
+  const buildings = buildingSceneData.skyline;
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  const mat = new THREE.MeshLambertMaterial({
+    color: 0x78bdd7,
     transparent: true,
-    opacity: 0.62,
-    metalness: 0.65,
-    roughness: 0.12,
-    envMapIntensity: 1.1,
-    clearcoat: 0.8,
-    clearcoatRoughness: 0.08,
+    opacity: 0.68,
   });
-  for (let i = 0; i < 20; i++) {
-    const bh = 6 + Math.random() * 16;
-    const bw = 2 + Math.random() * 3;
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bw), mat);
-    const angle = (i / 20) * Math.PI * 2 + Math.random() * 0.3;
-    const dist = 34 + Math.random() * 10;
-    mesh.position.set(Math.cos(angle) * dist, bh / 2, Math.sin(angle) * dist);
-    scene.add(mesh);
+  const mesh = new THREE.InstancedMesh(geo, mat, buildings.length);
+  mesh.receiveShadow = false;
+  mesh.castShadow = false;
+
+  const matrix = new THREE.Matrix4();
+  buildings.forEach((b, i) => {
+    matrix.compose(
+      new THREE.Vector3(b.pos[0], b.size[1] / 2, b.pos[2]),
+      new THREE.Quaternion(),
+      new THREE.Vector3(b.size[0], b.size[1], b.size[2]),
+    );
+    mesh.setMatrixAt(i, matrix);
+  });
+  scene.add(mesh);
+}
+
+function addGrassPatches(scene) {
+  const patches = buildingSceneData.grassPatches;
+  const geo = new THREE.CircleGeometry(1, 12);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x5cb850, roughness: 0.9 });
+  const mesh = new THREE.InstancedMesh(geo, mat, patches.length);
+  mesh.receiveShadow = true;
+
+  const matrix = new THREE.Matrix4();
+  const rotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+  patches.forEach(([x, z, radius = 2.4], i) => {
+    matrix.compose(
+      new THREE.Vector3(x, 0.02, z),
+      rotation,
+      new THREE.Vector3(radius, radius, radius),
+    );
+    mesh.setMatrixAt(i, matrix);
+  });
+  scene.add(mesh);
+}
+
+function addSurroundingBuildings(scene) {
+  const buildings = buildingSceneData.surroundingBuildings;
+  if (!buildings?.length) return;
+
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  const mat = new THREE.MeshLambertMaterial({
+    color: 0x7fb6c9,
+    transparent: true,
+    opacity: 0.78,
+  });
+  const mesh = new THREE.InstancedMesh(geo, mat, buildings.length);
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+
+  const matrix = new THREE.Matrix4();
+  buildings.forEach((b, i) => {
+    matrix.compose(
+      new THREE.Vector3(b.pos[0], b.size[1] / 2, b.pos[2]),
+      new THREE.Quaternion(),
+      new THREE.Vector3(b.size[0], b.size[1], b.size[2]),
+    );
+    mesh.setMatrixAt(i, matrix);
+  });
+  scene.add(mesh);
+}
+
+function addPath(scene, data) {
+  if (!data) return;
+  const road = new THREE.Mesh(
+    new THREE.PlaneGeometry(data.size[0], data.size[1]),
+    new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.95 }),
+  );
+  road.rotation.x = -Math.PI / 2;
+  road.rotation.z = data.rotation || 0;
+  road.position.set(data.pos[0], 0.015, data.pos[2]);
+  road.receiveShadow = true;
+  scene.add(road);
+}
+
+function addPaths(scene) {
+  for (const path of buildingSceneData.paths) {
+    addPath(scene, path);
   }
 }
 
-export function createEnvironment(scene, renderer) {
+export function createEnvironment(scene) {
   scene.background = new THREE.Color(0xb8daf0);
-  scene.fog = new THREE.Fog(0xc8e4f8, 55, 95);
+  scene.fog = new THREE.Fog(0xc8e4f8, 72, 125);
 
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50),
-    new THREE.MeshStandardMaterial({ color: 0x6aaa58, roughness: 0.88 }),
+    new THREE.PlaneGeometry(92, 92),
+    new THREE.MeshStandardMaterial({ color: 0x8fcc73, roughness: 0.9 }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
   scene.add(ground);
 
-  buildingSceneData.grassPatches.forEach(([x, z]) => {
-    const patch = new THREE.Mesh(
-      new THREE.CircleGeometry(2.2 + Math.random() * 0.5, 12),
-      new THREE.MeshStandardMaterial({ color: 0x5cb850, roughness: 0.9 }),
-    );
-    patch.rotation.x = -Math.PI / 2;
-    patch.position.set(x, 0.02, z);
-    patch.receiveShadow = true;
-    scene.add(patch);
-  });
+  addGrassPatches(scene);
 
   const { water, island } = buildingSceneData;
   const [ww, wh] = water.size;
   const waterGeo = new THREE.PlaneGeometry(ww, wh);
-  const px = renderer.getPixelRatio();
-  const rw = Math.floor(renderer.domElement.width * px);
-  const rh = Math.floor(renderer.domElement.height * px);
 
-  const reflector = new Reflector(waterGeo, {
-    clipBias: 0.003,
-    textureWidth: Math.max(rw, 512),
-    textureHeight: Math.max(rh, 512),
-    color: 0xa8d4e8,
-  });
-  reflector.rotation.x = -Math.PI / 2;
-  reflector.position.set(water.pos[0], 0.04, water.pos[2]);
-  scene.add(reflector);
+  const waterBase = new THREE.Mesh(
+    waterGeo,
+    new THREE.MeshStandardMaterial({
+      color: 0x8dd3ec,
+      metalness: 0.35,
+      roughness: 0.22,
+      transparent: true,
+      opacity: 0.74,
+    }),
+  );
+  waterBase.rotation.x = -Math.PI / 2;
+  waterBase.position.set(water.pos[0], 0.04, water.pos[2]);
+  waterBase.receiveShadow = true;
+  scene.add(waterBase);
 
   const ripple = new THREE.Mesh(
     waterGeo.clone(),
@@ -90,18 +149,12 @@ export function createEnvironment(scene, renderer) {
   islandMesh.receiveShadow = true;
   scene.add(islandMesh);
 
-  const road = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 4),
-    new THREE.MeshStandardMaterial({ color: 0xc8ccd0, roughness: 0.95 }),
-  );
-  road.rotation.x = -Math.PI / 2;
-  road.position.set(0, 0.015, 11);
-  road.receiveShadow = true;
-  scene.add(road);
+  addPaths(scene);
+  addSurroundingBuildings(scene);
 
   addSkyline(scene);
 
-  return { reflector, ripple };
+  return { reflector: null, ripple };
 }
 
 export function disposeEnvironment(reflector) {

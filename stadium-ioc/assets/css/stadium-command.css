@@ -1161,16 +1161,197 @@ body.sidebar-resizing::after {
   line-height: 1.25;
 }
 
+#page-security.security-exterior-mode .traffic24-panel {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+#page-security.security-exterior-mode .traffic24-status {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid rgba(0, 180, 255, 0.18);
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(0, 126, 190, 0.24), rgba(5, 18, 32, 0.18));
+  color: #dff9ff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.32;
+}
+
+#page-security.security-exterior-mode .traffic24-status i {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(0, 212, 255, 0.13);
+  color: #00d4ff;
+  font-size: 14px;
+}
+
+#page-security.security-exterior-mode .traffic24-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+#page-security.security-exterior-mode .traffic24-kpi {
+  min-width: 0;
+  min-height: 50px;
+  padding: 8px 9px;
+  border: 1px solid rgba(0, 180, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(5, 18, 32, 0.16);
+}
+
+#page-security.security-exterior-mode .traffic24-kpi--warn {
+  border-color: rgba(0, 212, 255, 0.3);
+  background: linear-gradient(135deg, rgba(0, 126, 190, 0.2), rgba(5, 18, 32, 0.14));
+}
+
+#page-security.security-exterior-mode .traffic24-kpi--hot {
+  border-color: rgba(73, 166, 255, 0.32);
+  background: linear-gradient(135deg, rgba(24, 95, 165, 0.2), rgba(5, 18, 32, 0.14));
+}
+
+#page-security.security-exterior-mode .traffic24-kpi b,
+#page-security.security-exterior-mode .traffic24-kpi em {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#page-security.security-exterior-mode .traffic24-kpi b {
+  color: #e8f4ff;
+  font-size: 17px;
+  line-height: 1.05;
+}
+
+#page-security.security-exterior-mode .traffic24-kpi em {
+  margin-top: 4px;
+  color: #92c2df;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+#page-security.security-exterior-mode .traffic24-routes {
+  display: grid;
+  gap: 7px;
+  padding: 3px 0;
+}
+
+#page-security.security-exterior-mode .traffic24-route {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 54px;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  color: #d8ecff;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+#page-security.security-exterior-mode .traffic24-route b,
+#page-security.security-exterior-mode .traffic24-route strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#page-security.security-exterior-mode .traffic24-route strong {
+  color: #e8f4ff;
+  text-align: right;
+}
+
+#page-security.security-exterior-mode .traffic24-route i {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(216, 236, 255, 0.08);
+}
+
+#page-security.security-exterior-mode .traffic24-route i em {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #00d4ff;
+}
+
+#page-security.security-exterior-mode .traffic24-route--warn i em {
+  background: #27b8ff;
+}
+
+#page-security.security-exterior-mode .traffic24-route--hot i em {
+  background: #5aa7ff;
+}
+
+#page-security.security-exterior-mode .traffic24-actions {
+  display: grid;
+  grid-template-columns: 46px repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  align-items: center;
+}
+
+#page-security.security-exterior-mode .traffic24-actions span,
+#page-security.security-exterior-mode .traffic24-actions b {
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid rgba(0, 180, 255, 0.22);
+  border-radius: 3px;
+  background: rgba(0, 74, 112, 0.16);
+  color: #9dc8df;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+}
+
+#page-security.security-exterior-mode .traffic24-actions b {
+  color: #dff9ff;
+  background: rgba(0, 126, 190, 0.2);
+}
+
+#page-security.security-exterior-mode .traffic24-chart {
+  display: grid;
+  gap: 2px;
+  min-height: 112px;
+}
+
+#page-security.security-exterior-mode .traffic24-chart .hud-area-chart {
+  min-height: 96px;
+}
+
+#page-security.security-exterior-mode .traffic24-chart__axis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  color: #6f9fbd;
+  font-size: 8px;
+  font-weight: 800;
+  text-align: center;
+}
+
 #page-security.security-exterior-mode .hud-block--security-patrol .hud-vent-row {
-  grid-template-columns: repeat(3, minmax(96px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
 }
 
 #page-security.security-exterior-mode .hud-block--security-patrol .hud-vent-btn {
+  min-width: 0;
   min-height: 48px;
-  padding: 9px 10px;
-  font-size: 11px;
+  padding: 8px 6px;
+  overflow-wrap: anywhere;
+  font-size: 10px;
   font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
 }
 
 #page-security.security-exterior-mode .security-patrol-chart {
@@ -1199,14 +1380,14 @@ body.sidebar-resizing::after {
   display: block;
   overflow: hidden;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 #page-security.security-exterior-mode .security-patrol-stats b {
   color: #e8f4ff;
-  font-size: 14px;
-  line-height: 1.1;
+  font-size: 13px;
+  line-height: 1.12;
 }
 
 #page-security.security-exterior-mode .security-patrol-stats em {
@@ -1229,10 +1410,20 @@ body.sidebar-resizing::after {
   line-height: 1.35;
 }
 
-#page-security.security-exterior-mode .hud-vent-btn--active {
-  border-color: rgba(94, 224, 176, 0.56);
-  color: #d8fff0;
-  box-shadow: inset 3px 0 0 rgba(94, 224, 176, 0.72);
+#page-security.security-exterior-mode .hud-block--security-patrol .hud-vent-btn--active {
+  border-color: rgba(0, 212, 255, 0.58);
+  background: rgba(0, 126, 190, 0.24);
+  color: #dff9ff;
+  box-shadow:
+    inset 3px 0 0 rgba(0, 212, 255, 0.76),
+    0 0 14px rgba(0, 174, 255, 0.16);
+}
+
+#page-security.security-exterior-mode .hud-block--security-patrol .hud-vent-btn:hover,
+#page-security.security-exterior-mode .hud-block--security-patrol .hud-vent-btn:focus-visible {
+  border-color: rgba(0, 180, 255, 0.46);
+  color: #dff9ff;
+  outline: none;
 }
 
 @container (max-width: 260px) {

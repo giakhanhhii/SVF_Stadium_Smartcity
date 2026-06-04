@@ -3,7 +3,7 @@
  * Load sau security-command.css để ghi đè HUD/sidebar.
  */
 :root {
-  --font-family-ui: "Segoe UI Variable Text", "Segoe UI", "Noto Sans", Arial, sans-serif;
+  --font-family-ui: "Be Vietnam Pro", "Noto Sans", "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif;
   --font-size-caption: 9px;
   --font-size-label: 10px;
   --font-size-body-sm: 11px;
@@ -37,12 +37,19 @@ body,
   font-synthesis: none;
 }
 
+[role="dialog"],
+[role="dialog"] * {
+  font-family: var(--font-family-ui) !important;
+  font-synthesis: none;
+}
+
 .prototype-shell .ti,
 .event-action-modal .ti,
 .event-smoke-modal .ti,
 .event-power-modal .ti,
 .fac-action-modal .ti,
-.svc-action-modal .ti {
+.svc-action-modal .ti,
+[role="dialog"] .ti {
   font-family: "tabler-icons" !important;
 }
 

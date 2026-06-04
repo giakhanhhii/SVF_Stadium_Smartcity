@@ -1,27 +1,38 @@
 import { CROWD_CAPACITY, CROWD_SECTORS } from './stadium-geometry.js';
 
+export const STADIUM_DISPLAY_CAPACITY = 60000;
+export const DEFAULT_FILL_PERCENT = 87;
+
+function scaledSectorCapacities() {
+  const geomTotal = CROWD_CAPACITY || CROWD_SECTORS.length;
+  let remaining = STADIUM_DISPLAY_CAPACITY;
+  return CROWD_SECTORS.map((sec, index) => {
+    if (index === CROWD_SECTORS.length - 1) {
+      return { id: sec.id, capacity: remaining };
+    }
+    const capacity = Math.round((sec.capacity / geomTotal) * STADIUM_DISPLAY_CAPACITY);
+    remaining -= capacity;
+    return { id: sec.id, capacity };
+  });
+}
+
+const DISPLAY_SECTOR_CAPACITY = Object.fromEntries(
+  scaledSectorCapacities().map((sec) => [sec.id, sec.capacity]),
+);
+
 /** Trạng thái lấp đầy — nguồn dữ liệu cho 3D + HUD */
 const state = {
-  capacity: CROWD_CAPACITY,
+  capacity: STADIUM_DISPLAY_CAPACITY,
   sectors: Object.fromEntries(
-    CROWD_SECTORS.map((s) => [s.id, { label: s.label, capacity: s.capacity, count: 0 }]),
+    CROWD_SECTORS.map((s) => [s.id, { label: s.label, capacity: DISPLAY_SECTOR_CAPACITY[s.id], count: 0 }]),
   ),
 };
 
 /** Mock: ~87% lấp đầy theo capacity thực từ geometry */
 function applyDefaultFill() {
-  const defaultCounts = {
-    north: 1897,
-    south: 2146,
-    east: 1962,
-    west: 2011,
-  };
-  const ratio = 0.87;
+  const ratio = DEFAULT_FILL_PERCENT / 100;
   CROWD_SECTORS.forEach((sec) => {
-    state.sectors[sec.id].count = Math.min(
-      sec.capacity,
-      defaultCounts[sec.id] ?? Math.round(sec.capacity * ratio),
-    );
+    state.sectors[sec.id].count = Math.round(state.sectors[sec.id].capacity * ratio);
   });
 }
 applyDefaultFill();
@@ -58,14 +69,14 @@ export function setSectorCount(sectorId, count) {
 export function setFillPercent(percent) {
   const ratio = Math.max(0, Math.min(100, percent)) / 100;
   CROWD_SECTORS.forEach((sec) => {
-    state.sectors[sec.id].count = Math.round(sec.capacity * ratio);
+    state.sectors[sec.id].count = Math.round(state.sectors[sec.id].capacity * ratio);
   });
 }
 
 export function setCrowdTotal(total) {
   const ratio = Math.max(0, Math.min(1, total / state.capacity));
   CROWD_SECTORS.forEach((sec) => {
-    state.sectors[sec.id].count = Math.round(sec.capacity * ratio);
+    state.sectors[sec.id].count = Math.round(state.sectors[sec.id].capacity * ratio);
   });
 }
 
@@ -83,8 +94,8 @@ export function getCrowdSnapshot() {
       id: sec.id,
       label: state.sectors[sec.id].label,
       count: state.sectors[sec.id].count,
-      capacity: sec.capacity,
-      fillPercent: Math.round((state.sectors[sec.id].count / sec.capacity) * 100),
+      capacity: state.sectors[sec.id].capacity,
+      fillPercent: Math.round((state.sectors[sec.id].count / state.sectors[sec.id].capacity) * 100),
     })),
     groups: CROWD_SECTORS.map((sec, i) => ({
       label: state.sectors[sec.id].label,

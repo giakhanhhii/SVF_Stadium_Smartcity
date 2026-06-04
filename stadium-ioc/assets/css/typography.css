@@ -262,3 +262,81 @@ body,
 #page-events .event-risk__btn:focus-visible .ti {
   color: #18d8f5 !important;
 }
+
+/* Khi dashboard/sidebar bị co hẹp, không dùng dấu "..." trên HUD. */
+.prototype-shell :where(
+  .security-sidebar,
+  .sidebar-hud,
+  .hud-block,
+  .hud-head,
+  .hud-sub,
+  .hud-tab,
+  .hud-vent-btn,
+  .hud-pill__lbl,
+  .hud-pill__val,
+  .hud-metric-lbl,
+  .hud-metric-big,
+  .hud-inline-stat,
+  .hud-bar-head,
+  .hud-energy-lbl,
+  .hud-energy-val,
+  .hud-energy-trend,
+  .hud-alert__title,
+  .hud-alert__time,
+  .stad-sec-mini,
+  .stad-sec-mini span,
+  .stad-sec-mini strong,
+  .overview-venue-total__main span,
+  .overview-venue-badges b,
+  .overview-venue-badges em,
+  .overview-ingress-diagram__summary b,
+  .overview-ingress-diagram__summary em,
+  .overview-ingress-diagram__mini b,
+  .overview-ingress-diagram__mini em,
+  .traffic24-kpi b,
+  .traffic24-kpi em,
+  .traffic24-route b,
+  .traffic24-route strong,
+  .traffic24-actions span,
+  .traffic24-actions b,
+  .security-patrol-stats b,
+  .security-patrol-stats em
+) {
+  text-overflow: clip !important;
+}
+
+.prototype-shell :where(
+  .hud-head,
+  .hud-sub,
+  .hud-tab,
+  .hud-vent-btn,
+  .hud-pill__lbl,
+  .hud-pill__val,
+  .hud-metric-lbl,
+  .hud-inline-stat,
+  .hud-bar-head,
+  .hud-energy-lbl,
+  .hud-energy-val,
+  .hud-energy-trend,
+  .hud-alert__title,
+  .stad-sec-mini span,
+  .overview-venue-total__main span,
+  .overview-venue-badges b,
+  .overview-venue-badges em,
+  .traffic24-kpi em,
+  .traffic24-route b,
+  .traffic24-route strong,
+  .traffic24-actions span,
+  .traffic24-actions b,
+  .security-patrol-stats b,
+  .security-patrol-stats em
+) {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+
+.prototype-shell .overview-ingress-diagram__summary em {
+  font-size: 7.5px;
+  white-space: nowrap !important;
+  overflow-wrap: normal;
+}

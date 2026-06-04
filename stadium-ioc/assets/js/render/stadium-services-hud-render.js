@@ -44,6 +44,36 @@ const serviceActions = {
     primary: 'Giảm tải P4',
     done: 'Đã kích hoạt quy trình giảm tải P4.',
   },
+  parkingHoldP2: {
+    icon: 'ti-lock',
+    tag: 'BÃI ĐỖ',
+    title: 'Giữ chỗ P2',
+    summary: 'Giữ một phần sức chứa P2 cho xe ưu tiên và xe đã được điều phối từ cổng chính.',
+    stats: [['P2', '62%'], ['Giữ chỗ', '40'], ['Thời gian', '15 phút']],
+    steps: ['Khóa 40 chỗ P2 trên hệ thống', 'Thông báo chốt vào bãi P2', 'Theo dõi tỷ lệ lấp đầy sau 5 phút'],
+    primary: 'Giữ chỗ',
+    done: 'Đã giữ 40 chỗ tại P2 cho luồng xe ưu tiên.',
+  },
+  parkingMarshalP2: {
+    icon: 'ti-user-shield',
+    tag: 'BÃI ĐỖ',
+    title: 'Điều chốt P2',
+    summary: 'Điều thêm nhân sự tới lối vào P2 để giảm thời gian chờ và tách luồng xe máy.',
+    stats: [['Chốt P2', '2/3'], ['Chờ vào', '5 phút'], ['Mục tiêu', '<3 phút']],
+    steps: ['Cử 1 chốt từ cổng B sang P2', 'Tách xe máy sang làn phải', 'Báo lại VOC sau 5 phút'],
+    primary: 'Điều chốt',
+    done: 'Đã điều thêm 1 chốt tới P2 và kích hoạt tách làn xe máy.',
+  },
+  parkingPriorityTransit: {
+    icon: 'ti-bus',
+    tag: 'BÃI ĐỖ',
+    title: 'Ưu tiên taxi/bus',
+    summary: 'Ưu tiên làn vào riêng cho taxi và bus để tránh dồn xe tại P2 trong khung cao điểm.',
+    stats: [['Taxi', '4 phút'], ['Bus', '2 phút'], ['Làn ưu tiên', '1']],
+    steps: ['Mở làn taxi/bus tại P2', 'Giữ xe cá nhân ở nhánh chờ', 'Theo dõi camera lối vào'],
+    primary: 'Bật ưu tiên',
+    done: 'Đã bật ưu tiên taxi/bus tại lối vào P2.',
+  },
   nodeFb: {
     icon: 'ti-burger',
     tag: 'F&B',
@@ -78,8 +108,8 @@ const serviceActions = {
     icon: 'ti-map-pin',
     tag: 'Y TẾ',
     title: 'Điểm AED',
-    summary: 'Các điểm AED đang online, cần đảm bảo vị trí không bị che khuất khi khán đài đông.',
-    stats: [['AED online', '12/12'], ['Pin', 'OK'], ['Vị trí', 'Đã map']],
+    summary: 'Các điểm AED đang trực tuyến, cần đảm bảo vị trí không bị che khuất khi khán đài đông.',
+    stats: [['AED trực tuyến', '12/12'], ['Pin', 'Ổn'], ['Vị trí', 'Đã định vị']],
     steps: ['Ping trạng thái AED', 'Kiểm tra vị trí gần VIP', 'Gửi map cho đội y tế'],
     primary: 'Kiểm tra AED',
     done: 'Đã ping kiểm tra toàn bộ điểm AED.',
@@ -88,7 +118,7 @@ const serviceActions = {
     icon: 'ti-users',
     tag: 'Y TẾ',
     title: 'Đội EMS',
-    summary: 'Hai đội EMS đang standby, ưu tiên khu FOP và khán đài đông.',
+    summary: 'Hai đội EMS đang trực chờ, ưu tiên khu FOP và khán đài đông.',
     stats: [['Đội EMS', '2 đội'], ['Ưu tiên', 'FOP/B'], ['Radio', 'Online']],
     steps: ['Giữ đội 1 tại FOP', 'Đội 2 phủ khán đài B', 'Bật route ưu tiên'],
     primary: 'Điều phối EMS',
@@ -108,8 +138,8 @@ const serviceActions = {
     icon: 'ti-flame',
     tag: 'PCCC',
     title: 'Tủ báo cháy',
-    summary: 'Fire panel đang normal, không có alarm. Có thể chạy kiểm tra nhanh tín hiệu VOC.',
-    stats: [['Panel', 'Normal'], ['Alarm', '0'], ['Kết nối', 'VOC ready']],
+    summary: 'Tủ báo cháy đang tốt, không có cảnh báo. Có thể chạy kiểm tra nhanh tín hiệu VOC.',
+    stats: [['Tủ báo cháy', 'Tốt'], ['Cảnh báo', '0'], ['Kết nối', 'VOC sẵn sàng']],
     steps: ['Ping fire panel', 'Kiểm tra log 15 phút', 'Giữ line VOC-12'],
     primary: 'Kiểm tra panel',
     done: 'Đã ping kiểm tra fire panel.',
@@ -128,7 +158,7 @@ const serviceActions = {
     icon: 'ti-users',
     tag: 'SƠ TÁN',
     title: 'Lối thoát hiểm',
-    summary: 'Toàn bộ exit route đang clear, cần giữ thông thoáng khi kết thúc trận.',
+    summary: 'Toàn bộ lối thoát hiểm đang thông thoáng, cần giữ sạch tuyến khi kết thúc trận.',
     stats: [['Exit route', '24/24'], ['Trạng thái', 'Clear'], ['Ưu tiên', 'Cổng B/C']],
     steps: ['Giữ an ninh tại cổng B/C', 'Theo dõi camera hành lang', 'Chặn vật cản phát sinh'],
     primary: 'Giữ route mở',
@@ -159,7 +189,7 @@ const serviceActions = {
     tag: 'GIAO THÔNG',
     title: 'Cập nhật LED',
     summary: 'Cập nhật bảng LED quanh sân để hướng xe sang bãi còn trống và làn phụ.',
-    stats: [['Bảng LED', '6/6'], ['Nội dung', 'P3/P4'], ['Trạng thái', 'Ready']],
+    stats: [['Bảng LED', '6/6'], ['Nội dung', 'P3/P4'], ['Trạng thái', 'Sẵn sàng']],
     steps: ['Đẩy nội dung LED', 'Xác nhận hiển thị cổng Bắc', 'Theo dõi camera giao thông'],
     primary: 'Đẩy LED',
     done: 'Đã cập nhật bảng LED điều hướng quanh sân.',
@@ -224,10 +254,12 @@ function fillServiceModal(root, action) {
 }
 
 function serviceParkingMap(parking) {
+  const highLot = parking.groups.reduce((max, lot) => (lot.value > max.value ? lot : max), parking.groups[0]);
+  const avg = Math.round(parking.groups.reduce((sum, lot) => sum + lot.value, 0) / Math.max(parking.groups.length, 1));
   const lots = parking.groups.map((g, index) => {
     const x = [14, 57, 14, 57][index] || 14;
     const y = [16, 16, 54, 54][index] || 16;
-    const tone = g.value >= 85 ? 'hot' : g.value >= 72 ? 'warn' : 'ok';
+    const tone = g.value >= 85 ? 'hot' : 'ok';
     return `<g class="svc-parking-map__lot svc-parking-map__lot--${tone}">
       <rect x="${x}" y="${y}" width="29" height="22" rx="3"/>
       <text x="${x + 14.5}" y="${y + 10}">${g.label}</text>
@@ -235,7 +267,13 @@ function serviceParkingMap(parking) {
     </g>`;
   }).join('');
   return `<div class="svc-parking-viz">
-    ${ringSvg(parking.total, 'PARK')}
+    <div class="svc-parking-viz__top">
+      ${ringSvg(parking.total, 'Bãi xe')}
+      <div class="svc-parking-bars">
+        <div class="svc-parking-bar"><span>Bãi cao nhất</span><b>${highLot.label} ${highLot.value}%</b><em><i style="width:${highLot.value}%"></i></em></div>
+        <div class="svc-parking-bar"><span>Trung bình</span><b>${avg}%</b><em><i style="width:${avg}%"></i></em></div>
+      </div>
+    </div>
     <svg class="svc-parking-map" viewBox="0 0 100 92" aria-hidden="true">
       <path class="svc-parking-map__road" d="M8 44h84M50 8v76"/>
       <rect class="svc-parking-map__stadium" x="38" y="35" width="24" height="22" rx="11"/>
@@ -281,9 +319,28 @@ function serviceQueueMap(view) {
       <b>${bar.value}</b>
     </button>`;
   }).join('');
+  const actions = (view.actions || []).map((item) =>
+    `<button type="button" class="svc-dispatch-action" data-service-action="${item.action}">
+      <i class="ti ${item.icon}"></i><span>${item.label}</span>
+    </button>`,
+  ).join('');
+  const dispatch = actions ? `<div class="svc-dispatch-map">
+    <svg viewBox="0 0 180 64" aria-hidden="true">
+      <path class="svc-dispatch-map__route svc-dispatch-map__route--priority" d="M18 18h58l22 14h64"/>
+      <path class="svc-dispatch-map__route svc-dispatch-map__route--standby" d="M18 46h58l22-14"/>
+      <circle class="svc-dispatch-map__node svc-dispatch-map__node--priority" cx="30" cy="18" r="7"/>
+      <circle class="svc-dispatch-map__node svc-dispatch-map__node--active" cx="98" cy="32" r="7"/>
+      <circle class="svc-dispatch-map__node svc-dispatch-map__node--standby" cx="150" cy="32" r="7"/>
+      <text x="30" y="21">P2</text>
+      <text x="98" y="35">Chốt</text>
+      <text x="150" y="35">Taxi</text>
+    </svg>
+    <div class="svc-dispatch-actions">${actions}</div>
+  </div>` : '';
   return `<div class="svc-mode-viz">
     <div class="svc-mode-viz__stat"><i class="ti ${view.icon}"></i><strong>${view.value}</strong><span>${view.label}</span></div>
     <div class="svc-queue-map">${cells}</div>
+    ${dispatch}
   </div>`;
 }
 
@@ -341,6 +398,14 @@ function serviceTrafficFlow(traffic) {
   const lanes = traffic.lanes.map((lane, index) =>
     `<button type="button" class="svc-lane svc-lane--info" data-service-action="${actions[index]}">${lane}</button>`,
   ).join('');
+  const checks = [
+    { label: 'P4', value: 'cao', tone: 'warn' },
+    { label: 'P3', value: 'dự phòng', tone: 'ok' },
+    { label: 'LED', value: '6/6', tone: 'ok' },
+    { label: 'EMS', value: 'thoáng', tone: 'ok' },
+  ].map((check) =>
+    `<span class="svc-traffic-check svc-traffic-check--${check.tone}"><b>${check.label}</b><em>${check.value}</em></span>`,
+  ).join('');
   return `<div class="svc-traffic-flow">
     <svg viewBox="0 0 150 62" aria-hidden="true">
       <path class="svc-traffic-flow__road" d="M8 14h116l16 10-16 10H8"/>
@@ -349,6 +414,7 @@ function serviceTrafficFlow(traffic) {
       <circle class="svc-traffic-flow__node" cx="72" cy="48" r="5"/>
       <circle class="svc-traffic-flow__node svc-traffic-flow__node--ok" cx="126" cy="34" r="5"/>
     </svg>
+    <div class="svc-traffic-checks">${checks}</div>
     <div class="svc-lane-row">${lanes}</div>
   </div>`;
 }

@@ -3,12 +3,15 @@ import * as THREE from 'three';
 export function setupRenderer(container) {
   const w = container.clientWidth || 640;
   const h = container.clientHeight || 480;
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({
+    antialias: false,
+    powerPreference: 'high-performance',
+  });
   renderer.setSize(w, h);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.35));
   renderer.setClearColor(0xc8e4f8);
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.35;
@@ -23,7 +26,7 @@ export function setupLighting(scene) {
   const sun = new THREE.DirectionalLight(0xfff8e8, 1.55);
   sun.position.set(-14, 26, 10);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.set(1024, 1024);
   sun.shadow.camera.near = 1;
   sun.shadow.camera.far = 70;
   sun.shadow.camera.left = -22;

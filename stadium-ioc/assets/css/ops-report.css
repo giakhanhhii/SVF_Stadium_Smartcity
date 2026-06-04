@@ -675,7 +675,7 @@
 
 #page-overview .overview-venue-total__ingress-main {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   justify-items: center;
   align-content: center;
   justify-self: center;
@@ -697,7 +697,7 @@
 
 #page-overview .overview-venue-total__ingress-main span {
   display: grid;
-  gap: 5px;
+  gap: 3px;
   justify-items: center;
   min-width: 0;
   width: 100%;
@@ -708,13 +708,14 @@
   display: block;
   overflow: hidden;
   max-width: 100%;
-  line-height: 1.08;
+  line-height: 1;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #00d4ff;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 900;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.28);
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.34);
 }
 
 #page-overview .overview-venue-total__ingress-main em {
@@ -725,15 +726,15 @@
   gap: 0 2px;
   width: fit-content;
   max-width: 100%;
-  padding: 4px 7px;
+  padding: 3px 5px;
   border: 1px solid rgba(0, 180, 255, 0.14);
-  border-radius: 4px;
+  border-radius: 3px;
   background: rgba(5, 24, 45, 0.42);
   color: #d8ecff;
-  font-size: 10px;
+  font-size: 9px;
   font-style: normal;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.15;
   overflow: visible;
   text-overflow: clip;
   white-space: normal;

@@ -33,9 +33,14 @@ function createScene(container) {
   buildingSceneData.markers.forEach((m) => addMarker(scene, m, refs));
 
   let frameId;
+  let lastRender = 0;
   const clock = new THREE.Clock();
   function animate() {
     frameId = requestAnimationFrame(animate);
+    const now = performance.now();
+    if (now - lastRender < 33) return;
+    lastRender = now;
+
     const t = clock.getElapsedTime();
     if (refs.incident) {
       refs.incident.scale.setScalar(0.85 + Math.sin(t * 3) * 0.15);
@@ -69,7 +74,10 @@ function createScene(container) {
       scene.traverse((obj) => {
         if (obj.geometry) obj.geometry.dispose();
         if (obj.material) {
-          (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m) => m.dispose());
+          (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((m) => {
+            m.map?.dispose();
+            m.dispose();
+          });
         }
       });
       renderer.dispose();

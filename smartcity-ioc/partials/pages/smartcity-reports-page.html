@@ -1,35 +1,25 @@
-<div class="page-view page-view--smartcity-shell" id="page-reports" data-frame="06 — Báo cáo">
-  <div class="smartcity-page-shell">
-    <aside class="security-sidebar security-sidebar--left"><div data-side-nav-rail="left"></div></aside>
-    <main class="smartcity-page-main">
-      <div class="domain-banner">
-    <div data-mount="banner"></div>
-    <div class="time-tabs" style="background:rgba(255,255,255,0.1);padding:4px;border-radius:6px">
-      <button class="time-tab active" style="color:white;background:rgba(255,255,255,0.2)">Tuần</button>
-      <button class="time-tab" style="color:rgba(255,255,255,0.7)">Tháng</button>
-      <button class="time-tab" style="color:rgba(255,255,255,0.7)">Quý</button>
-      <button class="time-tab" style="color:rgba(255,255,255,0.7)">Năm</button>
-    </div>
+<div class="page-view page-view--reports page-view--stadium-cmd" id="page-reports" data-frame="06 — Báo cáo">
+  <div class="security-command smartcity-domain-command smartcity-domain-command--blue report-command">
+    <aside class="security-sidebar security-sidebar--left">
+      <div data-side-nav-rail="left"></div>
+      <div class="sidebar-hud" data-mount="sidebar-left"></div>
+    </aside>
+
+    <main class="security-center">
+      <div class="security-center__legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#00d4ff"></span>KPI</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#185FA5"></span>Báo cáo</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span>Đạt SLA</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#EF9F27"></span>Cần xử lý</span>
       </div>
-      <div data-mount="kpis"></div>
-      <div class="report-layout">
-    <div class="report-sidebar">
-      <div class="alerts-title" style="margin-bottom:12px">Danh mục báo cáo</div>
-      <div data-mount="categories"></div>
-    </div>
-    <div class="report-main">
-      <div class="alerts-header">
-        <div class="alerts-title">So sánh KPI phân hệ — Tuần 21/2026</div>
-        <span class="closed-loop"><i class="ti ti-circle-check"></i> Closed-loop 94%</span>
+      <div class="map-container map-container--3d map-container--hero" data-mount="smartcity-scene">
+        <span class="map-scene-hint">Kéo chuột xoay · Cuộn để zoom · Báo cáo tổng hợp</span>
       </div>
-      <table class="report-table">
-        <thead><tr><th>Phân hệ</th><th>KPI chính</th><th>Thực tế</th><th>Mục tiêu</th><th>Xu hướng</th></tr></thead>
-        <tbody data-mount="table-body"></tbody>
-      </table>
-    </div>
-      </div>
-      <div data-mount="chart"></div>
     </main>
-    <aside class="security-sidebar security-sidebar--right"><div data-side-nav-rail="right"></div></aside>
+
+    <aside class="security-sidebar security-sidebar--right">
+      <div data-side-nav-rail="right"></div>
+      <div class="sidebar-hud" data-mount="sidebar-right"></div>
+    </aside>
   </div>
 </div>

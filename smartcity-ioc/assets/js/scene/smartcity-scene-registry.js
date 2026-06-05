@@ -1,23 +1,17 @@
-import { initSecurityBuildingScene, disposeSecurityBuildingScene } from './security-building-scene.js';
-import { initTrafficRoadScene, disposeTrafficRoadScene } from './traffic-road-scene.js';
+import { initSmartcityScene, disposeSmartcityScene } from './smartcity-scene-runtime.js';
 
 let currentPage = null;
 
-const disposers = {
-  security: disposeSecurityBuildingScene,
-  traffic: disposeTrafficRoadScene,
-};
-
-export const sceneRegistry = {
-  security: initSecurityBuildingScene,
-  traffic: initTrafficRoadScene,
-};
+const SCENE_PAGES = new Set(['overview', 'traffic', 'security', 'environment', 'utilities', 'reports']);
 
 export function initPageScenes(pageId) {
-  if (currentPage && currentPage !== pageId && disposers[currentPage]) {
-    disposers[currentPage]();
-  }
+  const wasScene = currentPage && SCENE_PAGES.has(currentPage);
+  const isScene = SCENE_PAGES.has(pageId);
+
+  if (wasScene && !isScene) disposeSmartcityScene();
+  else if (isScene) initSmartcityScene(pageId);
+
   currentPage = pageId;
-  const init = sceneRegistry[pageId];
-  if (init) init();
 }
+
+export { applyPageView } from './smartcity-scene-runtime.js';

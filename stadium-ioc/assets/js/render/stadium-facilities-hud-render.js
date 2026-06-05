@@ -243,6 +243,52 @@ function getFacilityModal(root) {
   return modal;
 }
 
+function getSharedPowerModal() {
+  const modal = document.body.querySelector('[data-power-modal]')
+    || document.querySelector('#page-events [data-power-modal]');
+  if (!modal) return null;
+  const bodyModal = document.body.querySelector('[data-power-modal]');
+  if (bodyModal && bodyModal !== modal) bodyModal.remove();
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
+  return modal;
+}
+
+function openSharedPowerModal({ turnOn = false, zoneName = '' } = {}) {
+  const powerModal = getSharedPowerModal();
+  if (!powerModal) return;
+  powerModal.hidden = false;
+  powerModal.dataset.powerIntent = turnOn ? 'on' : 'off';
+  powerModal.dataset.powerZone = zoneName;
+  powerModal.querySelector('[data-power-title]').textContent = zoneName
+    ? `${turnOn ? 'Mở điện' : 'Cắt điện'} ${zoneName}`
+    : `${turnOn ? 'Mở điện' : 'Cắt điện'} toàn bộ SVĐ`;
+  powerModal.querySelector('[data-power-message]').textContent = zoneName
+    ? `Bạn có chắc muốn ${turnOn ? 'mở điện lại' : 'tắt điện'} ${zoneName}? Thao tác này chỉ áp dụng cho khu vực được chọn.`
+    : turnOn
+      ? 'Bạn có chắc muốn mở điện toàn bộ hệ thống sân vận động? Các khu sẽ được cấp điện lại theo từng bước.'
+      : 'Bạn có chắc chắn muốn cắt điện? Điều này sẽ cắt điện hoàn toàn hệ thống sân vận động.';
+  powerModal.querySelector('[data-power-status]').textContent = zoneName
+    ? `Chờ xác nhận thao tác nguồn cho ${zoneName}.`
+    : 'Chờ xác nhận thao tác nguồn.';
+  powerModal.querySelector('[data-power-accept]').textContent = turnOn ? 'Có, mở điện' : 'Có, cắt điện';
+  powerModal.querySelector('[data-power-confirm]').hidden = false;
+  powerModal.querySelectorAll('[data-power-zone]').forEach((node) => {
+    const active = !!zoneName && node.dataset.powerZone === zoneName;
+    node.classList.toggle('event-power-zone--selected', active);
+    node.setAttribute('aria-pressed', String(active));
+  });
+}
+
+function ensureFacilityPowerButton(root) {
+  const actionRow = root.querySelector('.fac-action-row');
+  if (!actionRow || actionRow.querySelector('[data-fac-action="powerCut"]')) return;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.dataset.facAction = 'powerCut';
+  button.innerHTML = '<i class="ti ti-power"></i><span>Cắt điện</span>';
+  actionRow.appendChild(button);
+}
+
 function fillFacilityActionModal(root, action) {
   const modal = getFacilityModal(root);
   if (!modal || !action) return;
@@ -266,7 +312,9 @@ function fillFacilityActionModal(root, action) {
 }
 
 export function bindFacilitiesActions(root) {
-  if (!root || root.dataset.facilityActionsBound) return;
+  if (!root) return;
+  ensureFacilityPowerButton(root);
+  if (root.dataset.facilityActionsBound) return;
   root.dataset.facilityActionsBound = 'true';
   root.addEventListener('click', (event) => {
     const modeBtn = event.target.closest('[data-fac-mode]');
@@ -283,6 +331,10 @@ export function bindFacilitiesActions(root) {
     }
     const btn = event.target.closest('[data-fac-action]');
     if (!btn || !root.contains(btn)) return;
+    if (btn.dataset.facAction === 'powerCut') {
+      openSharedPowerModal({ turnOn: false });
+      return;
+    }
     fillFacilityActionModal(root, facilityActions[btn.dataset.facAction]);
   });
 }

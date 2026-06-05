@@ -1,42 +1,25 @@
-<div class="page-view page-view--smartcity-shell" id="page-utilities" data-frame="05 — Tiện ích">
-  <div class="smartcity-page-shell">
-    <aside class="security-sidebar security-sidebar--left"><div data-side-nav-rail="left"></div></aside>
-    <main class="smartcity-page-main">
-      <div data-mount="banner"></div>
-      <div data-mount="kpis"></div>
-      <div class="utility-grid">
-    <div class="utility-panel">
-      <div class="utility-panel-head"><span class="utility-panel-title"><i class="ti ti-bolt"></i> Năng lượng & Điện</span><span class="badge badge-online">ONLINE</span></div>
-      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:8px">Tiêu thụ hôm nay: <strong style="color:var(--color-text-primary)">1.842 MWh</strong></div>
-      <div style="font-size:10px;color:var(--color-text-secondary)">Tải lưới</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:74%"></div></div>
-      <div style="font-size:10px;margin-top:8px;color:var(--color-text-info)">Dự báo đỉnh: 19:00 — 89%</div>
-    </div>
-    <div class="utility-panel">
-      <div class="utility-panel-head"><span class="utility-panel-title"><i class="ti ti-bulb"></i> Chiếu sáng công cộng</span><span class="badge badge-warn">CẢNH BÁO</span></div>
-      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:8px">Tỷ lệ hoạt động: <strong style="color:#854F0B">99,3%</strong></div>
-      <div style="font-size:10px;color:var(--color-text-secondary)">Đèn sáng / tổng</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:99.3%;background:#BA7517"></div></div>
-      <div class="alert-card" style="margin-top:10px;border-left:3px solid #BA7517;padding:8px 10px"><div style="font-size:11px;font-weight:500">Đường D5 — Cụm 12 hỏng</div><div style="font-size:10px;color:var(--color-text-secondary)">Ticket #4821 · Đội bảo trì đã phân công</div></div>
-    </div>
-    <div class="utility-panel">
-      <div class="utility-panel-head"><span class="utility-panel-title"><i class="ti ti-droplet"></i> Cấp thoát nước</span><span class="badge badge-online">ONLINE</span></div>
-      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:8px">156 cảm biến · 24 trạm bơm</div>
-      <div style="font-size:10px;color:var(--color-text-secondary)">Dung tích hồ chứa</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:82%;background:#1D9E75"></div></div>
-      <div style="font-size:10px;margin-top:8px;color:var(--color-text-warning)">Trạm #07 — Áp suất bất thường</div>
-    </div>
-    <div class="utility-panel">
-      <div class="utility-panel-head"><span class="utility-panel-title"><i class="ti ti-headset"></i> Dịch vụ cư dân</span><span class="badge badge-online">ONLINE</span></div>
-      <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px">Tổng đài: <strong>1022</strong> · Phản ánh: <strong>47</strong></div>
-      <div class="team-list">
-        <div class="team-item"><span>Đèn chiếu sáng D5</span><span style="color:#BA7517">Đang xử lý</span></div>
-        <div class="team-item"><span>Rác thải Khu C</span><span style="color:#1D9E75">Hoàn thành</span></div>
-        <div class="team-item"><span>Cấp nước tầng 12</span><span style="color:#185FA5">Tiếp nhận</span></div>
+<div class="page-view page-view--utilities page-view--stadium-cmd" id="page-utilities" data-frame="05 — Tiện ích">
+  <div class="security-command smartcity-domain-command smartcity-domain-command--blue">
+    <aside class="security-sidebar security-sidebar--left">
+      <div data-side-nav-rail="left"></div>
+      <div class="sidebar-hud" data-mount="sidebar-left"></div>
+    </aside>
+
+    <main class="security-center">
+      <div class="security-center__legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#00d4ff"></span>Điện</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#185FA5"></span>Nước</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span>Online</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#EF9F27"></span>Bảo trì</span>
       </div>
-    </div>
+      <div class="map-container map-container--3d map-container--hero" data-mount="smartcity-scene">
+        <span class="map-scene-hint">Kéo chuột xoay · Cuộn để zoom · Hạ tầng tiện ích</span>
       </div>
     </main>
-    <aside class="security-sidebar security-sidebar--right"><div data-side-nav-rail="right"></div></aside>
+
+    <aside class="security-sidebar security-sidebar--right">
+      <div data-side-nav-rail="right"></div>
+      <div class="sidebar-hud" data-mount="sidebar-right"></div>
+    </aside>
   </div>
 </div>

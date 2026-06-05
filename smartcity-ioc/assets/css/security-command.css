@@ -1,12 +1,18 @@
 .page-view--traffic.active,
-.page-view--security.active {
+.page-view--security.active,
+.page-view--environment.active,
+.page-view--utilities.active,
+.page-view--reports.active {
   height: calc(100vh - 108px);
   min-height: 0;
   overflow: hidden;
 }
 
 .prototype-shell:has(.page-view--traffic.active),
-.prototype-shell:has(.page-view--security.active) {
+.prototype-shell:has(.page-view--security.active),
+.prototype-shell:has(.page-view--environment.active),
+.prototype-shell:has(.page-view--utilities.active),
+.prototype-shell:has(.page-view--reports.active) {
   max-width: 100%;
   box-shadow: none;
 }
@@ -448,7 +454,10 @@
 
 .page-view--overview.active,
 .page-view--traffic.active,
-.page-view--security.active {
+.page-view--security.active,
+.page-view--environment.active,
+.page-view--utilities.active,
+.page-view--reports.active {
   height: 100vh;
   min-height: 0;
   overflow: hidden;
@@ -464,7 +473,10 @@
 .prototype-shell:has(.page-view--smartcity-shell.active),
 .prototype-shell:has(.page-view--traffic.active),
 .prototype-shell:has(.page-view--security.active),
-.prototype-shell:has(.page-view--overview.active) {
+.prototype-shell:has(.page-view--overview.active),
+.prototype-shell:has(.page-view--environment.active),
+.prototype-shell:has(.page-view--utilities.active),
+.prototype-shell:has(.page-view--reports.active) {
   max-width: 100%;
   box-shadow: none;
 }
@@ -543,6 +555,736 @@
   display: block;
 }
 
+.smartcity-domain-command--blue {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(0, 212, 255, 0.16), transparent 32%),
+    #040810;
+}
+
+.smartcity-domain-command--blue .security-sidebar {
+  background: linear-gradient(180deg, rgba(4, 20, 38, 0.86), rgba(3, 11, 24, 0.94));
+}
+
+.smartcity-domain-command--blue .hud-block {
+  border-color: rgba(0, 212, 255, 0.2);
+  background: rgba(5, 18, 35, 0.86);
+}
+
+.smartcity-hud-accent {
+  box-shadow: inset 2px 0 0 #00d4ff, 0 10px 28px rgba(0, 80, 140, 0.12);
+}
+
+.smartcity-hud-fill {
+  background: linear-gradient(90deg, #185FA5, #00d4ff);
+}
+
+.sc-diagram {
+  min-width: 0;
+}
+
+.sc-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sc-thermal {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.sc-thermal__dial,
+.sc-service-map__ring,
+.sc-report-summary__ring {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, #07182b 54%, transparent 55%),
+    conic-gradient(#00d4ff calc(var(--pct) * 1%), rgba(24, 95, 165, 0.24) 0);
+  box-shadow: 0 0 22px rgba(0, 212, 255, 0.18);
+}
+
+.sc-thermal__dial strong,
+.sc-service-map__ring strong,
+.sc-report-summary__ring strong {
+  color: #e8f8ff;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.sc-thermal__dial span,
+.sc-service-map__ring span,
+.sc-report-summary__ring span {
+  color: #85b7eb;
+  font-size: 7px;
+  line-height: 1;
+  margin: 0;
+}
+
+.sc-thermal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.sc-thermal__cell,
+.sc-lux-cell,
+.sc-check,
+.sc-route-check {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  border-radius: 3px;
+  background: rgba(0, 55, 95, 0.26);
+  font-style: normal;
+}
+
+.sc-thermal__cell b,
+.sc-lux-cell b,
+.sc-check b,
+.sc-route-check b {
+  overflow: hidden;
+  color: #e8f8ff;
+  font-size: 9px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-thermal__cell span,
+.sc-lux-cell em,
+.sc-check em,
+.sc-route-check em {
+  overflow: hidden;
+  color: #85b7eb;
+  font-size: 7px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-thermal__cell--warn,
+.sc-lux-cell--warn,
+.sc-route-check--warn {
+  border-color: rgba(239, 159, 39, 0.42);
+  background: rgba(239, 159, 39, 0.12);
+}
+
+.sc-node-map {
+  position: relative;
+  min-height: 190px;
+}
+
+.sc-node-map svg {
+  height: 150px;
+}
+
+.sc-node-map__halo {
+  fill: rgba(0, 212, 255, 0.08);
+  stroke: rgba(0, 212, 255, 0.22);
+}
+
+.sc-node-map__pitch {
+  fill: rgba(0, 212, 255, 0.08);
+  stroke: rgba(0, 212, 255, 0.26);
+}
+
+.sc-node-map__hub,
+.sc-report-map__core {
+  fill: #00d4ff;
+  filter: drop-shadow(0 0 7px rgba(0, 212, 255, 0.55));
+}
+
+.sc-node-map__line,
+.sc-report-map__line {
+  fill: none;
+  stroke: rgba(133, 183, 235, 0.42);
+  stroke-width: 1.2;
+}
+
+.sc-node-map__line--warn,
+.sc-node-map__line--lighting {
+  stroke: rgba(239, 159, 39, 0.62);
+}
+
+.sc-node-map__node,
+.sc-report-map__node {
+  fill: #00d4ff;
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 0.8;
+}
+
+.sc-node-map__node--warn,
+.sc-report-map__node--warn {
+  fill: #ef9f27;
+}
+
+.sc-node-map__labels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.sc-node-label {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 3px;
+  background: rgba(4, 28, 52, 0.78);
+  border: 1px solid rgba(0, 212, 255, 0.14);
+}
+
+.sc-node-label i {
+  color: #00d4ff;
+  font-size: 13px;
+}
+
+.sc-node-label b,
+.sc-node-label em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-node-label b {
+  color: #dcefff;
+  font-size: 8px;
+}
+
+.sc-node-label em {
+  color: #85b7eb;
+  font-size: 7px;
+}
+
+.sc-load-matrix {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  align-items: end;
+  height: 82px;
+}
+
+.sc-load-col {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  justify-content: end;
+}
+
+.sc-load-cell {
+  display: block;
+  width: 100%;
+  max-width: 18px;
+  height: 9px;
+  border-radius: 2px;
+  background: rgba(90, 138, 176, 0.22);
+}
+
+.sc-load-cell--ok {
+  background: #00d4ff;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.28);
+}
+
+.sc-load-cell--warn {
+  background: #ef9f27;
+  box-shadow: 0 0 8px rgba(239, 159, 39, 0.25);
+}
+
+.sc-load-col span {
+  color: #85b7eb;
+  font-size: 8px;
+}
+
+.sc-radar {
+  display: grid;
+  grid-template-columns: 98px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.sc-radar svg {
+  height: 98px;
+}
+
+.sc-radar__ring {
+  fill: none;
+  stroke: rgba(0, 212, 255, 0.24);
+  stroke-width: 1;
+}
+
+.sc-radar__ring--inner {
+  stroke: rgba(133, 183, 235, 0.16);
+}
+
+.sc-radar__axis {
+  stroke: rgba(133, 183, 235, 0.18);
+}
+
+.sc-radar__shape {
+  fill: rgba(0, 212, 255, 0.26);
+  stroke: #00d4ff;
+  stroke-width: 1.4;
+}
+
+.sc-radar__legend,
+.sc-report-map__side,
+.sc-report-summary__chips {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sc-radar__legend span,
+.sc-report-map__side span,
+.sc-report-summary__chips span {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px;
+  border-radius: 3px;
+  background: rgba(0, 55, 95, 0.26);
+  color: #85b7eb;
+  font-size: 8px;
+}
+
+.sc-radar__legend b,
+.sc-report-map__side b,
+.sc-report-summary__chips b {
+  color: #e8f8ff;
+  font-size: 10px;
+}
+
+.sc-checklist,
+.sc-lux-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.sc-check i,
+.sc-lux-cell i {
+  color: #00d4ff;
+  font-size: 13px;
+}
+
+.sc-service-map {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sc-service-map__top {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.sc-service-map__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sc-service-map__bars span {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 32px;
+  gap: 5px;
+  align-items: center;
+  color: #85b7eb;
+  font-size: 7px;
+}
+
+.sc-service-map__bars b,
+.sc-service-map__bars strong {
+  overflow: hidden;
+  color: #dcefff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-service-map__bars em {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, 0.12);
+}
+
+.sc-service-map__bars i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #185fa5, #00d4ff);
+}
+
+.sc-service-map__road {
+  fill: none;
+  stroke: rgba(133, 183, 235, 0.28);
+  stroke-width: 7;
+  stroke-linecap: square;
+}
+
+.sc-service-map__core {
+  fill: rgba(0, 212, 255, 0.18);
+  stroke: #00d4ff;
+}
+
+.sc-service-lot rect {
+  fill: rgba(0, 212, 255, 0.14);
+  stroke: rgba(0, 212, 255, 0.44);
+}
+
+.sc-service-lot--warn rect {
+  fill: rgba(239, 159, 39, 0.14);
+  stroke: rgba(239, 159, 39, 0.5);
+}
+
+.sc-service-lot text {
+  fill: #dcefff;
+  font-size: 5px;
+  text-anchor: middle;
+}
+
+.sc-route-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sc-route-flow__route {
+  fill: none;
+  stroke: #00d4ff;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.sc-route-flow__route--alt {
+  stroke: rgba(133, 183, 235, 0.42);
+  stroke-width: 3;
+}
+
+.sc-route-flow__node {
+  fill: #00d4ff;
+  stroke: #e8f8ff;
+  stroke-width: 1;
+}
+
+.sc-route-flow__node--warn {
+  fill: #ef9f27;
+}
+
+.sc-route-flow__node--ok {
+  fill: #1d9e75;
+}
+
+.sc-route-flow text {
+  fill: #04111f;
+  font-size: 7px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.sc-route-flow__checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.sc-queue-bars,
+.sc-report-bars {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: end;
+  gap: 6px;
+  height: 92px;
+}
+
+.sc-report-bars {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sc-queue-bar,
+.sc-report-bars span {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+  gap: 3px;
+  color: #85b7eb;
+  font-size: 7px;
+}
+
+.sc-queue-bar i,
+.sc-report-bars i {
+  display: block;
+  width: 100%;
+  max-width: 20px;
+  min-height: 12px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(180deg, #00d4ff, #185fa5);
+}
+
+.sc-queue-bar--warn i {
+  background: linear-gradient(180deg, #ef9f27, #185fa5);
+}
+
+.sc-queue-bar b,
+.sc-report-bars b {
+  color: #e8f8ff;
+  font-size: 8px;
+}
+
+.sc-report-summary {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.sc-report-summary__warn {
+  border-color: rgba(239, 159, 39, 0.32);
+}
+
+.sc-report-timeline {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding-left: 12px;
+}
+
+.sc-report-timeline::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 4px;
+  width: 1px;
+  background: linear-gradient(180deg, #00d4ff, rgba(0, 212, 255, 0.05));
+  content: "";
+}
+
+.sc-report-timeline__node {
+  position: relative;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 58px;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #85b7eb;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 8px;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.sc-report-timeline__node i {
+  position: absolute;
+  left: -11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1d9e75;
+  box-shadow: 0 0 10px rgba(29, 158, 117, 0.42);
+}
+
+.sc-report-timeline__node--warn i {
+  background: #ef9f27;
+  box-shadow: 0 0 10px rgba(239, 159, 39, 0.42);
+}
+
+.sc-report-timeline__node strong,
+.sc-report-timeline__node span,
+.sc-report-timeline__node b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-report-timeline__node strong,
+.sc-report-timeline__node b {
+  color: #e8f8ff;
+  font-weight: 600;
+}
+
+.sc-resolution-rings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sc-resolution-ring {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 74px;
+}
+
+.sc-resolution-ring svg {
+  position: absolute;
+  inset: 0;
+}
+
+.sc-resolution-ring circle {
+  fill: none;
+  stroke-width: 8;
+}
+
+.sc-resolution-ring circle:first-child {
+  stroke: rgba(0, 212, 255, 0.12);
+}
+
+.sc-resolution-ring circle:last-child {
+  stroke: #00d4ff;
+  stroke-dasharray: calc(var(--pct) * 1.88) 188;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.sc-resolution-ring strong {
+  color: #e8f8ff;
+  font-size: 13px;
+  z-index: 1;
+  line-height: 1;
+}
+
+.sc-resolution-ring span {
+  color: #85b7eb;
+  font-size: 8px;
+  z-index: 1;
+  line-height: 1;
+}
+
+.sc-incident-matrix {
+  display: grid;
+  gap: 6px;
+}
+
+.sc-incident-matrix span {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 28px;
+  gap: 6px;
+  align-items: center;
+  color: #85b7eb;
+  font-size: 8px;
+}
+
+.sc-incident-matrix em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-incident-matrix i {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, #00d4ff var(--pct), rgba(0, 212, 255, 0.12) 0);
+}
+
+.sc-incident-matrix b {
+  color: #e8f8ff;
+  font-size: 8px;
+  text-align: right;
+}
+
+.sc-report-map {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.sc-report-map svg {
+  height: 120px;
+}
+
+.sc-report-map__ring {
+  fill: none;
+  stroke: rgba(0, 212, 255, 0.22);
+  stroke-width: 1.4;
+}
+
+.sc-send-flow {
+  display: grid;
+  grid-template-columns: 1fr 12px 1fr 12px 1fr 12px 1fr;
+  gap: 3px;
+  align-items: center;
+}
+
+.sc-send-flow span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 3px;
+  border-radius: 3px;
+  background: rgba(0, 55, 95, 0.26);
+  border: 1px solid rgba(0, 212, 255, 0.16);
+  text-align: center;
+}
+
+.sc-send-flow span > i {
+  color: #00d4ff;
+  font-size: 14px;
+}
+
+.sc-send-flow b,
+.sc-send-flow em {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-send-flow b {
+  color: #e8f8ff;
+  font-size: 8px;
+}
+
+.sc-send-flow em {
+  color: #85b7eb;
+  font-size: 7px;
+}
+
+.sc-send-flow__line {
+  height: 1px;
+  background: linear-gradient(90deg, #00d4ff, rgba(0, 212, 255, 0.18));
+}
+
+.smartcity-page-main > [data-mount="smartcity-scene"] {
+  height: clamp(340px, 44vh, 520px);
+  min-height: 340px;
+  margin-bottom: 12px;
+  border-radius: 0;
+}
+
 .page-view--overview .vitals-strip,
 .page-view--overview [data-mount="vitals"] {
   display: flex;
@@ -598,4 +1340,1401 @@
   .smartcity-page-shell .security-sidebar--right {
     max-height: 180px;
   }
+}
+
+/* Match Stadium command HUD scale for Smart City domain pages. */
+.page-view--environment.page-view--stadium-cmd,
+.page-view--utilities.page-view--stadium-cmd,
+.page-view--reports.page-view--stadium-cmd {
+  --smartcity-stadium-label: 10px;
+  --smartcity-stadium-caption: 9px;
+  --smartcity-stadium-body-sm: 11px;
+  --smartcity-stadium-value: 14px;
+  --smartcity-stadium-metric: 22px;
+}
+
+.page-view--environment.page-view--stadium-cmd .security-command,
+.page-view--utilities.page-view--stadium-cmd .security-command,
+.page-view--reports.page-view--stadium-cmd .security-command {
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(280px, 320px);
+}
+
+.page-view--environment.page-view--stadium-cmd .security-sidebar,
+.page-view--utilities.page-view--stadium-cmd .security-sidebar,
+.page-view--reports.page-view--stadium-cmd .security-sidebar {
+  gap: 10px;
+  padding: 10px 8px;
+  container-type: inline-size;
+}
+
+.page-view--environment.page-view--stadium-cmd .security-sidebar,
+.page-view--utilities.page-view--stadium-cmd .security-sidebar {
+  padding: 8px 6px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sidebar-hud,
+.page-view--utilities.page-view--stadium-cmd .sidebar-hud,
+.page-view--reports.page-view--stadium-cmd .sidebar-hud {
+  overflow-x: hidden;
+}
+
+.page-view--environment.page-view--stadium-cmd .sidebar-hud > .hud-block,
+.page-view--utilities.page-view--stadium-cmd .sidebar-hud > .hud-block,
+.page-view--reports.page-view--stadium-cmd .sidebar-hud > .hud-block {
+  min-width: 0;
+  overflow: hidden;
+  padding: 10px;
+  gap: 9px;
+  border-radius: 4px;
+  background: transparent !important;
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(145, 226, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.page-view--environment.page-view--stadium-cmd .sidebar-hud > .hud-block {
+  padding: 12px;
+  gap: 10px;
+}
+
+.page-view--utilities.page-view--stadium-cmd .sidebar-hud > .hud-block {
+  padding: 10px;
+  gap: 8px;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-head,
+.page-view--utilities.page-view--stadium-cmd .hud-head,
+.page-view--reports.page-view--stadium-cmd .hud-head {
+  font-size: var(--smartcity-stadium-label);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-head {
+  font-size: 11px;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-head i,
+.page-view--utilities.page-view--stadium-cmd .hud-head i,
+.page-view--reports.page-view--stadium-cmd .hud-head i {
+  font-size: var(--smartcity-stadium-body-sm);
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-sub,
+.page-view--utilities.page-view--stadium-cmd .hud-sub,
+.page-view--reports.page-view--stadium-cmd .hud-sub,
+.page-view--environment.page-view--stadium-cmd .hud-alert__time,
+.page-view--utilities.page-view--stadium-cmd .hud-alert__time,
+.page-view--reports.page-view--stadium-cmd .hud-alert__time {
+  font-size: var(--smartcity-stadium-caption);
+  line-height: 1.35;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-inline-stat,
+.page-view--utilities.page-view--stadium-cmd .hud-inline-stat,
+.page-view--reports.page-view--stadium-cmd .hud-inline-stat {
+  gap: 8px;
+  font-size: var(--smartcity-stadium-caption);
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-inline-stat i,
+.page-view--utilities.page-view--stadium-cmd .hud-inline-stat i,
+.page-view--reports.page-view--stadium-cmd .hud-inline-stat i {
+  font-size: 18px;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-inline-stat strong,
+.page-view--utilities.page-view--stadium-cmd .hud-inline-stat strong,
+.page-view--reports.page-view--stadium-cmd .hud-inline-stat strong {
+  font-size: var(--smartcity-stadium-value);
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-tab,
+.page-view--utilities.page-view--stadium-cmd .hud-tab,
+.page-view--reports.page-view--stadium-cmd .hud-tab,
+.page-view--environment.page-view--stadium-cmd .hud-vent-btn,
+.page-view--utilities.page-view--stadium-cmd .hud-vent-btn,
+.page-view--reports.page-view--stadium-cmd .hud-vent-btn {
+  min-height: 32px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: rgba(5, 18, 32, 0.16);
+  font-size: var(--smartcity-stadium-body-sm);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-tab,
+.page-view--utilities.page-view--stadium-cmd .hud-tab,
+.page-view--environment.page-view--stadium-cmd .hud-vent-btn,
+.page-view--utilities.page-view--stadium-cmd .hud-vent-btn {
+  min-height: 28px;
+  padding: 5px 6px;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-tab--active,
+.page-view--utilities.page-view--stadium-cmd .hud-tab--active,
+.page-view--reports.page-view--stadium-cmd .hud-tab--active {
+  background: rgba(0, 140, 210, 0.24);
+}
+
+.page-view--environment.page-view--stadium-cmd .sidebar-nav__item,
+.page-view--utilities.page-view--stadium-cmd .sidebar-nav__item,
+.page-view--reports.page-view--stadium-cmd .sidebar-nav__item,
+.page-view--environment.page-view--stadium-cmd .sidebar-action,
+.page-view--utilities.page-view--stadium-cmd .sidebar-action,
+.page-view--reports.page-view--stadium-cmd .sidebar-action {
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: var(--smartcity-stadium-body-sm);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.page-view--environment.page-view--stadium-cmd .sidebar-nav__item,
+.page-view--utilities.page-view--stadium-cmd .sidebar-nav__item,
+.page-view--environment.page-view--stadium-cmd .sidebar-action,
+.page-view--utilities.page-view--stadium-cmd .sidebar-action {
+  min-height: 28px;
+  padding: 5px 8px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sidebar-nav__item i,
+.page-view--utilities.page-view--stadium-cmd .sidebar-nav__item i,
+.page-view--reports.page-view--stadium-cmd .sidebar-nav__item i,
+.page-view--environment.page-view--stadium-cmd .sidebar-action i,
+.page-view--utilities.page-view--stadium-cmd .sidebar-action i,
+.page-view--reports.page-view--stadium-cmd .sidebar-action i {
+  font-size: 15px;
+}
+
+.page-view--environment.page-view--stadium-cmd .security-center__legend,
+.page-view--utilities.page-view--stadium-cmd .security-center__legend,
+.page-view--reports.page-view--stadium-cmd .security-center__legend,
+.page-view--environment.page-view--stadium-cmd .map-scene-hint,
+.page-view--utilities.page-view--stadium-cmd .map-scene-hint,
+.page-view--reports.page-view--stadium-cmd .map-scene-hint {
+  font-size: var(--smartcity-stadium-label);
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal,
+.page-view--utilities.page-view--stadium-cmd .sc-thermal,
+.page-view--reports.page-view--stadium-cmd .sc-thermal {
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal__dial,
+.page-view--utilities.page-view--stadium-cmd .sc-thermal__dial,
+.page-view--reports.page-view--stadium-cmd .sc-thermal__dial,
+.page-view--environment.page-view--stadium-cmd .sc-service-map__ring,
+.page-view--utilities.page-view--stadium-cmd .sc-service-map__ring,
+.page-view--reports.page-view--stadium-cmd .sc-service-map__ring,
+.page-view--environment.page-view--stadium-cmd .sc-report-summary__ring,
+.page-view--utilities.page-view--stadium-cmd .sc-report-summary__ring,
+.page-view--reports.page-view--stadium-cmd .sc-report-summary__ring {
+  width: 92px;
+  height: 92px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal__dial strong,
+.page-view--utilities.page-view--stadium-cmd .sc-thermal__dial strong,
+.page-view--reports.page-view--stadium-cmd .sc-thermal__dial strong,
+.page-view--environment.page-view--stadium-cmd .sc-service-map__ring strong,
+.page-view--utilities.page-view--stadium-cmd .sc-service-map__ring strong,
+.page-view--reports.page-view--stadium-cmd .sc-service-map__ring strong,
+.page-view--environment.page-view--stadium-cmd .sc-report-summary__ring strong,
+.page-view--utilities.page-view--stadium-cmd .sc-report-summary__ring strong,
+.page-view--reports.page-view--stadium-cmd .sc-report-summary__ring strong {
+  font-size: 26px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal__dial span,
+.page-view--utilities.page-view--stadium-cmd .sc-thermal__dial span,
+.page-view--reports.page-view--stadium-cmd .sc-thermal__dial span,
+.page-view--environment.page-view--stadium-cmd .sc-service-map__ring span,
+.page-view--utilities.page-view--stadium-cmd .sc-service-map__ring span,
+.page-view--reports.page-view--stadium-cmd .sc-service-map__ring span,
+.page-view--environment.page-view--stadium-cmd .sc-report-summary__ring span,
+.page-view--utilities.page-view--stadium-cmd .sc-report-summary__ring span,
+.page-view--reports.page-view--stadium-cmd .sc-report-summary__ring span {
+  margin-top: 0;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal__dial,
+.page-view--environment.page-view--stadium-cmd .sc-service-map__ring,
+.page-view--environment.page-view--stadium-cmd .sc-report-summary__ring {
+  width: 86px;
+  height: 86px;
+}
+
+.page-view--utilities.page-view--stadium-cmd .sc-thermal__dial,
+.page-view--utilities.page-view--stadium-cmd .sc-service-map__ring,
+.page-view--utilities.page-view--stadium-cmd .sc-report-summary__ring {
+  width: 88px;
+  height: 88px;
+}
+
+.page-view--reports.page-view--stadium-cmd .sc-thermal__dial,
+.page-view--reports.page-view--stadium-cmd .sc-service-map__ring,
+.page-view--reports.page-view--stadium-cmd .sc-report-summary__ring {
+  width: 82px;
+  height: 82px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal__grid,
+.page-view--utilities.page-view--stadium-cmd .sc-thermal__grid,
+.page-view--reports.page-view--stadium-cmd .sc-thermal__grid,
+.page-view--environment.page-view--stadium-cmd .sc-node-map__labels,
+.page-view--utilities.page-view--stadium-cmd .sc-node-map__labels,
+.page-view--reports.page-view--stadium-cmd .sc-node-map__labels,
+.page-view--environment.page-view--stadium-cmd .sc-checklist,
+.page-view--utilities.page-view--stadium-cmd .sc-checklist,
+.page-view--reports.page-view--stadium-cmd .sc-checklist,
+.page-view--environment.page-view--stadium-cmd .sc-lux-grid,
+.page-view--utilities.page-view--stadium-cmd .sc-lux-grid,
+.page-view--reports.page-view--stadium-cmd .sc-lux-grid {
+  gap: 8px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal__cell,
+.page-view--utilities.page-view--stadium-cmd .sc-thermal__cell,
+.page-view--reports.page-view--stadium-cmd .sc-thermal__cell,
+.page-view--environment.page-view--stadium-cmd .sc-lux-cell,
+.page-view--utilities.page-view--stadium-cmd .sc-lux-cell,
+.page-view--reports.page-view--stadium-cmd .sc-lux-cell,
+.page-view--environment.page-view--stadium-cmd .sc-check,
+.page-view--utilities.page-view--stadium-cmd .sc-check,
+.page-view--reports.page-view--stadium-cmd .sc-check,
+.page-view--environment.page-view--stadium-cmd .sc-route-check,
+.page-view--utilities.page-view--stadium-cmd .sc-route-check,
+.page-view--reports.page-view--stadium-cmd .sc-route-check,
+.page-view--environment.page-view--stadium-cmd .sc-report-summary__chips span,
+.page-view--utilities.page-view--stadium-cmd .sc-report-summary__chips span,
+.page-view--reports.page-view--stadium-cmd .sc-report-summary__chips span,
+.page-view--environment.page-view--stadium-cmd .sc-report-map__side span,
+.page-view--utilities.page-view--stadium-cmd .sc-report-map__side span,
+.page-view--reports.page-view--stadium-cmd .sc-report-map__side span {
+  min-height: 36px;
+  padding: 8px 9px;
+  border-radius: 4px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal__cell b,
+.page-view--utilities.page-view--stadium-cmd .sc-thermal__cell b,
+.page-view--reports.page-view--stadium-cmd .sc-thermal__cell b,
+.page-view--environment.page-view--stadium-cmd .sc-lux-cell b,
+.page-view--utilities.page-view--stadium-cmd .sc-lux-cell b,
+.page-view--reports.page-view--stadium-cmd .sc-lux-cell b,
+.page-view--environment.page-view--stadium-cmd .sc-check b,
+.page-view--utilities.page-view--stadium-cmd .sc-check b,
+.page-view--reports.page-view--stadium-cmd .sc-check b,
+.page-view--environment.page-view--stadium-cmd .sc-route-check b,
+.page-view--utilities.page-view--stadium-cmd .sc-route-check b,
+.page-view--reports.page-view--stadium-cmd .sc-route-check b,
+.page-view--environment.page-view--stadium-cmd .sc-report-summary__chips b,
+.page-view--utilities.page-view--stadium-cmd .sc-report-summary__chips b,
+.page-view--reports.page-view--stadium-cmd .sc-report-summary__chips b,
+.page-view--environment.page-view--stadium-cmd .sc-report-map__side b,
+.page-view--utilities.page-view--stadium-cmd .sc-report-map__side b,
+.page-view--reports.page-view--stadium-cmd .sc-report-map__side b {
+  font-size: 10px;
+  line-height: 1.1;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-thermal__cell span,
+.page-view--utilities.page-view--stadium-cmd .sc-thermal__cell span,
+.page-view--reports.page-view--stadium-cmd .sc-thermal__cell span,
+.page-view--environment.page-view--stadium-cmd .sc-lux-cell em,
+.page-view--utilities.page-view--stadium-cmd .sc-lux-cell em,
+.page-view--reports.page-view--stadium-cmd .sc-lux-cell em,
+.page-view--environment.page-view--stadium-cmd .sc-check em,
+.page-view--utilities.page-view--stadium-cmd .sc-check em,
+.page-view--reports.page-view--stadium-cmd .sc-check em,
+.page-view--environment.page-view--stadium-cmd .sc-route-check em,
+.page-view--utilities.page-view--stadium-cmd .sc-route-check em,
+.page-view--reports.page-view--stadium-cmd .sc-route-check em,
+.page-view--environment.page-view--stadium-cmd .sc-report-summary__chips em,
+.page-view--utilities.page-view--stadium-cmd .sc-report-summary__chips em,
+.page-view--reports.page-view--stadium-cmd .sc-report-summary__chips em,
+.page-view--environment.page-view--stadium-cmd .sc-report-map__side em,
+.page-view--utilities.page-view--stadium-cmd .sc-report-map__side em,
+.page-view--reports.page-view--stadium-cmd .sc-report-map__side em {
+  font-size: 9px;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-node-map,
+.page-view--utilities.page-view--stadium-cmd .sc-node-map,
+.page-view--reports.page-view--stadium-cmd .sc-node-map {
+  display: grid;
+  grid-template-columns: minmax(116px, 0.9fr) minmax(180px, 1.1fr);
+  gap: 14px;
+  align-items: center;
+  min-height: 154px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-node-map svg,
+.page-view--utilities.page-view--stadium-cmd .sc-node-map svg,
+.page-view--reports.page-view--stadium-cmd .sc-node-map svg {
+  width: 100%;
+  height: auto;
+  min-height: 152px;
+  overflow: visible;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-node-label,
+.page-view--utilities.page-view--stadium-cmd .sc-node-label,
+.page-view--reports.page-view--stadium-cmd .sc-node-label {
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-node-map__labels,
+.page-view--utilities.page-view--stadium-cmd .sc-node-map__labels {
+  grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-node-label i,
+.page-view--utilities.page-view--stadium-cmd .sc-node-label i,
+.page-view--reports.page-view--stadium-cmd .sc-node-label i {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  font-size: 15px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-node-label b,
+.page-view--utilities.page-view--stadium-cmd .sc-node-label b,
+.page-view--reports.page-view--stadium-cmd .sc-node-label b {
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-node-label em,
+.page-view--utilities.page-view--stadium-cmd .sc-node-label em,
+.page-view--reports.page-view--stadium-cmd .sc-node-label em {
+  display: none;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-load-matrix,
+.page-view--utilities.page-view--stadium-cmd .sc-load-matrix,
+.page-view--reports.page-view--stadium-cmd .sc-load-matrix,
+.page-view--environment.page-view--stadium-cmd .sc-queue-bars,
+.page-view--utilities.page-view--stadium-cmd .sc-queue-bars,
+.page-view--reports.page-view--stadium-cmd .sc-queue-bars,
+.page-view--environment.page-view--stadium-cmd .sc-report-bars,
+.page-view--utilities.page-view--stadium-cmd .sc-report-bars,
+.page-view--reports.page-view--stadium-cmd .sc-report-bars {
+  min-height: 102px;
+  height: 102px;
+  gap: 5px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-load-matrix,
+.page-view--environment.page-view--stadium-cmd .sc-queue-bars,
+.page-view--environment.page-view--stadium-cmd .sc-report-bars {
+  min-height: 97px;
+  height: 97px;
+}
+
+.page-view--reports.page-view--stadium-cmd .sc-load-matrix,
+.page-view--reports.page-view--stadium-cmd .sc-queue-bars,
+.page-view--reports.page-view--stadium-cmd .sc-report-bars {
+  min-height: 118px;
+  height: 118px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-load-cell,
+.page-view--utilities.page-view--stadium-cmd .sc-load-cell,
+.page-view--reports.page-view--stadium-cmd .sc-load-cell {
+  max-width: 20px;
+  height: 12px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-load-col span,
+.page-view--utilities.page-view--stadium-cmd .sc-load-col span,
+.page-view--reports.page-view--stadium-cmd .sc-load-col span,
+.page-view--environment.page-view--stadium-cmd .sc-queue-bar,
+.page-view--utilities.page-view--stadium-cmd .sc-queue-bar,
+.page-view--reports.page-view--stadium-cmd .sc-queue-bar,
+.page-view--environment.page-view--stadium-cmd .sc-report-bars span,
+.page-view--utilities.page-view--stadium-cmd .sc-report-bars span,
+.page-view--reports.page-view--stadium-cmd .sc-report-bars span {
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-queue-bar i,
+.page-view--utilities.page-view--stadium-cmd .sc-queue-bar i,
+.page-view--reports.page-view--stadium-cmd .sc-queue-bar i,
+.page-view--environment.page-view--stadium-cmd .sc-report-bars i,
+.page-view--utilities.page-view--stadium-cmd .sc-report-bars i,
+.page-view--reports.page-view--stadium-cmd .sc-report-bars i {
+  max-width: 24px;
+  min-height: 14px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-radar,
+.page-view--utilities.page-view--stadium-cmd .sc-radar,
+.page-view--reports.page-view--stadium-cmd .sc-radar,
+.page-view--environment.page-view--stadium-cmd .sc-report-map,
+.page-view--utilities.page-view--stadium-cmd .sc-report-map,
+.page-view--reports.page-view--stadium-cmd .sc-report-map {
+  grid-template-columns: 142px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-radar svg,
+.page-view--utilities.page-view--stadium-cmd .sc-radar svg,
+.page-view--reports.page-view--stadium-cmd .sc-radar svg,
+.page-view--environment.page-view--stadium-cmd .sc-report-map svg,
+.page-view--utilities.page-view--stadium-cmd .sc-report-map svg,
+.page-view--reports.page-view--stadium-cmd .sc-report-map svg {
+  height: 142px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-service-map__top,
+.page-view--utilities.page-view--stadium-cmd .sc-service-map__top,
+.page-view--reports.page-view--stadium-cmd .sc-service-map__top,
+.page-view--environment.page-view--stadium-cmd .sc-report-summary,
+.page-view--utilities.page-view--stadium-cmd .sc-report-summary,
+.page-view--reports.page-view--stadium-cmd .sc-report-summary {
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-service-map__bars span,
+.page-view--utilities.page-view--stadium-cmd .sc-service-map__bars span,
+.page-view--reports.page-view--stadium-cmd .sc-service-map__bars span {
+  grid-template-columns: 62px minmax(0, 1fr) 36px;
+  gap: 6px;
+  font-size: 9px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-service-map svg,
+.page-view--utilities.page-view--stadium-cmd .sc-service-map svg,
+.page-view--reports.page-view--stadium-cmd .sc-service-map svg {
+  min-height: 142px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-route-flow svg,
+.page-view--utilities.page-view--stadium-cmd .sc-route-flow svg,
+.page-view--reports.page-view--stadium-cmd .sc-route-flow svg {
+  min-height: 82px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-route-flow__checks,
+.page-view--utilities.page-view--stadium-cmd .sc-route-flow__checks,
+.page-view--reports.page-view--stadium-cmd .sc-route-flow__checks {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-report-timeline,
+.page-view--utilities.page-view--stadium-cmd .sc-report-timeline,
+.page-view--reports.page-view--stadium-cmd .sc-report-timeline {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding-left: 0;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-report-timeline::before,
+.page-view--utilities.page-view--stadium-cmd .sc-report-timeline::before,
+.page-view--reports.page-view--stadium-cmd .sc-report-timeline::before {
+  top: 20px;
+  right: 10%;
+  bottom: auto;
+  left: 10%;
+  width: auto;
+  height: 2px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-report-timeline__node,
+.page-view--utilities.page-view--stadium-cmd .sc-report-timeline__node,
+.page-view--reports.page-view--stadium-cmd .sc-report-timeline__node {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 5px;
+  min-height: 82px;
+  padding: 8px 4px;
+  border: 1px solid rgba(0, 180, 255, 0.16);
+  border-radius: 4px;
+  background: rgba(5, 24, 45, 0.72);
+  text-align: center;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-report-timeline__node i,
+.page-view--utilities.page-view--stadium-cmd .sc-report-timeline__node i,
+.page-view--reports.page-view--stadium-cmd .sc-report-timeline__node i {
+  position: static;
+  width: 16px;
+  height: 16px;
+  border: 3px solid rgba(230, 250, 255, 0.18);
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-report-timeline__node strong,
+.page-view--utilities.page-view--stadium-cmd .sc-report-timeline__node strong,
+.page-view--reports.page-view--stadium-cmd .sc-report-timeline__node strong {
+  font-size: 10px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-report-timeline__node span,
+.page-view--utilities.page-view--stadium-cmd .sc-report-timeline__node span,
+.page-view--reports.page-view--stadium-cmd .sc-report-timeline__node span,
+.page-view--environment.page-view--stadium-cmd .sc-report-timeline__node b,
+.page-view--utilities.page-view--stadium-cmd .sc-report-timeline__node b,
+.page-view--reports.page-view--stadium-cmd .sc-report-timeline__node b {
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-resolution-rings,
+.page-view--utilities.page-view--stadium-cmd .sc-resolution-rings,
+.page-view--reports.page-view--stadium-cmd .sc-resolution-rings {
+  gap: 10px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-resolution-ring,
+.page-view--utilities.page-view--stadium-cmd .sc-resolution-ring,
+.page-view--reports.page-view--stadium-cmd .sc-resolution-ring {
+  min-height: 96px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-resolution-ring strong,
+.page-view--utilities.page-view--stadium-cmd .sc-resolution-ring strong,
+.page-view--reports.page-view--stadium-cmd .sc-resolution-ring strong {
+  font-size: 16px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-resolution-ring span,
+.page-view--utilities.page-view--stadium-cmd .sc-resolution-ring span,
+.page-view--reports.page-view--stadium-cmd .sc-resolution-ring span {
+  margin-top: 0;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-incident-matrix,
+.page-view--utilities.page-view--stadium-cmd .sc-incident-matrix,
+.page-view--reports.page-view--stadium-cmd .sc-incident-matrix {
+  gap: 8px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-incident-matrix span,
+.page-view--utilities.page-view--stadium-cmd .sc-incident-matrix span,
+.page-view--reports.page-view--stadium-cmd .sc-incident-matrix span {
+  grid-template-columns: 84px minmax(0, 1fr) 34px;
+  gap: 7px;
+  font-size: 10px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-incident-matrix i,
+.page-view--utilities.page-view--stadium-cmd .sc-incident-matrix i,
+.page-view--reports.page-view--stadium-cmd .sc-incident-matrix i {
+  height: 8px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-send-flow,
+.page-view--utilities.page-view--stadium-cmd .sc-send-flow,
+.page-view--reports.page-view--stadium-cmd .sc-send-flow {
+  grid-template-columns: 1fr 14px 1fr 14px 1fr 14px 1fr;
+  gap: 4px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-send-flow span,
+.page-view--utilities.page-view--stadium-cmd .sc-send-flow span,
+.page-view--reports.page-view--stadium-cmd .sc-send-flow span {
+  min-height: 46px;
+  padding: 8px 5px;
+  border-radius: 4px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-send-flow span > i,
+.page-view--utilities.page-view--stadium-cmd .sc-send-flow span > i,
+.page-view--reports.page-view--stadium-cmd .sc-send-flow span > i {
+  font-size: 15px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-send-flow b,
+.page-view--utilities.page-view--stadium-cmd .sc-send-flow b,
+.page-view--reports.page-view--stadium-cmd .sc-send-flow b {
+  font-size: 10px;
+}
+
+.page-view--environment.page-view--stadium-cmd .sc-send-flow em,
+.page-view--utilities.page-view--stadium-cmd .sc-send-flow em,
+.page-view--reports.page-view--stadium-cmd .sc-send-flow em {
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-alert,
+.page-view--utilities.page-view--stadium-cmd .hud-alert,
+.page-view--reports.page-view--stadium-cmd .hud-alert {
+  padding: 8px 0;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-alert__tag,
+.page-view--utilities.page-view--stadium-cmd .hud-alert__tag,
+.page-view--reports.page-view--stadium-cmd .hud-alert__tag {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.page-view--environment.page-view--stadium-cmd .hud-alert__title,
+.page-view--utilities.page-view--stadium-cmd .hud-alert__title,
+.page-view--reports.page-view--stadium-cmd .hud-alert__title {
+  font-size: 11px;
+  line-height: 1.32;
+}
+
+@container (max-width: 360px) {
+  .page-view--environment.page-view--stadium-cmd .sc-node-map,
+  .page-view--utilities.page-view--stadium-cmd .sc-node-map,
+  .page-view--reports.page-view--stadium-cmd .sc-node-map,
+  .page-view--environment.page-view--stadium-cmd .sc-thermal,
+  .page-view--utilities.page-view--stadium-cmd .sc-thermal,
+  .page-view--reports.page-view--stadium-cmd .sc-thermal,
+  .page-view--environment.page-view--stadium-cmd .sc-radar,
+  .page-view--utilities.page-view--stadium-cmd .sc-radar,
+  .page-view--reports.page-view--stadium-cmd .sc-radar,
+  .page-view--environment.page-view--stadium-cmd .sc-report-map,
+  .page-view--utilities.page-view--stadium-cmd .sc-report-map,
+  .page-view--reports.page-view--stadium-cmd .sc-report-map {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .page-view--environment.page-view--stadium-cmd .sc-node-map svg,
+  .page-view--utilities.page-view--stadium-cmd .sc-node-map svg,
+  .page-view--reports.page-view--stadium-cmd .sc-node-map svg,
+  .page-view--environment.page-view--stadium-cmd .sc-radar svg,
+  .page-view--utilities.page-view--stadium-cmd .sc-radar svg,
+  .page-view--reports.page-view--stadium-cmd .sc-radar svg,
+  .page-view--environment.page-view--stadium-cmd .sc-report-map svg,
+  .page-view--utilities.page-view--stadium-cmd .sc-report-map svg,
+  .page-view--reports.page-view--stadium-cmd .sc-report-map svg {
+    justify-self: center;
+    width: min(100%, 150px);
+    min-height: 96px;
+    height: auto;
+  }
+
+  .page-view--environment.page-view--stadium-cmd .sc-route-flow__checks,
+  .page-view--utilities.page-view--stadium-cmd .sc-route-flow__checks,
+  .page-view--reports.page-view--stadium-cmd .sc-route-flow__checks,
+  .page-view--environment.page-view--stadium-cmd .sc-send-flow,
+  .page-view--utilities.page-view--stadium-cmd .sc-send-flow,
+  .page-view--reports.page-view--stadium-cmd .sc-send-flow {
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  }
+
+  .page-view--environment.page-view--stadium-cmd .sc-send-flow__line,
+  .page-view--utilities.page-view--stadium-cmd .sc-send-flow__line,
+  .page-view--reports.page-view--stadium-cmd .sc-send-flow__line {
+    display: none;
+  }
+
+  .page-view--environment.page-view--stadium-cmd .sc-node-map__labels,
+  .page-view--utilities.page-view--stadium-cmd .sc-node-map__labels,
+  .page-view--reports.page-view--stadium-cmd .sc-node-map__labels {
+    grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+  }
+}
+
+.page-view--traffic.page-view--stadium-cmd .security-command {
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(280px, 320px);
+}
+
+.page-view--traffic.page-view--stadium-cmd .security-sidebar {
+  padding: 6px;
+  gap: 8px;
+  container-type: inline-size;
+}
+
+.page-view--traffic.page-view--stadium-cmd .sidebar-hud {
+  overflow-x: hidden;
+}
+
+.page-view--traffic.page-view--stadium-cmd .sidebar-hud > .hud-block {
+  min-width: 0;
+  overflow: hidden;
+  padding: 8px;
+  gap: 6px;
+  border-radius: 4px;
+  background: transparent !important;
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(145, 226, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.page-view--traffic.page-view--stadium-cmd .hud-head {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.page-view--traffic.page-view--stadium-cmd .hud-tab,
+.page-view--traffic.page-view--stadium-cmd .sidebar-nav__item,
+.page-view--traffic.page-view--stadium-cmd .sidebar-action {
+  min-height: 28px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.traffic-viz-pie {
+  display: grid;
+  grid-template-columns: minmax(98px, 0.88fr) minmax(118px, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.traffic-viz-pie svg {
+  display: block;
+  width: 100%;
+  min-height: 106px;
+  overflow: visible;
+  filter: drop-shadow(0 10px 18px rgba(0, 12, 28, 0.5));
+}
+
+.traffic-viz-pie__shadow {
+  fill: rgba(0, 18, 42, 0.42);
+}
+
+.traffic-viz-pie__slice {
+  stroke: rgba(230, 250, 255, 0.16);
+  stroke-width: 1.2;
+}
+
+.traffic-viz-pie__pin {
+  stroke: rgba(126, 223, 255, 0.58);
+  stroke-width: 0.9;
+}
+
+.traffic-viz-pie__dot {
+  fill: #9ff5ff;
+}
+
+.traffic-viz-pie__dot--inner {
+  opacity: 0.62;
+}
+
+.traffic-viz-pie__core {
+  fill: #173cff;
+  stroke: rgba(126, 223, 255, 0.75);
+  stroke-width: 5;
+}
+
+.traffic-viz-pie__core-light {
+  fill: #00d4ff;
+  filter: drop-shadow(0 0 9px rgba(0, 212, 255, 0.8));
+}
+
+.traffic-viz-legend {
+  display: grid;
+  gap: 5px;
+}
+
+.traffic-viz-legend span {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) 34px;
+  gap: 7px;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 1px solid rgba(0, 180, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(5, 24, 45, 0.56);
+}
+
+.traffic-viz-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.traffic-viz-legend b,
+.traffic-viz-legend em {
+  overflow: hidden;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traffic-viz-legend b {
+  color: #e8f4ff;
+  font-size: 10px;
+}
+
+.traffic-viz-legend em {
+  color: #7ab0d0;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  text-align: right;
+}
+
+.traffic-viz-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 8px;
+  align-items: center;
+}
+
+.traffic-viz-flow svg {
+  display: block;
+  width: 100%;
+  min-height: 82px;
+  overflow: visible;
+}
+
+.traffic-viz-flow__grid line {
+  stroke: rgba(122, 176, 208, 0.14);
+}
+
+.traffic-viz-flow__grid text {
+  fill: #7ab0d0;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.traffic-viz-flow__line {
+  fill: none;
+  stroke: #00d4ff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.32));
+}
+
+.traffic-viz-flow circle {
+  fill: #e8f4ff;
+  stroke: #00d4ff;
+  stroke-width: 1.5;
+}
+
+.traffic-viz-flow__metric {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 0;
+  text-align: center;
+}
+
+.traffic-viz-flow__metric i {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(0, 212, 255, 0.32);
+  border-radius: 50%;
+  color: #00d4ff;
+  font-size: 16px;
+}
+
+.traffic-viz-flow__metric strong {
+  color: #00d4ff;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.traffic-viz-flow__metric span {
+  color: #d8ecff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.traffic-viz-camera-grid,
+.traffic-viz-matrix,
+.traffic-heat-bars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.traffic-viz-camera,
+.traffic-viz-matrix__cell,
+.traffic-heat-bars__cell {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 42px;
+  overflow: hidden;
+  padding: 6px;
+  border: 1px solid rgba(0, 180, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(5, 24, 45, 0.56);
+}
+
+.traffic-viz-camera i {
+  color: #00d4ff;
+  font-size: 15px;
+}
+
+.traffic-viz-camera--warn {
+  border-color: rgba(239, 159, 39, 0.42);
+}
+
+.traffic-viz-camera b,
+.traffic-viz-camera em,
+.traffic-viz-matrix__cell b,
+.traffic-viz-matrix__cell em,
+.traffic-heat-bars__cell b,
+.traffic-heat-bars__cell em {
+  overflow: hidden;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traffic-viz-camera b,
+.traffic-viz-matrix__cell b,
+.traffic-heat-bars__cell b {
+  color: #e8f4ff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.traffic-viz-camera em,
+.traffic-viz-matrix__cell em,
+.traffic-heat-bars__cell em {
+  color: #7ab0d0;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.traffic-viz-matrix__cell b {
+  font-size: 18px;
+  color: #00d4ff;
+}
+
+.traffic-viz-matrix__cell--danger b { color: #e24b4a; }
+.traffic-viz-matrix__cell--warn b { color: #ef9f27; }
+.traffic-viz-matrix__cell--ok b { color: #1d9e75; }
+
+.traffic-viz-radar {
+  display: block;
+  width: min(100%, 190px);
+  min-height: 146px;
+  margin: 0 auto;
+  overflow: visible;
+  filter: drop-shadow(0 10px 18px rgba(0, 12, 28, 0.44));
+}
+
+.traffic-viz-radar__grid polygon {
+  fill: rgba(0, 212, 255, 0.035);
+  stroke: rgba(126, 223, 255, 0.22);
+  stroke-width: 0.8;
+}
+
+.traffic-viz-radar__grid line {
+  stroke: rgba(126, 223, 255, 0.18);
+  stroke-width: 0.7;
+}
+
+.traffic-viz-radar__grid text {
+  fill: #7ab0d0;
+  font-size: 7px;
+  font-weight: 800;
+}
+
+.traffic-viz-radar__shadow {
+  transform: translateY(5px);
+  fill: rgba(0, 38, 84, 0.56);
+}
+
+.traffic-viz-radar__shape {
+  fill: url(#trafficRadarFill);
+  stroke: rgba(190, 245, 255, 0.78);
+  stroke-width: 1.2;
+}
+
+.traffic-viz-radar circle {
+  fill: #9ff5ff;
+  stroke: #173cff;
+  stroke-width: 0.8;
+}
+
+.traffic-cycle {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.traffic-viz-ring {
+  display: block;
+  width: 78px;
+  height: 78px;
+}
+
+.traffic-cycle__bars {
+  display: grid;
+  gap: 6px;
+}
+
+.traffic-cycle-bar {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 34px;
+  gap: 6px;
+  align-items: center;
+  color: #7ab0d0;
+  font-size: 8px;
+}
+
+.traffic-cycle-bar em,
+.traffic-cycle-bar b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traffic-cycle-bar em {
+  font-style: normal;
+  font-weight: 800;
+}
+
+.traffic-cycle-bar b {
+  color: #e8f4ff;
+  text-align: right;
+}
+
+.traffic-cycle-bar i {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #185fa5, #00d4ff);
+}
+
+.traffic-route-flow svg {
+  display: block;
+  width: 100%;
+  min-height: 72px;
+  overflow: visible;
+}
+
+.traffic-route-flow__road {
+  fill: none;
+  stroke: rgba(0, 212, 255, 0.44);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 5;
+}
+
+.traffic-route-flow__road--alt {
+  stroke: rgba(29, 158, 117, 0.46);
+  stroke-width: 4;
+}
+
+.traffic-route-flow__node {
+  fill: #00d4ff;
+  stroke: rgba(230, 250, 255, 0.34);
+}
+
+.traffic-route-flow__node--warn { fill: #ef9f27; }
+.traffic-route-flow__node--ok { fill: #1d9e75; }
+
+.traffic-route-flow text {
+  fill: #061426;
+  font-size: 8px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
+.traffic-route-checks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.traffic-route-check {
+  display: grid;
+  min-height: 30px;
+  padding: 5px;
+  border: 1px solid rgba(0, 180, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(5, 24, 45, 0.48);
+}
+
+.traffic-route-check--warn {
+  border-color: rgba(239, 159, 39, 0.34);
+}
+
+.traffic-route-check b,
+.traffic-route-check em {
+  overflow: hidden;
+  line-height: 1.12;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traffic-route-check b {
+  color: #e8f4ff;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.traffic-route-check em {
+  color: #7ab0d0;
+  font-size: 8px;
+  font-style: normal;
+}
+
+.traffic-heat-bars {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: end;
+  min-height: 72px;
+}
+
+.traffic-heat-bars__cell {
+  justify-content: end;
+  min-height: 72px;
+  padding: 6px 4px;
+  text-align: center;
+}
+
+.traffic-heat-bars__cell i {
+  display: block;
+  width: 100%;
+  max-width: 22px;
+  min-height: 12px;
+  justify-self: center;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, rgba(0, 212, 255, 0.86), rgba(0, 80, 140, 0.34));
+}
+
+.traffic-heat-bars__cell--down i {
+  background: linear-gradient(180deg, rgba(105, 199, 232, 0.78), rgba(24, 95, 165, 0.32));
+}
+
+.traffic-alert-strips {
+  display: grid;
+  gap: 6px;
+}
+
+.traffic-alert-strip {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  min-height: 32px;
+  overflow: hidden;
+  padding: 7px 9px;
+  border: 1px solid rgba(92, 220, 255, 0.28);
+  border-radius: 4px;
+  background: rgba(8, 42, 66, 0.62);
+}
+
+.traffic-alert-strip i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  opacity: 0.66;
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.76), rgba(45, 169, 255, 0.28));
+}
+
+.traffic-alert-strip--warn i {
+  background: linear-gradient(90deg, rgba(239, 159, 39, 0.76), rgba(45, 169, 255, 0.18));
+}
+
+.traffic-alert-strip--danger i {
+  background: linear-gradient(90deg, rgba(226, 75, 74, 0.76), rgba(45, 169, 255, 0.16));
+}
+
+.traffic-alert-strip b,
+.traffic-alert-strip em {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  color: #f0fbff;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.traffic-alert-strip em {
+  color: #c6f2ff;
+  text-align: right;
+}
+
+@container (max-width: 360px) {
+  .traffic-cycle {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .traffic-viz-radar {
+    justify-self: center;
+    width: min(100%, 150px);
+    min-height: 96px;
+  }
+
+  .traffic-viz-camera-grid,
+  .traffic-viz-matrix,
+  .traffic-route-checks {
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  }
+
+  .traffic-heat-bars {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Keep the command UI typography and control scale identical across all six Smart City tabs. */
+.page-view--stadium-cmd {
+  --smartcity-stadium-label: 10px;
+  --smartcity-stadium-caption: 9px;
+  --smartcity-stadium-body-sm: 11px;
+  --smartcity-stadium-value: 14px;
+  --smartcity-stadium-metric: 22px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.page-view--stadium-cmd .security-command {
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr) minmax(280px, 320px);
+  font-family: inherit;
+}
+
+.page-view--stadium-cmd button,
+.page-view--stadium-cmd input,
+.page-view--stadium-cmd select {
+  font-family: inherit;
+}
+
+.page-view--stadium-cmd .security-sidebar {
+  gap: 8px;
+  padding: 8px 6px;
+  container-type: inline-size;
+}
+
+.page-view--stadium-cmd .sidebar-hud {
+  overflow-x: hidden;
+}
+
+.page-view--stadium-cmd .sidebar-hud > .hud-block {
+  min-width: 0;
+  overflow: hidden;
+  padding: 12px;
+  gap: 10px;
+  border-radius: 4px;
+  background: transparent !important;
+  backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(145, 226, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.page-view--stadium-cmd .hud-head {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.page-view--stadium-cmd .hud-head i {
+  font-size: var(--smartcity-stadium-body-sm);
+}
+
+.page-view--stadium-cmd .hud-sub,
+.page-view--stadium-cmd .hud-alert__time,
+.page-view--stadium-cmd .hud-metric-lbl {
+  font-size: var(--smartcity-stadium-caption);
+  line-height: 1.35;
+}
+
+.page-view--stadium-cmd .hud-inline-stat {
+  gap: 8px;
+  font-size: var(--smartcity-stadium-caption);
+}
+
+.page-view--stadium-cmd .hud-inline-stat i {
+  font-size: 18px;
+}
+
+.page-view--stadium-cmd .hud-inline-stat strong {
+  font-size: var(--smartcity-stadium-value);
+}
+
+.page-view--stadium-cmd .hud-tab,
+.page-view--stadium-cmd .hud-vent-btn,
+.page-view--stadium-cmd .sidebar-nav__item,
+.page-view--stadium-cmd .sidebar-action {
+  min-height: 28px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: var(--smartcity-stadium-body-sm);
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.page-view--stadium-cmd .hud-tab--sm {
+  padding: 5px 8px;
+  font-size: var(--smartcity-stadium-body-sm);
+}
+
+.page-view--stadium-cmd .hud-tab--active {
+  background: rgba(0, 140, 210, 0.24);
+}
+
+.page-view--stadium-cmd .sidebar-nav__item i,
+.page-view--stadium-cmd .sidebar-action i {
+  font-size: 15px;
+}
+
+.page-view--stadium-cmd .security-center__legend,
+.page-view--stadium-cmd .map-scene-hint {
+  font-size: var(--smartcity-stadium-label);
+}
+
+.page-view.page-view--stadium-cmd .security-sidebar {
+  gap: 8px;
+  padding: 8px 6px;
+}
+
+.page-view.page-view--stadium-cmd .sidebar-hud > .hud-block {
+  padding: 12px;
+  gap: 10px;
+}
+
+.page-view.page-view--stadium-cmd .hud-head {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.page-view.page-view--stadium-cmd .hud-tab,
+.page-view.page-view--stadium-cmd .hud-vent-btn,
+.page-view.page-view--stadium-cmd .sidebar-nav__item,
+.page-view.page-view--stadium-cmd .sidebar-action {
+  min-height: 28px;
+  padding: 5px 8px;
+  font-size: var(--smartcity-stadium-body-sm);
+  font-weight: 600;
+  line-height: 1.15;
 }

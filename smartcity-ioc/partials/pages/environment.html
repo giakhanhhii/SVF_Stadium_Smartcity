@@ -1,37 +1,25 @@
-<div class="page-view page-view--smartcity-shell" id="page-environment" data-frame="04 — Môi trường">
-  <div class="smartcity-page-shell">
-    <aside class="security-sidebar security-sidebar--left"><div data-side-nav-rail="left"></div></aside>
-    <main class="smartcity-page-main">
-      <div data-mount="banner"></div>
-      <div data-mount="kpis"></div>
-      <div class="dash-body">
-    <div class="dash-map-col">
-      <div class="map-header">
-        <div class="map-title">Bản đồ phân bố AQI & trạm quan trắc</div>
-        <div class="map-legend">
-          <span class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span>Tốt</span>
-          <span class="legend-item"><span class="legend-dot" style="background:#BA7517"></span>Trung bình</span>
-          <span class="legend-item"><span class="legend-dot" style="background:#A32D2D"></span>Kém</span>
-        </div>
+<div class="page-view page-view--environment page-view--stadium-cmd" id="page-environment" data-frame="04 — Môi trường">
+  <div class="security-command smartcity-domain-command smartcity-domain-command--blue">
+    <aside class="security-sidebar security-sidebar--left">
+      <div data-side-nav-rail="left"></div>
+      <div class="sidebar-hud" data-mount="sidebar-left"></div>
+    </aside>
+
+    <main class="security-center">
+      <div class="security-center__legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#00d4ff"></span>AQI</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#185FA5"></span>Nước</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span>Cây xanh</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#EF9F27"></span>Cảnh báo</span>
       </div>
-      <div class="map-container">
-        <svg viewBox="0 0 420 280" xmlns="http://www.w3.org/2000/svg">
-          <rect width="420" height="280" fill="#0a1f14"/>
-          <g opacity="0.3"><rect x="30" y="50" width="80" height="60" fill="#1D9E75" rx="4"/><rect x="140" y="40" width="90" height="70" fill="#BA7517" rx="4"/><rect x="260" y="60" width="100" height="55" fill="#1D9E75" rx="4"/><rect x="80" y="160" width="70" height="80" fill="#A32D2D" rx="4" opacity="0.6"/></g>
-          <circle cx="70" cy="80" r="5" fill="#97C459"/><circle cx="185" cy="75" r="5" fill="#EF9F27"/><circle cx="310" cy="85" r="5" fill="#97C459"/>
-          <circle cx="115" cy="200" r="6" fill="#E24B4A"/><circle cx="115" cy="200" r="12" fill="#E24B4A" opacity="0.3"/>
-          <text x="14" y="265" fill="#A8D5BA" font-size="9" opacity="0.8">Heatmap AQI — Cập nhật 5 phút/lần</text>
-        </svg>
+      <div class="map-container map-container--3d map-container--hero" data-mount="smartcity-scene">
+        <span class="map-scene-hint">Kéo chuột xoay · Cuộn để zoom · Cảm biến môi trường</span>
       </div>
-      <div class="mini-stats" data-mount="mini-stats"></div>
-    </div>
-    <div class="dash-alerts-col">
-      <div class="alerts-header"><div class="alerts-title">Trạm quan trắc — Chi tiết</div><span class="alerts-filter">Sắp xếp →</span></div>
-      <div class="station-list" data-mount="stations"></div>
-    </div>
-      </div>
-      <div data-mount="chart"></div>
     </main>
-    <aside class="security-sidebar security-sidebar--right"><div data-side-nav-rail="right"></div></aside>
+
+    <aside class="security-sidebar security-sidebar--right">
+      <div data-side-nav-rail="right"></div>
+      <div class="sidebar-hud" data-mount="sidebar-right"></div>
+    </aside>
   </div>
 </div>

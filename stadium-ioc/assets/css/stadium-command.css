@@ -873,20 +873,22 @@ body.sidebar-resizing::after {
 #page-security.security-interior-mode .hud-block--security-access .hud-tab {
   flex: unset;
   min-height: 0;
-  padding: 4px 8px;
-  font-size: 9px;
+  min-width: 78px;
+  min-height: 28px;
+  padding: 6px 12px;
+  font-size: 10px;
   line-height: 1.2;
 }
 
 #page-security.security-interior-mode .hud-block--security-access .hud-env-row {
-  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-columns: 104px minmax(0, 1fr);
   gap: 14px;
   align-items: center;
 }
 
 #page-security.security-interior-mode .hud-block--security-access .stad-sec-donut {
-  width: 82px;
-  height: 82px;
+  width: 104px;
+  height: 104px;
 }
 
 #page-security.security-interior-mode .hud-block--security-access .stad-sec-bars {

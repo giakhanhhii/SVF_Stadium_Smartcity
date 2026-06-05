@@ -10,6 +10,7 @@ import { renderTrafficLeftSidebar } from '../render/traffic-panels-left.js';
 import { renderTrafficRightSidebar } from '../render/traffic-panels-right.js';
 import { renderLeftSidebar } from '../render/security-panels-left.js';
 import { renderRightSidebar } from '../render/security-panels-right.js';
+import { renderSmartcityDomainLeft, renderSmartcityDomainRight } from '../render/smartcity-domain-command-panels.js';
 import { overviewData } from '../data/smartcity-overview-data.js';
 import { trafficData } from '../data/traffic.js';
 import { securityData } from '../data/smartcity-security-data.js';
@@ -36,27 +37,16 @@ export function hydratePage(pageId) {
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderRightSidebar(securityData.right);
     },
     environment: () => {
-      root.querySelector('[data-mount="banner"]').outerHTML = renderDomainBanner(environmentData.banner);
-      root.querySelector('[data-mount="kpis"]').outerHTML = renderDomainKpiRow(environmentData.kpis);
-      root.querySelector('[data-mount="mini-stats"]').innerHTML = renderMiniStats(environmentData.miniStats);
-      root.querySelector('[data-mount="stations"]').innerHTML = renderStationList(environmentData.stations);
-      root.querySelector('[data-mount="chart"]').outerHTML = renderChartSection(environmentData.chart);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('environment');
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('environment');
     },
     utilities: () => {
-      root.querySelector('[data-mount="banner"]').outerHTML = renderDomainBanner(utilitiesData.banner);
-      root.querySelector('[data-mount="kpis"]').outerHTML = renderDomainKpiRow(utilitiesData.kpis);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('utilities');
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('utilities');
     },
     reports: () => {
-      const banner = root.querySelector('[data-mount="banner"]');
-      if (banner) banner.innerHTML = renderDomainBanner(reportsData.banner, true);
-      const kpis = root.querySelector('[data-mount="kpis"]');
-      if (kpis) kpis.outerHTML = renderDomainKpiRow(reportsData.kpis);
-      const cats = root.querySelector('[data-mount="categories"]');
-      if (cats) cats.innerHTML = renderReportCategories(reportsData.categories);
-      const tbody = root.querySelector('[data-mount="table-body"]');
-      if (tbody) tbody.innerHTML = renderReportTable(reportsData.rows);
-      const chart = root.querySelector('[data-mount="chart"]');
-      if (chart) chart.outerHTML = renderChartSection(reportsData.chart);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('reports');
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('reports');
     },
   };
 

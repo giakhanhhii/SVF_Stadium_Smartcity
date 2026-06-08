@@ -14,7 +14,7 @@ import { setupStadiumEnvironment, disposeStadiumEnvironment } from './stadium-en
 import { initStadiumCrowd, updateStadiumCrowd, disposeStadiumCrowd } from './stadium-crowd.js';
 import { buildStadiumGates, disposeStadiumGates, setStadiumGatesVisible } from './stadium-gates.js';
 import {
-  buildControlRooms, bindControlRoomPick, setControlRoomsVisible, disposeControlRooms,
+  buildControlRooms, setControlRoomsVisible, disposeControlRooms,
 } from './stadium-control-rooms.js';
 import {
   buildParkingVehicles, setParkingVehiclesVisible, disposeParkingVehicles,
@@ -167,9 +167,6 @@ function updateControlRoomVisibility() {
   setControlRoomsVisible(show);
   setStadiumGatesVisible(true);
   setParkingVisible(true);
-  if (show) {
-    document.dispatchEvent(new CustomEvent('voc-room-hint', { detail: true }));
-  }
 }
 
 function stabilizePitchSurface(model) {
@@ -363,9 +360,6 @@ function createScene(container, navPageId) {
     buildControlRooms(scene);
     buildSecurityInterior(scene);
     setMonitorFeedHooks({ beforeFeedRender: prepareMonitorFeed, afterFeedsRender: restoreAfterMonitorFeeds });
-    bindControlRoomPick(rendererEl, camera, (roomId) => {
-      document.dispatchEvent(new CustomEvent('voc-room-pick', { detail: roomId }));
-    });
     bindSecurityMonitorPick(rendererEl, camera, (feedId) => {
       document.dispatchEvent(new CustomEvent('voc-open-stadium-screen', { detail: feedToViewId(feedId) }));
     });

@@ -107,7 +107,7 @@ function setMode(next) {
 
 function showExteriorHint() {
   if (!mountEl || mode !== 'exterior') return;
-  mountEl.innerHTML = '<p class="voc-room-hint">Nhấn phòng điều khiển quanh sân để vào · 5 phòng VOC</p>';
+  mountEl.innerHTML = '';
 }
 
 function bindGlobalEvents() {
@@ -115,7 +115,6 @@ function bindGlobalEvents() {
   bound = true;
   document.addEventListener('voc-room-pick', (e) => onControlRoomPick(e.detail));
   document.addEventListener('voc-room-init', () => initControlRoomUI('overview'));
-  document.addEventListener('voc-room-hint', () => showExteriorHint());
   document.addEventListener('voc-open-stadium-screen', (e) => openScreen(e.detail));
 }
 
@@ -223,11 +222,6 @@ function bindRoomEvents() {
 
 export function onControlRoomPick(roomId) {
   if (mode !== 'exterior') return;
-  if (roomId === 'security') {
-    navigateTo('security', afterNavigate);
-    return;
-  }
-  enterControlRoom(roomId);
 }
 
 bindGlobalEvents();

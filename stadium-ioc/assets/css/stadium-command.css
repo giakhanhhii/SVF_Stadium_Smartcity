@@ -1174,6 +1174,7 @@ body.sidebar-resizing::after {
   grid-template-columns: 22px minmax(0, 1fr);
   gap: 6px;
   align-items: center;
+  width: 100%;
   padding: 6px 8px;
   border: 1px solid rgba(0, 180, 255, 0.18);
   border-radius: 4px;
@@ -1182,6 +1183,15 @@ body.sidebar-resizing::after {
   font-size: 10px;
   font-weight: 700;
   line-height: 1.32;
+  text-align: left;
+  cursor: pointer;
+}
+
+#page-security.security-exterior-mode .traffic24-status:hover,
+#page-security.security-exterior-mode .traffic24-status:focus-visible {
+  border-color: rgba(0, 212, 255, 0.42);
+  box-shadow: 0 0 14px rgba(0, 174, 255, 0.16);
+  outline: none;
 }
 
 #page-security.security-exterior-mode .traffic24-status i {
@@ -1295,28 +1305,50 @@ body.sidebar-resizing::after {
 
 #page-security.security-exterior-mode .traffic24-actions {
   display: grid;
-  grid-template-columns: 46px repeat(3, minmax(0, 1fr));
-  gap: 5px;
+  grid-template-columns: 44px repeat(3, minmax(0, 1fr));
+  gap: 7px;
   align-items: center;
 }
 
 #page-security.security-exterior-mode .traffic24-actions span,
-#page-security.security-exterior-mode .traffic24-actions b {
+#page-security.security-exterior-mode .traffic24-actions button {
   min-width: 0;
-  padding: 5px 6px;
+  min-height: 34px;
+  padding: 8px 8px;
   border: 1px solid rgba(0, 180, 255, 0.22);
-  border-radius: 3px;
+  border-radius: 4px;
   background: rgba(0, 74, 112, 0.16);
   color: #9dc8df;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   line-height: 1.15;
   text-align: center;
 }
 
-#page-security.security-exterior-mode .traffic24-actions b {
+#page-security.security-exterior-mode .traffic24-actions span {
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 8px 4px;
+  font-size: 8px;
+}
+
+#page-security.security-exterior-mode .traffic24-actions button {
   color: #dff9ff;
   background: rgba(0, 126, 190, 0.2);
+  cursor: pointer;
+}
+
+#page-security.security-exterior-mode .traffic24-actions button:hover,
+#page-security.security-exterior-mode .traffic24-actions button:focus-visible,
+#page-security.security-exterior-mode .traffic24-actions .traffic24-command--active {
+  border-color: rgba(0, 212, 255, 0.58);
+  background: rgba(0, 126, 190, 0.32);
+  color: #ffffff;
+  box-shadow:
+    inset 3px 0 0 rgba(0, 212, 255, 0.76),
+    0 0 14px rgba(0, 174, 255, 0.16);
+  outline: none;
 }
 
 #page-security.security-exterior-mode .traffic24-chart {

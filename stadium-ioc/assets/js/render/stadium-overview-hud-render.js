@@ -334,6 +334,13 @@ function overviewRouteDiagram(items) {
     <button type="button" class="overview-route-diagram__node overview-route-diagram__node--ok" data-overview-event-action="${end.action}">
       <b>${end.label}</b><em>${end.value}</em>
     </button>
+  </div>
+  <div class="event-fire-auto overview-fire-auto">
+    <button type="button" class="event-fire-auto__button" data-overview-fire-auto aria-label="Kích hoạt dây chuyền chống cháy">
+      <i class="ti ti-shield-bolt"></i>
+      <span>Auto PCCC</span>
+    </button>
+    <p>Kích hoạt dây chuyền chống cháy</p>
   </div>`;
 }
 
@@ -580,6 +587,12 @@ export function mountOverviewOpsBind(root) {
   };
 
   root.addEventListener('click', (event) => {
+    const fireAuto = event.target.closest('[data-overview-fire-auto]');
+    if (fireAuto && root.contains(fireAuto)) {
+      document.dispatchEvent(new CustomEvent('stadium-overview-fire-auto-request'));
+      return;
+    }
+
     const trigger = event.target.closest('[data-overview-action], [data-overview-event-action]');
     if (!trigger || !root.contains(trigger)) return;
     openModal(trigger.dataset.overviewAction || trigger.dataset.overviewEventAction || 'camera');

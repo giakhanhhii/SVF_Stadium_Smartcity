@@ -1,57 +1,64 @@
 # Vinsmartcity
 
-Prototype website cho Smart City IOC va Stadium IOC.
+Prototype website cho Smart City IOC và Stadium IOC.
 
-## Yeu cau
+## Yêu cầu
 
-- Node.js 20 LTS tro len
-- npm 10 tro len
-- PowerShell neu can chay script export Excel
+- Node.js 20 LTS trở lên
+- npm 10 trở lên
+- PowerShell nếu cần chạy script export Excel
 
-## Cai dat
+## Cài đặt
+
+Chạy lệnh cài đặt trước để tải đủ dependency, giúp `npm run dev` chạy được:
 
 ```powershell
 npm ci
 ```
 
-Neu PowerShell bao loi `npm.ps1 cannot be loaded because running scripts is disabled`, dung `npm.cmd` thay cho `npm`:
-
-```powershell
-npm.cmd ci
-```
-
-Neu muon chay test Playwright lan dau:
+Nếu muốn chạy test Playwright lần đầu:
 
 ```powershell
 npx playwright install chromium
 ```
 
-## Chay website
+## Chạy website
 
-Lenh chay website chinh:
+Lệnh chạy website:
 
 ```powershell
 npm run dev
 ```
 
-Tren Windows PowerShell co the dung:
+Trên Windows PowerShell có thể dùng:
 
 ```powershell
 npm.cmd run dev
 ```
 
-Sau khi server chay, mo mot trong cac URL sau:
+Sau khi server chạy, mở một trong các URL sau:
 
 - Smart City IOC: http://localhost:3457/smartcity-ioc/smartcity-index.html
 - Stadium IOC: http://localhost:3457/stadium-ioc/stadium-index.html
 
-Trang mac dinh khi vao `http://localhost:3457/` la Smart City IOC.
+Trang mặc định khi vào `http://localhost:3457/` là Smart City IOC.
 
-Neu gap loi `EADDRINUSE: address already in use :::3457`, port 3457 dang co server khac chay. Co the doi port bang:
+## Nếu Báo Lỗi
+
+Nếu PowerShell báo lỗi `npm.ps1 cannot be loaded because running scripts is disabled`, dùng `npm.cmd` thay cho `npm`:
+
+```powershell
+npm.cmd ci
+npm.cmd run dev
+```
+
+Nếu gặp lỗi `EADDRINUSE: address already in use :::3457`, port 3457 đang có server khác chạy. Có thể đổi port bằng:
 
 ```powershell
 $env:PORT=3458; npm.cmd run dev
 ```
+
+Trong Codex sandbox, Playwright có thể bị Windows chặn khi mở Chromium với lỗi `spawn EPERM`. Khi đó chạy lại lệnh test với quyền ngoài sandbox/approval; đây là giới hạn môi trường, không phải lỗi app.
 
 ## Test
 
@@ -59,11 +66,9 @@ $env:PORT=3458; npm.cmd run dev
 npm run test:stadium
 ```
 
-Trong Codex sandbox, Playwright co the bi Windows chan khi mo Chromium voi loi `spawn EPERM`. Khi do chay lai lenh test voi quyen ngoai sandbox/approval; day la gioi han moi truong, khong phai loi app.
+## Ghi Chú Cho Codex Agent
 
-## Ghi chu cho Codex agent
-
-Nguoi dung chay website bang `npm run dev`. Cac lenh duoi day chi la tien ich phu khi agent can bat server nen hoac kiem tra moi truong:
+Người dùng chạy website bằng `npm run dev`. Các lệnh dưới đây chỉ là tiện ích phụ khi agent cần bật server nền hoặc kiểm tra môi trường:
 
 ```powershell
 npm.cmd run dev:start
@@ -71,7 +76,7 @@ npm.cmd run dev:check
 npm.cmd run dev:stop
 ```
 
-Khong dung cac lenh phu nay thay cho huong dan chay website thong thuong.
+Không dùng các lệnh phụ này thay cho hướng dẫn chạy website thông thường.
 
 ## Export Excel
 
@@ -79,7 +84,7 @@ Khong dung cac lenh phu nay thay cho huong dan chay website thong thuong.
 npm run export:ke-hoach
 ```
 
-## Ghi chu
+## Ghi Chú
 
-- Dependency duoc quan ly bang `package.json` va `package-lock.json`.
-- Khong commit `node_modules`, report test, log, file Excel export hoac artifact sinh tu kiem thu.
+- Dependency được quản lý bằng `package.json` và `package-lock.json`.
+- Không commit `node_modules`, report test, log, file Excel export hoặc artifact sinh từ kiểm thử.

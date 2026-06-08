@@ -161,6 +161,86 @@ const patrolActionConfigs = [
   },
 ];
 
+const traffic24Labels = ['16h', '18h', '20h', '22h'];
+
+const traffic24DefaultState = {
+  status: 'P4 / Cổng B tải cao',
+  kpis: [
+    { label: 'Xe/h', value: '420', tone: 'warn' },
+    { label: 'Ùn', value: '2', tone: 'hot' },
+    { label: 'Shuttle', value: '18/20', tone: 'ok' },
+    { label: 'Ra TB', value: '18 ph', tone: 'ok' },
+  ],
+  routes: [
+    { label: 'Cổng B', value: '46 xe/ph', pct: 78, tone: 'warn' },
+    { label: 'Bãi P4', value: '58 xe/ph', pct: 92, tone: 'hot' },
+    { label: 'P3 dự phòng', value: '21 xe/ph', pct: 34, tone: 'ok' },
+  ],
+  chart: [0.15, 0.22, 0.38, 0.62, 0.88, 0.95, 0.82, 0.68, 0.55, 0.42, 0.28, 0.18],
+};
+
+const traffic24CommandConfigs = [
+  {
+    label: 'P3',
+    status: 'Đã mở P3, P4 giảm tải',
+    kpis: [
+      { label: 'Xe/h', value: '380', tone: 'ok' },
+      { label: 'Ùn', value: '1', tone: 'warn' },
+      { label: 'Shuttle', value: '18/20', tone: 'ok' },
+      { label: 'Ra TB', value: '15 ph', tone: 'ok' },
+    ],
+    routes: [
+      { label: 'Cổng B', value: '39 xe/ph', pct: 64, tone: 'warn' },
+      { label: 'Bãi P4', value: '44 xe/ph', pct: 70, tone: 'warn' },
+      { label: 'P3 nhận luồng', value: '36 xe/ph', pct: 58, tone: 'ok' },
+    ],
+    chart: [0.14, 0.2, 0.31, 0.48, 0.66, 0.72, 0.64, 0.52, 0.42, 0.33, 0.23, 0.16],
+  },
+  {
+    label: 'Bus',
+    status: 'Shuttle Bắc đang kéo tải',
+    kpis: [
+      { label: 'Xe/h', value: '365', tone: 'ok' },
+      { label: 'Ùn', value: '1', tone: 'warn' },
+      { label: 'Shuttle', value: '20/20', tone: 'ok' },
+      { label: 'Ra TB', value: '14 ph', tone: 'ok' },
+    ],
+    routes: [
+      { label: 'Cổng B', value: '34 xe/ph', pct: 56, tone: 'ok' },
+      { label: 'Bãi P4', value: '42 xe/ph', pct: 66, tone: 'warn' },
+      { label: 'Trục Bus Bắc', value: '28 chuyến', pct: 78, tone: 'ok' },
+    ],
+    chart: [0.12, 0.17, 0.25, 0.42, 0.58, 0.66, 0.59, 0.47, 0.36, 0.26, 0.18, 0.12],
+  },
+  {
+    label: 'LED',
+    status: 'LED đã hướng luồng P3/P4',
+    kpis: [
+      { label: 'Xe/h', value: '390', tone: 'ok' },
+      { label: 'Ùn', value: '1', tone: 'warn' },
+      { label: 'Shuttle', value: '18/20', tone: 'ok' },
+      { label: 'Ra TB', value: '16 ph', tone: 'ok' },
+    ],
+    routes: [
+      { label: 'Cổng B', value: '38 xe/ph', pct: 62, tone: 'warn' },
+      { label: 'Bãi P4', value: '46 xe/ph', pct: 74, tone: 'warn' },
+      { label: 'P3 theo LED', value: '31 xe/ph', pct: 52, tone: 'ok' },
+    ],
+    chart: [0.13, 0.19, 0.29, 0.5, 0.7, 0.78, 0.68, 0.55, 0.44, 0.34, 0.24, 0.15],
+  },
+];
+
+const traffic24IncidentConfig = {
+  icon: 'ti-traffic-lights',
+  tag: 'GIAO THÔNG 24H',
+  title: 'P4 / Cổng B tải cao',
+  summary: 'Bãi P4 và cổng B đang chịu tải cao sau nhịp vào sân, cần phân luồng sang P3, kéo shuttle Bắc và cập nhật LED chỉ hướng.',
+  route: ['Cổng B', 'Bãi P4', 'P3 dự phòng'],
+  stats: [['Xe/h', '420'], ['Ùn', '2 điểm'], ['Ra TB', '18 ph']],
+  steps: ['Mở nhánh nhận luồng P3', 'Đẩy shuttle qua trục Bắc', 'Cập nhật LED hướng xe về P3/P4'],
+  status: 'Đề xuất kích hoạt lệnh P3, Bus hoặc LED theo tình hình thực địa.',
+};
+
 function aquaBarChart(bars) {
   const max = Math.max(...bars.map((b) => b.value));
   const cols = bars.map((b, i) => {
@@ -463,6 +543,43 @@ function applySecurityPatrolAction(actionIndex) {
   return action.done;
 }
 
+function securityTrafficIncidentModal() {
+  return `<div class="event-action-modal security-traffic-modal" data-security-traffic-modal hidden>
+    <div class="event-action-modal__panel security-zone-modal__panel" role="dialog" aria-modal="true" aria-label="Điều phối giao thông 24h">
+      <button type="button" class="event-action-modal__close" data-security-traffic-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="event-action-modal__head">
+        <span class="event-action-modal__icon"><i class="ti ${traffic24IncidentConfig.icon}"></i></span>
+        <div><small>${traffic24IncidentConfig.tag}</small><h3>${traffic24IncidentConfig.title}</h3></div>
+      </div>
+      <p>${traffic24IncidentConfig.summary}</p>
+      <div class="fac-action-modal__route">
+        ${traffic24IncidentConfig.route.map((item, index) => `${index ? '<i></i>' : ''}<span>${item}</span>`).join('')}
+      </div>
+      <div class="fac-action-modal__stats">
+        ${traffic24IncidentConfig.stats.map(([label, value]) => `<span><b>${value}</b><em>${label}</em></span>`).join('')}
+      </div>
+      <div class="event-action-modal__steps">
+        ${traffic24IncidentConfig.steps.map((step, index) => `<span><b>0${index + 1}</b>${step}</span>`).join('')}
+      </div>
+      <div class="event-action-modal__status"><i class="ti ti-broadcast"></i><span>${traffic24IncidentConfig.status}</span></div>
+    </div>
+  </div>`;
+}
+
+function getSecurityTrafficModal(root) {
+  const modal = root.querySelector('[data-security-traffic-modal]') || document.querySelector('[data-security-traffic-modal]');
+  if (!modal) return null;
+  const bodyModal = document.body.querySelector('[data-security-traffic-modal]');
+  if (bodyModal && bodyModal !== modal) bodyModal.remove();
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
+  return modal;
+}
+
+function openSecurityTrafficModal(root) {
+  const modal = getSecurityTrafficModal(root);
+  if (modal) modal.hidden = false;
+}
+
 function statTiles(stats) {
   return `<div class="hud-energy-grid">${stats.map((s) =>
     `<div class="hud-energy-cell" title="${s.label}: ${s.value}">
@@ -472,42 +589,66 @@ function statTiles(stats) {
   ).join('')}</div>`;
 }
 
-function traffic24hPanel(traffic) {
-  const kpis = [
-    { label: 'Xe/h', value: '420', tone: 'warn' },
-    { label: 'Ùn', value: '2', tone: 'hot' },
-    { label: 'Shuttle', value: '18/20', tone: 'ok' },
-    { label: 'Ra TB', value: '18 ph', tone: 'ok' },
-  ];
-  const routes = [
-    { label: 'Cổng B', value: '46 xe/ph', pct: 78, tone: 'warn' },
-    { label: 'Bãi P4', value: '58 xe/ph', pct: 92, tone: 'hot' },
-    { label: 'P3 dự phòng', value: '21 xe/ph', pct: 34, tone: 'ok' },
-  ];
-  const labels = ['16h', '18h', '20h', '22h'];
+function traffic24hPanel() {
   return `<div class="traffic24-panel">
-    <div class="traffic24-status">
+    <button type="button" class="traffic24-status" data-security-traffic-incident>
       <i class="ti ti-traffic-lights"></i>
-      <span>P4 / Cổng B tải cao</span>
-    </div>
+      <span data-security-traffic-status>${traffic24DefaultState.status}</span>
+    </button>
     <div class="traffic24-kpis">
-      ${kpis.map((item) => `<span class="traffic24-kpi traffic24-kpi--${item.tone}">
+      ${traffic24DefaultState.kpis.map((item) => `<span class="traffic24-kpi traffic24-kpi--${item.tone}" data-security-traffic-kpi>
         <b>${item.value}</b><em>${item.label}</em>
       </span>`).join('')}
     </div>
     <div class="traffic24-routes">
-      ${routes.map((route) => `<span class="traffic24-route traffic24-route--${route.tone}">
+      ${traffic24DefaultState.routes.map((route) => `<span class="traffic24-route traffic24-route--${route.tone}" data-security-traffic-route>
         <b>${route.label}</b><i><em style="width:${route.pct}%"></em></i><strong>${route.value}</strong>
       </span>`).join('')}
     </div>
     <div class="traffic24-actions">
-      <span>Lệnh</span><b>P3</b><b>Bus</b><b>LED</b>
+      <span>Lệnh</span>${traffic24CommandConfigs.map((action, index) =>
+        `<button type="button" data-security-traffic-command="${index}">${action.label}</button>`,
+      ).join('')}
     </div>
-    <div class="traffic24-chart">
-      ${areaChartSvg(traffic.chart, 'secExtGrad')}
-      <div class="traffic24-chart__axis">${labels.map((label) => `<span>${label}</span>`).join('')}</div>
+    <div class="traffic24-chart" data-security-traffic-chart>
+      ${areaChartSvg(traffic24DefaultState.chart, 'secExtGrad')}
+      <div class="traffic24-chart__axis">${traffic24Labels.map((label) => `<span>${label}</span>`).join('')}</div>
     </div>
   </div>`;
+}
+
+function renderTraffic24Chart(chart) {
+  return `${areaChartSvg(chart, 'secExtGrad')}
+    <div class="traffic24-chart__axis">${traffic24Labels.map((label) => `<span>${label}</span>`).join('')}</div>`;
+}
+
+function applyTraffic24Command(root, actionIndex) {
+  const panel = root.querySelector('.traffic24-panel');
+  const action = traffic24CommandConfigs[actionIndex] || traffic24CommandConfigs[0];
+  const statusEl = panel?.querySelector('[data-security-traffic-status]');
+  const kpiEls = [...(panel?.querySelectorAll('[data-security-traffic-kpi]') || [])];
+  const routeEls = [...(panel?.querySelectorAll('[data-security-traffic-route]') || [])];
+  const chartEl = panel?.querySelector('[data-security-traffic-chart]');
+  if (statusEl) statusEl.textContent = action.status;
+  kpiEls.forEach((el, index) => {
+    const item = action.kpis[index];
+    if (!item) return;
+    el.className = `traffic24-kpi traffic24-kpi--${item.tone}`;
+    el.querySelector('b').textContent = item.value;
+    el.querySelector('em').textContent = item.label;
+  });
+  routeEls.forEach((el, index) => {
+    const route = action.routes[index];
+    if (!route) return;
+    el.className = `traffic24-route traffic24-route--${route.tone}`;
+    el.querySelector('b').textContent = route.label;
+    el.querySelector('em').style.width = `${route.pct}%`;
+    el.querySelector('strong').textContent = route.value;
+  });
+  if (chartEl) chartEl.innerHTML = renderTraffic24Chart(action.chart);
+  panel?.querySelectorAll('[data-security-traffic-command]').forEach((button) => {
+    button.classList.toggle('traffic24-command--active', Number(button.dataset.securityTrafficCommand || 0) === actionIndex);
+  });
 }
 
 function fifaSafetyMatrix() {
@@ -593,7 +734,8 @@ export function renderSecurityExteriorRight(d) {
     <section class="hud-block hud-block--grow hud-block--traffic-24h">${hudHead(d.traffic.title)}
       ${traffic24hPanel(d.traffic)}
     </section>
-    ${securityPatrolActionModal()}`;
+    ${securityPatrolActionModal()}
+    ${securityTrafficIncidentModal()}`;
 }
 
 export function bindSecurityHudTabs(root, data) {
@@ -648,6 +790,18 @@ export function bindSecurityExteriorHudTabs(root, data) {
       openSecurityPatrolModal(root, patrolActionConfigs[actionIndex], actionIndex);
     });
   });
+
+  root.querySelector('[data-security-traffic-incident]')?.addEventListener('click', () => {
+    openSecurityTrafficModal(root);
+  });
+
+  root.querySelectorAll('[data-security-traffic-command]').forEach((button) => {
+    if (button.dataset.securityTrafficBound === 'true') return;
+    button.dataset.securityTrafficBound = 'true';
+    button.addEventListener('click', () => {
+      applyTraffic24Command(root, Number(button.dataset.securityTrafficCommand || 0));
+    });
+  });
 }
 
 function handleSecurityZoneDelegation(event) {
@@ -689,6 +843,14 @@ document.addEventListener('click', (event) => {
     }
   }
 
+  const activeTrafficModal = document.querySelector('[data-security-traffic-modal]:not([hidden])');
+  if (activeTrafficModal) {
+    if (event.target.closest('[data-security-traffic-close]') || event.target === activeTrafficModal) {
+      activeTrafficModal.hidden = true;
+      return;
+    }
+  }
+
   const activeModal = document.querySelector('[data-security-zone-modal]:not([hidden])');
   if (!activeModal) return;
   if (event.target.closest('[data-security-zone-close]') || event.target === activeModal) {
@@ -705,6 +867,8 @@ document.addEventListener('keydown', (event) => {
   if (event.key !== 'Escape') return;
   const activePatrolModal = document.querySelector('[data-security-patrol-modal]:not([hidden])');
   if (activePatrolModal) activePatrolModal.hidden = true;
+  const activeTrafficModal = document.querySelector('[data-security-traffic-modal]:not([hidden])');
+  if (activeTrafficModal) activeTrafficModal.hidden = true;
   const activeModal = document.querySelector('[data-security-zone-modal]:not([hidden])');
   if (activeModal) activeModal.hidden = true;
 });

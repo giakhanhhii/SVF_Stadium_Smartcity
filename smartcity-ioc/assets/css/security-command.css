@@ -2627,9 +2627,21 @@
 }
 
 .page-view--stadium-cmd .security-sidebar {
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
   gap: 8px;
   padding: 8px 6px;
   container-type: inline-size;
+}
+
+.page-view--stadium-cmd .security-sidebar * {
+  pointer-events: auto;
+}
+
+.page-view--stadium-cmd .security-center {
+  position: relative;
+  z-index: 1;
 }
 
 .page-view--stadium-cmd .sidebar-hud {

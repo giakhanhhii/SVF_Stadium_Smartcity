@@ -1,7 +1,7 @@
 import { hudHead, areaChartSvg, renderAlerts, camThumb } from './hud-charts.js';
 import { distributionChart, distributionMinis, distributionStack, radial3dChart } from './radial3d-chart.js';
 import {
-  renderDispatchPanel, renderDispatchDialog, MEDICAL_DISPATCH, SECURITY_DISPATCH,
+  renderDispatchPanel, renderDispatchDialog, MEDICAL_DISPATCH, SECURITY_DISPATCH, openDispatchDialog,
 } from './emergency-dispatch.js';
 
 function eventRadarChart(values, labels) {
@@ -387,6 +387,13 @@ function fireSensorTrendPanel() {
       <span>${b.label}</span><div class="event-fire-bar__track"><i style="height:${b.value}%"></i></div><b>${b.value}%</b>
     </div>`,
   ).join('')}</div>
+    <div class="event-fire-auto">
+      <button type="button" class="event-fire-auto__button" data-fire-auto-chain aria-label="Kích hoạt dây chuyền chống cháy">
+        <i class="ti ti-shield-bolt"></i>
+        <span>Auto PCCC</span>
+      </button>
+      <p data-fire-auto-status>Kích hoạt dây chuyền chống cháy</p>
+    </div>
     <div class="event-risk__actions">
       <button type="button" class="event-risk__btn" data-dispatch-open="medical" data-dispatch-type-preset="fire">
         <i class="ti ti-flame"></i><span>Báo cháy</span>
@@ -576,8 +583,7 @@ function fireRiskPanel() {
     const cls = hot ? 'hot' : warn ? 'warn' : 'ok';
     const zone = fireZoneCells[i];
     if (zone) {
-      const active = zone.id === 'fb' ? ' event-fire-cell--active' : '';
-      return `<button type="button" class="event-fire-cell event-fire-cell--${cls}${active}" data-fire-zone="${zone.id}" aria-label="${zone.label}">
+      return `<button type="button" class="event-fire-cell event-fire-cell--${cls}" data-fire-zone="${zone.id}" aria-label="${zone.label}">
         <span>${zone.label}</span>
       </button>`;
     }
@@ -603,21 +609,10 @@ function fireRiskPanel() {
       <div class="event-fire-matrix">${cells}</div>
     </div>
     <div class="event-fire-sensors">${sensors.map((s) =>
-    `<button type="button" class="event-fire-sensor event-fire-sensor--${s.tone}${s.id === 'fb' ? ' event-fire-sensor--active' : ''}" data-fire-zone="${s.id}">
+    `<button type="button" class="event-fire-sensor event-fire-sensor--${s.tone}" data-fire-zone="${s.id}">
       <span>${s.sensor}</span><b>${s.temp}</b><em>${s.smoke}</em>
     </button>`,
   ).join('')}</div>
-    <div class="event-risk__actions">
-      <button type="button" class="event-risk__btn event-risk__btn--hot" data-fire-primary-action data-dispatch-open="medical" data-dispatch-type-preset="fire">
-        <i class="ti ti-flame" data-fire-primary-icon></i><span data-fire-primary-label>Gọi cứu hỏa</span>
-      </button>
-      <button type="button" class="event-risk__btn" data-fire-action="power-zone-b">
-        <i class="ti ti-power"></i><span data-fire-power-label>Cắt điện khu B</span>
-      </button>
-      <button type="button" class="event-risk__btn" data-fire-action="smoke">
-        <i class="ti ti-wind"></i><span data-fire-vent-label>Mở hút khói</span>
-      </button>
-    </div>
   </section>`;
 }
 
@@ -884,10 +879,14 @@ export function bindEventsHudTabs(root, data) {
     fireCard.querySelector('[data-fire-core-icon]').className = `ti ${zone.icon}`;
     fireCard.querySelector('[data-fire-core-title]').textContent = zone.label;
     fireCard.querySelector('[data-fire-core-status]').textContent = zone.status;
-    fireCard.querySelector('[data-fire-primary-icon]').className = `ti ${zone.icon}`;
-    fireCard.querySelector('[data-fire-primary-label]').textContent = zone.primary;
-    fireCard.querySelector('[data-fire-power-label]').textContent = zone.power;
-    fireCard.querySelector('[data-fire-vent-label]').textContent = zone.ventilation;
+    const primaryIcon = fireCard.querySelector('[data-fire-primary-icon]');
+    if (primaryIcon) primaryIcon.className = `ti ${zone.icon}`;
+    const primaryLabel = fireCard.querySelector('[data-fire-primary-label]');
+    if (primaryLabel) primaryLabel.textContent = zone.primary;
+    const powerLabel = fireCard.querySelector('[data-fire-power-label]');
+    if (powerLabel) powerLabel.textContent = zone.power;
+    const ventLabel = fireCard.querySelector('[data-fire-vent-label]');
+    if (ventLabel) ventLabel.textContent = zone.ventilation;
     fireCard.querySelectorAll('[data-fire-zone]').forEach((node) => {
       const active = node.dataset.fireZone === zoneId;
       if (node.classList.contains('event-fire-cell')) node.classList.toggle('event-fire-cell--active', active);
@@ -895,8 +894,6 @@ export function bindEventsHudTabs(root, data) {
       node.setAttribute('aria-pressed', String(active));
     });
   };
-
-  selectFireZone('fb');
 
   const fillAction = (action, actionKey = 'densityTeam') => {
     if (!modal || !action) return;
@@ -982,15 +979,18 @@ export function bindEventsHudTabs(root, data) {
     if (smokeTimer) clearInterval(smokeTimer);
     setSmokePct(0);
     fireSystemController.emit('smoke-extract-start', { zone: 'F&B B' });
-    smokeTimer = setInterval(() => {
-      const next = fireSystemController.smokePct + 4 + Math.random() * 7;
-      setSmokePct(next);
-      if (fireSystemController.smokePct >= 100) {
-        clearInterval(smokeTimer);
-        smokeTimer = null;
-        fireSystemController.emit('smoke-extract-complete', { zone: 'F&B B' });
-      }
-    }, 220);
+    return new Promise((resolve) => {
+      smokeTimer = setInterval(() => {
+        const next = fireSystemController.smokePct + 4 + Math.random() * 7;
+        setSmokePct(next);
+        if (fireSystemController.smokePct >= 100) {
+          clearInterval(smokeTimer);
+          smokeTimer = null;
+          fireSystemController.emit('smoke-extract-complete', { zone: 'F&B B' });
+          resolve();
+        }
+      }, 220);
+    });
   };
 
   const renderPowerZones = () => {
@@ -1031,7 +1031,8 @@ export function bindEventsHudTabs(root, data) {
     const status = powerModal.querySelector('[data-power-status]');
     const confirm = powerModal.querySelector('[data-power-confirm]');
     confirm.hidden = true;
-    if (!zoneName) {
+    return new Promise((resolve) => {
+      if (!zoneName) {
       if (status) status.textContent = turnOn ? 'Đang mở điện từng khu...' : 'Đang cắt điện từng khu...';
       fireSystemController.emit(turnOn ? 'power-restore-start' : 'power-cut-start', {
         zones: fireSystemController.powerZones.map((z) => z.name),
@@ -1057,37 +1058,86 @@ export function bindEventsHudTabs(root, data) {
           fireSystemController.emit(turnOn ? 'power-restore-complete' : 'power-cut-complete', {
             zones: fireSystemController.powerZones.map((z) => ({ ...z })),
           });
+          resolve();
         }
       }, 260);
       return;
-    }
+      }
 
-    const zone = fireSystemController.powerZones.find((item) => item.name === zoneName);
-    if (!zone) {
-      if (status) status.textContent = 'Vui lòng chọn một khu vực trước khi xác nhận.';
-      return;
-    }
-    const zoneNode = [...powerModal.querySelectorAll('[data-power-zone]')]
-      .find((node) => node.dataset.powerZone === zoneName);
-    if (status) status.textContent = turnOn ? `Đang mở điện lại ${zoneName}...` : `Đang cắt điện ${zoneName}...`;
-    fireSystemController.emit(turnOn ? 'power-restore-start' : 'power-cut-start', { zones: [zoneName] });
-    zone.on = turnOn;
-    fireSystemController.powerOn = fireSystemController.powerZones.some((item) => item.on);
-    renderPowerZones();
-    zoneNode?.classList.toggle('event-power-zone--on', turnOn);
-    zoneNode?.classList.toggle('event-power-zone--off', !turnOn);
-    powerTimer = setTimeout(() => {
-      powerTimer = null;
-      if (status) status.textContent = turnOn
-        ? `Đã mở điện lại ${zoneName}.`
-        : `Đã cắt điện ${zoneName}. Các khu vực khác vẫn giữ trạng thái hiện tại.`;
-      fireSystemController.emit(turnOn ? 'power-restore-complete' : 'power-cut-complete', {
-        zones: [{ ...zone }],
-      });
-    }, 420);
+      const zone = fireSystemController.powerZones.find((item) => item.name === zoneName);
+      if (!zone) {
+        if (status) status.textContent = 'Vui lòng chọn một khu vực trước khi xác nhận.';
+        resolve();
+        return;
+      }
+      const zoneNode = [...powerModal.querySelectorAll('[data-power-zone]')]
+        .find((node) => node.dataset.powerZone === zoneName);
+      if (status) status.textContent = turnOn ? `Đang mở điện lại ${zoneName}...` : `Đang cắt điện ${zoneName}...`;
+      fireSystemController.emit(turnOn ? 'power-restore-start' : 'power-cut-start', { zones: [zoneName] });
+      zone.on = turnOn;
+      fireSystemController.powerOn = fireSystemController.powerZones.some((item) => item.on);
+      renderPowerZones();
+      zoneNode?.classList.toggle('event-power-zone--on', turnOn);
+      zoneNode?.classList.toggle('event-power-zone--off', !turnOn);
+      powerTimer = setTimeout(() => {
+        powerTimer = null;
+        if (status) status.textContent = turnOn
+          ? `Đã mở điện lại ${zoneName}.`
+          : `Đã cắt điện ${zoneName}. Các khu vực khác vẫn giữ trạng thái hiện tại.`;
+        fireSystemController.emit(turnOn ? 'power-restore-complete' : 'power-cut-complete', {
+          zones: [{ ...zone }],
+        });
+        resolve();
+      }, 420);
+    });
+  };
+
+  const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+  const startFireAutoChain = async (button) => {
+    if (!button || button.dataset.running === 'true') return;
+    const status = root.querySelector('[data-fire-auto-status]');
+    button.dataset.running = 'true';
+    button.disabled = true;
+    button.classList.add('event-fire-auto__button--running');
+    if (status) status.textContent = '01 · Đang tự động cắt điện toàn bộ SVĐ';
+    preparePowerConfirm({ turnOn: false, showConfirm: false });
+    await runPowerSequence(false);
+    await sleep(450);
+    if (powerModal) powerModal.hidden = true;
+
+    if (status) status.textContent = '02 · Đang mở hút khói khu nguy cơ';
+    await startSmokeExtraction();
+    await sleep(450);
+    if (smokeModal) smokeModal.hidden = true;
+
+    if (status) status.textContent = '03 · Đang gọi cứu hỏa / sơ tán';
+    openDispatchDialog('medical', {
+      type: 'fire',
+      note: 'Auto PCCC: đã cắt điện toàn bộ SVĐ, đã hút khói khu nguy cơ, yêu cầu cứu hỏa / sơ tán xác nhận tiếp nhận.',
+      titleSuffix: 'cứu hỏa / sơ tán',
+    });
+    await sleep(120);
+    const fireDialog = document.querySelector('[data-dispatch-dialog="medical"]:not([hidden])');
+    fireDialog?.querySelector('[data-dispatch-call]')?.dispatchEvent(new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+    }));
+    if (status) status.textContent = 'Đã gọi cứu hỏa / sơ tán. Bấm Kết thúc & gửi yêu cầu trong form.';
+    button.classList.remove('event-fire-auto__button--running');
+    button.classList.add('event-fire-auto__button--done');
+    button.disabled = false;
+    button.dataset.running = 'false';
   };
 
   root.addEventListener('click', (event) => {
+    const autoBtn = event.target.closest('[data-fire-auto-chain]');
+    if (autoBtn) {
+      startFireAutoChain(autoBtn);
+      return;
+    }
+
     const fireBtn = event.target.closest('[data-fire-action]');
     if (!fireBtn) return;
     if (fireBtn.dataset.fireAction === 'smoke') startSmokeExtraction();

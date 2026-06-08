@@ -2629,6 +2629,8 @@
 .page-view--stadium-cmd .security-sidebar {
   position: relative;
   z-index: 3;
+  width: 100%;
+  max-width: none;
   pointer-events: auto;
   gap: 8px;
   padding: 8px 6px;

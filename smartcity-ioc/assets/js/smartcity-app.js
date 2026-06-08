@@ -4,14 +4,16 @@ import { hydrateAllPages } from './pages/smartcity-page-hydration.js';
 import { initPageCharts } from './charts/smartcity-chart-registry.js';
 import { initPageScenes } from './scene/smartcity-scene-registry.js';
 import { mountSmartcitySideNav } from './render/smartcity-side-nav.js';
-import { initSidebarResize } from '../../../stadium-ioc/assets/js/render/sidebar-resize.js';
-import { initHudBlockDrag } from '../../../stadium-ioc/assets/js/render/hud-block-drag.js';
+import { initSidebarResize } from '../../../shared-ioc/assets/js/render/sidebar-resize.js';
+import { initHudBlockDrag } from '../../../shared-ioc/assets/js/render/hud-block-drag.js';
+
+const SMARTCITY_INTERACTION_SCOPE = { storageNamespace: 'smartcity' };
 
 function onNavigate(pageId) {
   initPageCharts(pageId);
   initPageScenes(pageId);
-  initSidebarResize(pageId);
-  initHudBlockDrag(document.getElementById(`page-${pageId}`) || document);
+  initSidebarResize(pageId, SMARTCITY_INTERACTION_SCOPE);
+  initHudBlockDrag(document.getElementById(`page-${pageId}`) || document, SMARTCITY_INTERACTION_SCOPE);
 }
 
 createApp({

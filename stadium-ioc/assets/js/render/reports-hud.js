@@ -1,15 +1,33 @@
 import { hudHead } from './hud-charts.js';
 import { addOperationalReport, updateOperationalReport } from '../data/stadium-report-store.js';
 
+function reportPhase(item) {
+  if (item.resolved) return 'resolved';
+  if (/đang/i.test(item.status || '')) return 'processing';
+  return 'open';
+}
+
+function reportTone(item) {
+  const phase = reportPhase(item);
+  if (phase === 'resolved') return 'ok';
+  if (phase === 'processing') return 'warn';
+  return 'danger';
+}
+
+function displayReport(item) {
+  return { ...item, tone: reportTone(item) };
+}
+
 function historyItem(item, compact = false) {
+  const display = displayReport(item);
   return `
-    <div class="report-history__item report-history__item--${item.tone}">
+    <div class="report-history__item report-history__item--${display.tone}">
       <div>
-        <strong>${item.id}</strong>
-        <span>${item.title}</span>
+        <strong>${display.id}</strong>
+        <span>${display.title}</span>
       </div>
-      <em>${item.time}</em>
-      <b>${item.status}${item.source ? ` · ${item.source}` : ''}</b>
+      <em>${display.time}</em>
+      <b>${display.status}${display.source ? ` · ${display.source}` : ''}</b>
       ${compact ? '' : '<small>Nạp từ lịch sử báo cáo vận hành VOC</small>'}
     </div>
   `;
@@ -61,26 +79,27 @@ const reportCaseUi = {
 };
 
 function reportHistoryCase(item) {
-  const action = item.resolved
+  const display = displayReport(item);
+  const action = display.resolved
     ? '<span class="report-case__closed"><i class="ti ti-check"></i>Đã đóng</span>'
-    : `<button type="button" class="report-case__resolve" data-report-resolve="${item.id}">
+    : `<button type="button" class="report-case__resolve" data-report-resolve="${display.id}">
         <i class="ti ti-tool"></i><span>Giải quyết</span>
       </button>`;
-  const escalation = !item.resolved && item.attempts >= 2
-    ? `<button type="button" class="report-case__escalate" data-report-escalate="${item.id}">
+  const escalation = !display.resolved && display.attempts >= 2
+    ? `<button type="button" class="report-case__escalate" data-report-escalate="${display.id}">
         <i class="ti ti-message-report"></i><span>Khiếu nại phụ trách</span>
       </button>`
     : '';
-  return `<article class="report-case report-case--${item.tone}" data-report-case="${item.id}" data-report-resolved="${item.resolved ? 'true' : 'false'}">
+  return `<article class="report-case report-case--${display.tone}" data-report-case="${display.id}" data-report-resolved="${display.resolved ? 'true' : 'false'}">
     <div class="report-case__main">
-      <small>${item.id} · ${item.time}</small>
-      <strong>${item.title}</strong>
-      <p>${item.summary}</p>
+      <small>${display.id} · ${display.time}</small>
+      <strong>${display.title}</strong>
+      <p>${display.summary}</p>
     </div>
     <div class="report-case__meta">
-      <span class="report-case__attempt">Lần ${item.attempts}</span>
-      <span>${item.owner}</span>
-      <b>${item.status}</b>
+      <span class="report-case__attempt">Lần ${display.attempts}</span>
+      <span>${display.owner}</span>
+      <b>${display.status}</b>
     </div>
     <div class="report-case__actions">
       ${action}
@@ -92,8 +111,10 @@ function reportHistoryCase(item) {
 
 function reportCaseList(items = [], filter = 'all') {
   const filtered = items.filter((item) => {
-    if (filter === 'open') return !item.resolved;
-    if (filter === 'resolved') return item.resolved;
+    const phase = reportPhase(item);
+    if (filter === 'open') return phase === 'open';
+    if (filter === 'processing') return phase === 'processing';
+    if (filter === 'resolved') return phase === 'resolved';
     return true;
   });
   if (!filtered.length) return '<div class="report-history-modal__empty">Không có báo cáo trong nhóm này.</div>';
@@ -144,7 +165,7 @@ function reportSummaryViz(reportCases = []) {
 
 function reportTimeline(items = []) {
   return `<div class="report-timeline">${items.map((item) => `
-    <button type="button" class="report-timeline__node report-timeline__node--${item.tone}" title="${item.title}">
+    <button type="button" class="report-timeline__node report-timeline__node--${reportTone(item)}" title="${item.title}">
       <i></i><strong>${item.time}</strong><span>${item.id.replace('BC-2405-', '#')}</span><b>${item.status}</b>
     </button>
   `).join('')}</div>`;
@@ -392,9 +413,10 @@ function focusMap() {
 }
 
 export function renderReportsLeft(d) {
-  const reportCases = d.reportCases || [];
-  const resolvedCount = reportCases.filter((item) => item.resolved).length;
-  const openCount = reportCases.length - resolvedCount;
+  const reportCases = (d.reportCases || []).map(displayReport);
+  const resolvedCount = reportCases.filter((item) => reportPhase(item) === 'resolved').length;
+  const processingCount = reportCases.filter((item) => reportPhase(item) === 'processing').length;
+  const openCount = reportCases.filter((item) => reportPhase(item) === 'open').length;
   const allCount = reportCases.length;
 
   return `
@@ -402,7 +424,7 @@ export function renderReportsLeft(d) {
       ${reportSummaryViz(reportCases)}
     </section>
     <section class="hud-block report-history">${hudHead('Dòng báo cáo đã gửi')}
-      ${reportTimeline(d.history)}
+      ${reportTimeline(reportCases.slice(0, 5))}
       <button type="button" class="report-history__more" data-report-history-open>
         <i class="ti ti-history"></i><span>Xem lịch sử</span>
       </button>
@@ -423,6 +445,7 @@ export function renderReportsLeft(d) {
         <div class="report-history-modal__tabs" data-report-history-tabs>
           <button type="button" class="hud-tab hud-tab--active" data-report-history-tab="all">Tất cả <b>${allCount}</b></button>
           <button type="button" class="hud-tab" data-report-history-tab="open">Chưa giải quyết <b>${openCount}</b></button>
+          <button type="button" class="hud-tab" data-report-history-tab="processing">Đang giải quyết <b>${processingCount}</b></button>
           <button type="button" class="hud-tab" data-report-history-tab="resolved">Đã giải quyết <b>${resolvedCount}</b></button>
         </div>
         <div class="report-history-modal__list" data-report-history-panel data-report-cases="${encodeURIComponent(JSON.stringify(reportCases))}">${reportCaseList(reportCases, 'all')}</div>
@@ -597,11 +620,11 @@ export function bindReportsHistory(root) {
       }
       if (resolveButton) {
         resolveButton.disabled = true;
-        resolveButton.querySelector('span').textContent = 'Đang xử lý';
+        resolveButton.querySelector('span').textContent = 'Đang giải quyết';
       }
       resolveModal.querySelector('[data-report-resolve-status]').textContent = 'Đã gửi thao tác xử lý tới bộ phận phụ trách.';
       updateOperationalReport(id, {
-        status: 'Đang xử lý',
+        status: 'Đang giải quyết',
         resolved: false,
         tone: 'warn',
       });

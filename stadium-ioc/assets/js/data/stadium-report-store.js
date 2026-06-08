@@ -32,11 +32,12 @@ function notify() {
   document.dispatchEvent(new CustomEvent(UPDATE_EVENT, { detail: getReportsData() }));
 }
 
-function caseTone(type, resolved, explicitTone) {
-  if (explicitTone) return explicitTone;
+function caseTone(type, resolved, explicitTone, status = '') {
   if (resolved) return 'ok';
+  if (/đang/i.test(status)) return 'warn';
+  if (explicitTone === 'ok') return 'ok';
   if (type === 'fire' || type === 'fire-risk') return 'danger';
-  return 'warn';
+  return 'danger';
 }
 
 function caseType(type = '') {
@@ -73,13 +74,14 @@ function normalizeCase(payload = {}) {
   const now = new Date();
   const resolved = Boolean(payload.resolved);
   const type = caseType(payload.type || payload.tag || payload.title);
+  const status = payload.status || (resolved ? 'Đã xử lý' : 'Chưa giải quyết');
   return {
     id: payload.id || createCaseId(now),
     title: payload.title || 'Thao tác vận hành sân vận động',
     time: payload.time || `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
-    status: payload.status || (resolved ? 'Đã xử lý' : 'Chưa giải quyết'),
+    status,
     resolved,
-    tone: caseTone(type, resolved, payload.tone),
+    tone: caseTone(type, resolved, payload.tone, status),
     type,
     attempts: payload.attempts || 1,
     owner: payload.owner || 'Trưởng ca vận hành',
@@ -126,10 +128,12 @@ export function updateOperationalReport(id, patch = {}) {
   const normalizedPatch = { ...patch };
   if (normalizedPatch.resolved === true && !normalizedPatch.status) normalizedPatch.status = 'Đã xử lý';
   if (dynamicIndex >= 0) {
+    const nextResolved = normalizedPatch.resolved ?? state.cases[dynamicIndex].resolved;
+    const nextStatus = normalizedPatch.status ?? state.cases[dynamicIndex].status;
     state.cases[dynamicIndex] = {
       ...state.cases[dynamicIndex],
       ...normalizedPatch,
-      tone: normalizedPatch.tone || caseTone(state.cases[dynamicIndex].type, normalizedPatch.resolved ?? state.cases[dynamicIndex].resolved),
+      tone: caseTone(state.cases[dynamicIndex].type, nextResolved, normalizedPatch.tone, nextStatus),
     };
     writeState(state);
     notify();

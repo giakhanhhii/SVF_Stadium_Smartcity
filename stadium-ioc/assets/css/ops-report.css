@@ -5913,7 +5913,7 @@
 
 .report-history-modal__tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -7262,6 +7262,12 @@
   gap: 7px;
 }
 
+#page-reports .report-summary-viz__chips span,
+#page-reports .report-send__summary span,
+#page-reports .report-send-modal__summary span {
+  background: rgba(5, 24, 45, 0.52);
+}
+
 #page-events .event-flow__metric span,
 #page-events .event-flow-card span,
 #page-events .event-risk__kpis em,
@@ -8456,15 +8462,23 @@
 }
 
 #page-facilities .fac-mini {
+  display: grid;
+  align-content: center;
+  justify-items: center;
   min-height: clamp(34px, 12cqi, 38px);
   padding: 6px 5px;
+  text-align: center;
 }
 
 #page-facilities .fac-mini b {
+  width: 100%;
+  text-align: center;
   font-size: clamp(11px, 4cqi, 14px);
 }
 
 #page-facilities .fac-mini em {
+  width: 100%;
+  text-align: center;
   font-size: clamp(7px, 2.7cqi, 10px);
 }
 

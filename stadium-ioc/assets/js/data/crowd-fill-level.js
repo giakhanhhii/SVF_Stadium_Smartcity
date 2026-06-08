@@ -1,4 +1,4 @@
-/** Ngưỡng mật độ: xanh <70%, vàng 70–89%, đỏ ≥90% */
+/** Ngưỡng mật độ: ổn định <70%, cận ngưỡng 70–89%, đỉnh cao ≥90%. */
 export function getCrowdFillLevel(percent) {
   const pct = Math.round(percent);
   if (pct >= 90) {

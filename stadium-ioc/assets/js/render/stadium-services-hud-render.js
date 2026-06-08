@@ -2,6 +2,7 @@ import { hudHead, ringSvg, areaChartSvg } from './hud-charts.js';
 import {
   renderDispatchPanel, renderDispatchDialog, MEDICAL_DISPATCH,
 } from './emergency-dispatch.js';
+import { addOperationalReport } from '../data/stadium-report-store.js';
 
 const serviceActions = {
   nodeP1: {
@@ -250,6 +251,19 @@ function fillServiceModal(root, action) {
     .map((step, index) => `<span><b>0${index + 1}</b>${step}</span>`)
     .join('');
   modal.dataset.doneStatus = action.done;
+  modal.dataset.reportPayload = encodeURIComponent(JSON.stringify({
+    title: action.title,
+    summary: action.summary,
+    steps: action.steps,
+    type: action.tag === 'PCCC' || action.tag === 'SƠ TÁN' ? 'fire'
+      : action.tag === 'Y TẾ' ? 'medical'
+        : action.tag === 'GIAO THÔNG' || action.tag === 'BÃI ĐỖ' ? 'traffic'
+          : 'crowd',
+    tone: action.tag === 'PCCC' || action.tag === 'SƠ TÁN' ? 'danger' : 'warn',
+    owner: action.tag,
+    status: 'Chưa giải quyết',
+  }));
+  delete modal.dataset.reportSent;
   modal.hidden = false;
 }
 
@@ -510,6 +524,19 @@ document.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-service-action-confirm]')) {
     activeModal.querySelector('[data-service-action-status]').textContent = activeModal.dataset.doneStatus;
+    if (activeModal.dataset.reportSent !== 'true') {
+      try {
+        addOperationalReport(JSON.parse(decodeURIComponent(activeModal.dataset.reportPayload || '%7B%7D')));
+      } catch {
+        addOperationalReport({
+          title: 'Kích hoạt thao tác dịch vụ',
+          summary: activeModal.dataset.doneStatus || 'Đã xác nhận thao tác dịch vụ từ VOC.',
+          type: 'crowd',
+          tone: 'warn',
+        });
+      }
+      activeModal.dataset.reportSent = 'true';
+    }
   }
 });
 

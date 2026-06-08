@@ -1,5 +1,6 @@
 import { hudHead, ringSvg } from './hud-charts.js';
 import { setRoofProgress, getRoofProgress } from '../scene/stadium-scene-registry.js';
+import { addOperationalReport } from '../data/stadium-report-store.js';
 
 let roofAnim = null;
 
@@ -212,6 +213,134 @@ const facilityActions = {
     status: 'Chờ xác nhận tạo ticket bảo trì.',
     done: 'Đã tạo ticket bảo trì TM-3, TM-7 và phân công đội kỹ thuật.',
   },
+  envA: {
+    icon: 'ti-temperature',
+    tag: 'KHÁN ĐÀI A',
+    title: 'Môi trường khán đài A',
+    summary: 'Khán đài A đang trong ngưỡng ổn định. Duy trì thông gió hiện tại và theo dõi mật độ khu ghế trong nhịp vào sân.',
+    route: ['Sensor A', 'HVAC-A', 'Khán đài A'],
+    stats: [
+      ['Nhiệt độ', '23°C'],
+      ['Độ ẩm', '58%'],
+      ['CO₂', 'OK'],
+    ],
+    steps: ['Giữ quạt cấp mức 3', 'Theo dõi mật độ khán giả khu A', 'Cập nhật lại sau 5 phút'],
+    primary: 'Theo dõi A',
+    status: 'Chờ xác nhận theo dõi môi trường khán đài A.',
+    done: 'Đã bật theo dõi môi trường khán đài A.',
+  },
+  envB: {
+    icon: 'ti-air-conditioning',
+    tag: 'KHÁN ĐÀI B',
+    title: 'Môi trường khán đài B',
+    summary: 'Khán đài B có nhiệt độ và tải HVAC cao hơn các khu còn lại. Ưu tiên tăng gió cấp và san tải về HVAC-A nếu xu hướng tiếp tục tăng.',
+    route: ['Sensor B', 'HVAC-B', 'Đội kỹ thuật'],
+    stats: [
+      ['Nhiệt độ', '26°C'],
+      ['Tải HVAC', '92%'],
+      ['Ưu tiên', 'Cao'],
+    ],
+    steps: ['Tăng gió cấp khu B', 'Mở thêm damper hồi gió', 'Theo dõi nhiệt độ sau lệnh'],
+    primary: 'Tăng HVAC-B',
+    status: 'Chờ xác nhận điều phối môi trường khán đài B.',
+    done: 'Đã gửi lệnh tăng HVAC-B và bật theo dõi khu B.',
+  },
+  envVip: {
+    icon: 'ti-crown',
+    tag: 'VIP',
+    title: 'Môi trường khu VIP',
+    summary: 'Khu VIP đang ổn định, nguồn và điều hòa nằm trên tuyến ưu tiên. Tiếp tục giữ mức tiện nghi và khóa cảnh báo ngưỡng thấp.',
+    route: ['VIP lounge', 'HVAC VIP', 'Nguồn ưu tiên'],
+    stats: [
+      ['Nhiệt độ', '24°C'],
+      ['Nguồn', 'Ưu tiên'],
+      ['Trạng thái', 'Ready'],
+    ],
+    steps: ['Giữ chế độ tiện nghi VIP', 'Kiểm tra tải nguồn ưu tiên', 'Đồng bộ thông báo cho lễ tân'],
+    primary: 'Giữ chế độ VIP',
+    status: 'Chờ xác nhận chế độ môi trường VIP.',
+    done: 'Đã duy trì chế độ môi trường ưu tiên cho khu VIP.',
+  },
+  envFb: {
+    icon: 'ti-tools-kitchen-2',
+    tag: 'F&B',
+    title: 'Môi trường khu F&B',
+    summary: 'Khu F&B có nhiệt và mật độ phục vụ tăng. Cần ưu tiên hút khói, thông gió và điều phối hàng chờ tại quầy đông.',
+    route: ['F&B B', 'Hút khói', 'Đội dịch vụ'],
+    stats: [
+      ['Nhiệt bếp', 'Cao'],
+      ['Hàng chờ', '6 ph'],
+      ['Khói', 'Theo dõi'],
+    ],
+    steps: ['Tăng hút khói khu bếp', 'Mở thêm cửa gió F&B B', 'Báo đội dịch vụ tách hàng chờ'],
+    primary: 'Tăng thông gió',
+    status: 'Chờ xác nhận điều phối môi trường F&B.',
+    done: 'Đã gửi lệnh tăng thông gió và nhắc đội dịch vụ khu F&B.',
+  },
+  envPitch: {
+    icon: 'ti-grass',
+    tag: 'SÂN CỎ',
+    title: 'Môi trường sân cỏ',
+    summary: 'Sân cỏ đang ở trạng thái ổn định. Duy trì giám sát nhiệt bề mặt, độ ẩm và ánh sáng thi đấu để bảo đảm chất lượng mặt sân.',
+    route: ['Sân cỏ', 'Lux meter', 'Tưới tự động'],
+    stats: [
+      ['Nhiệt độ', '22°C'],
+      ['Độ ẩm', 'OK'],
+      ['Mặt sân', 'Ổn định'],
+    ],
+    steps: ['Giữ chế độ tưới chờ', 'Theo dõi lux mặt sân', 'Cập nhật đội vận hành sân'],
+    primary: 'Theo dõi sân',
+    status: 'Chờ xác nhận theo dõi môi trường sân cỏ.',
+    done: 'Đã bật theo dõi môi trường sân cỏ.',
+  },
+  envLed: {
+    icon: 'ti-device-tv',
+    tag: 'LED',
+    title: 'Môi trường hệ LED',
+    summary: 'Hệ LED đang đồng bộ nội dung. Theo dõi nhiệt tủ LED và trạng thái kết nối để tránh gián đoạn hiển thị trong sân.',
+    route: ['Tủ LED', 'Màn hình', 'VOC media'],
+    stats: [
+      ['Online', '6/6'],
+      ['Nhiệt tủ', '41°C'],
+      ['Tín hiệu', 'Sync'],
+    ],
+    steps: ['Kiểm tra nhiệt tủ LED', 'Đồng bộ nội dung hướng dẫn', 'Báo VOC media khi có lệch tín hiệu'],
+    primary: 'Cập nhật LED',
+    status: 'Chờ xác nhận cập nhật trạng thái LED.',
+    done: 'Đã cập nhật trạng thái LED và bật giám sát tín hiệu.',
+  },
+  envPa: {
+    icon: 'ti-speakerphone',
+    tag: 'PA',
+    title: 'Môi trường hệ PA',
+    summary: 'Hệ PA đang sẵn sàng phát thông báo. Kiểm tra vùng loa, mức âm lượng và kênh dự phòng trước các thông báo đông người.',
+    route: ['VOC media', 'PA zone', 'Khán đài'],
+    stats: [
+      ['Trạng thái', 'Online'],
+      ['Vùng loa', '100%'],
+      ['Dự phòng', 'Ready'],
+    ],
+    steps: ['Test tín hiệu PA zone', 'Giữ âm lượng theo ngưỡng sân', 'Chuẩn bị kịch bản thông báo'],
+    primary: 'Kiểm tra PA',
+    status: 'Chờ xác nhận kiểm tra hệ PA.',
+    done: 'Đã kiểm tra hệ PA và giữ kênh dự phòng sẵn sàng.',
+  },
+  envUps: {
+    icon: 'ti-bolt',
+    tag: 'UPS',
+    title: 'Môi trường nguồn UPS',
+    summary: 'Nguồn UPS còn dư tải tốt cho các node ưu tiên. Tiếp tục theo dõi thời lượng dự phòng và khóa bớt tải phụ nếu xu hướng tăng.',
+    route: ['Lưới', 'UPS/Gen', 'Node ưu tiên'],
+    stats: [
+      ['Tải UPS', '61%'],
+      ['Dự phòng', '38 ph'],
+      ['Rủi ro', 'Thấp'],
+    ],
+    steps: ['Giữ node ưu tiên trên UPS', 'Theo dõi thời lượng dự phòng', 'Sẵn sàng khóa tải phụ'],
+    primary: 'Theo dõi UPS',
+    status: 'Chờ xác nhận theo dõi nguồn UPS.',
+    done: 'Đã bật theo dõi nguồn UPS và giữ cảnh báo tải phụ.',
+  },
 };
 
 function facilityActionModal() {
@@ -308,6 +437,16 @@ function fillFacilityActionModal(root, action) {
     .map((step, index) => `<span><b>0${index + 1}</b>${step}</span>`)
     .join('');
   modal.dataset.doneStatus = action.done;
+  modal.dataset.reportPayload = encodeURIComponent(JSON.stringify({
+    title: action.title,
+    summary: action.summary,
+    steps: action.steps,
+    type: action.tag === 'UPS' || action.tag === 'ĐIỆN' ? 'power' : 'crowd',
+    tone: action.tag === 'UPS' ? 'ok' : 'warn',
+    owner: action.tag,
+    status: 'Chưa giải quyết',
+  }));
+  delete modal.dataset.reportSent;
   modal.hidden = false;
 }
 
@@ -363,14 +502,14 @@ function bindRoofControls(container) {
 
 function thermalMap(groups = []) {
   const cells = [
-    { label: 'A', tone: 'ok' },
-    { label: 'B', tone: 'warn' },
-    { label: 'VIP', tone: 'ok' },
-    { label: 'F&B', tone: 'warn' },
-    { label: 'Sân', tone: 'ok' },
-    { label: 'LED', tone: 'ok' },
-    { label: 'PA', tone: 'ok' },
-    { label: 'UPS', tone: 'ok' },
+    { label: 'A', tone: 'ok', action: 'envA' },
+    { label: 'B', tone: 'warn', action: 'envB' },
+    { label: 'VIP', tone: 'ok', action: 'envVip' },
+    { label: 'F&B', tone: 'warn', action: 'envFb' },
+    { label: 'Sân', tone: 'ok', action: 'envPitch' },
+    { label: 'LED', tone: 'ok', action: 'envLed' },
+    { label: 'PA', tone: 'ok', action: 'envPa' },
+    { label: 'UPS', tone: 'ok', action: 'envUps' },
   ];
   const codes = ['A', 'B', 'S'];
   const minis = groups.map((g, index) =>
@@ -379,7 +518,7 @@ function thermalMap(groups = []) {
   return `<div class="fac-thermal">
     <div class="fac-thermal__dial">${ringSvg(82, 'OK')}</div>
     <div class="fac-thermal__grid">${cells.map((c) =>
-    `<i class="fac-thermal__cell fac-thermal__cell--${c.tone}">${c.label}</i>`,
+    `<button type="button" class="fac-thermal__cell fac-thermal__cell--${c.tone}" data-fac-action="${c.action}">${c.label}</button>`,
   ).join('')}</div>
     <div class="fac-mini-grid">${minis}</div>
   </div>`;
@@ -574,6 +713,19 @@ document.addEventListener('click', (event) => {
   }
   if (event.target.closest('[data-fac-action-confirm]')) {
     activeModal.querySelector('[data-fac-action-status]').textContent = activeModal.dataset.doneStatus;
+    if (activeModal.dataset.reportSent !== 'true') {
+      try {
+        addOperationalReport(JSON.parse(decodeURIComponent(activeModal.dataset.reportPayload || '%7B%7D')));
+      } catch {
+        addOperationalReport({
+          title: 'Kích hoạt thao tác hạ tầng',
+          summary: activeModal.dataset.doneStatus || 'Đã xác nhận thao tác hạ tầng từ BMS.',
+          type: 'power',
+          tone: 'warn',
+        });
+      }
+      activeModal.dataset.reportSent = 'true';
+    }
   }
 });
 

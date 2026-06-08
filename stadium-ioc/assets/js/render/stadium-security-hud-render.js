@@ -1,6 +1,7 @@
 import { hudHead, areaChartSvg } from './hud-charts.js';
 import { distributionChart } from './radial3d-chart.js';
 import { securityHud } from '../data/stadium-security-hud-data.js';
+import { addOperationalReport } from '../data/stadium-report-store.js';
 
 const zoneActionConfigs = {
   live: [
@@ -48,7 +49,7 @@ const zoneActionConfigs = {
       title: 'Giảm mật độ B',
       summary: 'Kích hoạt kế hoạch giảm mật độ khán đài B trước khi điểm nóng B-12 vượt ngưỡng trong 10 phút tới.',
       route: ['AI dự báo', 'Khán đài B', 'Cổng phụ'],
-      stats: [['Dự báo', '10 ph'], ['Mục tiêu', '-18%'], ['Rủi ro', 'Vàng']],
+      stats: [['Dự báo', '10 ph'], ['Mục tiêu', '-18%'], ['Mức', 'Cận ngưỡng']],
       steps: ['Mở hướng đi sang cổng phụ', 'Giảm tốc dòng vào khu B', 'Theo dõi lại bản đồ nhiệt sau 5 phút'],
       status: 'Chờ xác nhận kích hoạt giảm mật độ khu B.',
       done: 'Đã kích hoạt kế hoạch giảm mật độ khu B và cập nhật theo dõi AI.',
@@ -413,6 +414,16 @@ function openSecurityZoneModal(root, action) {
     .map((step, index) => `<span><b>0${index + 1}</b>${step}</span>`)
     .join('');
   modal.dataset.doneStatus = action.done;
+  modal.dataset.reportPayload = encodeURIComponent(JSON.stringify({
+    title: action.title,
+    summary: action.summary,
+    steps: action.steps,
+    type: 'crowd',
+    tone: 'warn',
+    owner: action.tag,
+    status: 'Chưa giải quyết',
+  }));
+  delete modal.dataset.reportSent;
   modal.hidden = false;
 }
 
@@ -521,6 +532,16 @@ function openSecurityPatrolModal(root, action, actionIndex) {
     .map((step, index) => `<span><b>0${index + 1}</b>${step}</span>`)
     .join('');
   modal.dataset.actionIndex = String(actionIndex);
+  modal.dataset.reportPayload = encodeURIComponent(JSON.stringify({
+    title: action.title,
+    summary: action.summary,
+    steps: action.steps,
+    type: action.tag.includes('ĐIỀU TIẾT') ? 'traffic' : 'crowd',
+    tone: 'warn',
+    owner: action.tag,
+    status: 'Chưa giải quyết',
+  }));
+  delete modal.dataset.reportSent;
   modal.hidden = false;
 }
 
@@ -648,6 +669,15 @@ function applyTraffic24Command(root, actionIndex) {
   if (chartEl) chartEl.innerHTML = renderTraffic24Chart(action.chart);
   panel?.querySelectorAll('[data-security-traffic-command]').forEach((button) => {
     button.classList.toggle('traffic24-command--active', Number(button.dataset.securityTrafficCommand || 0) === actionIndex);
+  });
+  addOperationalReport({
+    title: `Lệnh giao thông 24h: ${action.label}`,
+    summary: action.status,
+    steps: ['Cập nhật lệnh điều tiết', 'Đồng bộ KPI giao thông', 'Theo dõi route P4/P3'],
+    type: 'traffic',
+    tone: 'warn',
+    owner: 'Điều phối giao thông',
+    status: 'Chưa giải quyết',
   });
 }
 
@@ -839,6 +869,19 @@ document.addEventListener('click', (event) => {
       const actionIndex = Number(activePatrolModal.dataset.actionIndex || 0);
       activePatrolModal.querySelector('[data-security-patrol-modal-status]').textContent = applySecurityPatrolAction(actionIndex);
       activePatrolModal.querySelector('[data-security-patrol-confirm]').hidden = true;
+      if (activePatrolModal.dataset.reportSent !== 'true') {
+        try {
+          addOperationalReport(JSON.parse(decodeURIComponent(activePatrolModal.dataset.reportPayload || '%7B%7D')));
+        } catch {
+          addOperationalReport({
+            title: 'Kích hoạt tuần tra chu vi',
+            summary: 'Đã xác nhận thao tác tuần tra chu vi.',
+            type: 'crowd',
+            tone: 'warn',
+          });
+        }
+        activePatrolModal.dataset.reportSent = 'true';
+      }
       return;
     }
   }
@@ -860,6 +903,19 @@ document.addEventListener('click', (event) => {
   if (event.target.closest('[data-security-zone-confirm]')) {
     activeModal.querySelector('[data-security-zone-status]').textContent = activeModal.dataset.doneStatus || 'Đã xác nhận thao tác vùng cảnh báo.';
     activeModal.querySelector('[data-security-zone-confirm]').hidden = true;
+    if (activeModal.dataset.reportSent !== 'true') {
+      try {
+        addOperationalReport(JSON.parse(decodeURIComponent(activeModal.dataset.reportPayload || '%7B%7D')));
+      } catch {
+        addOperationalReport({
+          title: 'Kích hoạt thao tác vùng cảnh báo',
+          summary: activeModal.dataset.doneStatus || 'Đã xác nhận thao tác vùng cảnh báo.',
+          type: 'crowd',
+          tone: 'warn',
+        });
+      }
+      activeModal.dataset.reportSent = 'true';
+    }
   }
 });
 

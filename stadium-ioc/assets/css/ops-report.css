@@ -6333,11 +6333,15 @@
 
 .report-summary-viz__chips span,
 .report-focus-map__chips span {
+  display: grid;
+  align-content: center;
+  justify-items: center;
   min-width: 0;
   padding: 9px;
   border: 1px solid rgba(0, 180, 255, 0.18);
   border-radius: 4px;
   background: rgba(5, 24, 45, 0.62);
+  text-align: center;
 }
 
 .report-summary-viz__chips b,
@@ -6367,7 +6371,7 @@
 }
 
 .report-summary-viz__warn {
-  border-color: rgba(239, 159, 39, 0.34) !important;
+  border-color: rgba(0, 180, 255, 0.18) !important;
 }
 
 .report-timeline {
@@ -7263,6 +7267,9 @@
 }
 
 #page-reports .report-summary-viz__chips span,
+#page-reports .report-focus-map__chips span,
+#page-reports .report-overview-side span,
+#page-reports .report-overview-chart__note span,
 #page-reports .report-send__summary span,
 #page-reports .report-send-modal__summary span {
   background: rgba(5, 24, 45, 0.52);

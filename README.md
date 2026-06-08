@@ -1,4 +1,4 @@
-# Vinsmartcity
+﻿# Vinsmartcity
 
 Prototype website cho Smart City IOC và Stadium IOC.
 
@@ -41,7 +41,7 @@ Sau khi server chạy, mở một trong các URL sau:
 - Smart City IOC: http://localhost:3457/smartcity-ioc/smartcity-index.html
 - Stadium IOC: http://localhost:3457/stadium-ioc/stadium-index.html
 
-Trang mặc định khi vào `http://localhost:3457/` là Smart City IOC.
+Trang mặc định khi vào `http://localhost:3457/` là Stadium IOC, mở vào phần Tổng quan.
 
 ## Nếu Báo Lỗi
 

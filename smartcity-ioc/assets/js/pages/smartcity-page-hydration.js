@@ -6,8 +6,14 @@ import {
   renderVitals, renderKpiGrid, renderModules, renderMiniStats,
   renderReportTable, renderReportCategories,
 } from '../../../../shared-ioc/assets/js/render/shared-overview-render.js';
-import { renderTrafficLeftSidebar } from '../render/traffic-panels-left.js';
-import { renderTrafficRightSidebar } from '../render/traffic-panels-right.js';
+import { renderTrafficLeftSidebar, bindTrafficCameraModal } from '../render/traffic-panels-left.js';
+import {
+  renderTrafficRightSidebar,
+  bindTrafficKpiControls,
+  bindTrafficFlowControls,
+  bindTrafficSignalControls,
+} from '../render/traffic-panels-right.js';
+import { bindRedLightModal } from '../render/traffic-violations.js';
 import { renderLeftSidebar } from '../render/security-panels-left.js';
 import { renderRightSidebar } from '../render/security-panels-right.js';
 import { renderSmartcityDomainLeft, renderSmartcityDomainRight } from '../render/smartcity-domain-command-panels.js';
@@ -55,4 +61,9 @@ export function hydratePage(pageId) {
 
 export function hydrateAllPages() {
   ['overview', 'traffic', 'security', 'environment', 'utilities', 'reports'].forEach(hydratePage);
+  bindTrafficCameraModal();
+  bindRedLightModal();
+  bindTrafficKpiControls();
+  bindTrafficFlowControls();
+  bindTrafficSignalControls();
 }

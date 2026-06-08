@@ -21,7 +21,7 @@ const mime = {
 const server = http
   .createServer((req, res) => {
     let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
-    if (urlPath === '/') urlPath = '/smartcity-ioc/smartcity-index.html';
+    if (urlPath === '/') urlPath = '/stadium-ioc/stadium-index.html';
     if (urlPath === '/smartcity-ioc/index.html') urlPath = '/smartcity-ioc/smartcity-index.html';
     if (urlPath === '/stadium-ioc/index.html') urlPath = '/stadium-ioc/stadium-index.html';
     const filePath = path.normalize(path.join(root, urlPath.replace(/^\//, '').replace(/\//g, path.sep)));

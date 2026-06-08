@@ -15,8 +15,9 @@ function addDashes(scene, axis, offset, from, to, skipCenter) {
 }
 
 function addCrosswalk(scene, cx, cz, alongX) {
+  const roadSpan = 9.6;
   for (let i = 0; i < 5; i++) {
-    const stripe = new THREE.Mesh(new THREE.PlaneGeometry(alongX ? 0.35 : 2.5, alongX ? 2.5 : 0.35), WHITE);
+    const stripe = new THREE.Mesh(new THREE.PlaneGeometry(alongX ? 0.35 : roadSpan, alongX ? roadSpan : 0.35), WHITE);
     stripe.rotation.x = -Math.PI / 2;
     stripe.position.set(alongX ? cx + i * 0.45 - 0.9 : cx, 0.026, alongX ? cz : cz + i * 0.45 - 0.9);
     scene.add(stripe);
@@ -73,10 +74,10 @@ export function createStreet(scene) {
   centerLineV.position.y = 0.023;
   scene.add(centerLineV);
 
-  addCrosswalk(scene, -3.8, -4.2, true);
-  addCrosswalk(scene, 3.8, -4.2, true);
-  addCrosswalk(scene, -4.2, 3.8, false);
-  addCrosswalk(scene, -4.2, -3.8, false);
+  addCrosswalk(scene, -5.2, 0, true);
+  addCrosswalk(scene, 5.2, 0, true);
+  addCrosswalk(scene, 0, 5.2, false);
+  addCrosswalk(scene, 0, -5.2, false);
 
   [[-12, -12], [12, -12], [12, 12], [-12, 12]].forEach(([x, z]) => {
     const b = new THREE.Mesh(

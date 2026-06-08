@@ -1,9 +1,104 @@
+import { renderTrafficViolations, redLightModal } from './traffic-violations.js';
+
 const BLUE = '#00d4ff';
 const BLUE_DARK = '#185FA5';
 const BLUE_SOFT = '#69c7e8';
 const GREEN = '#1D9E75';
 const AMBER = '#EF9F27';
 const RED = '#E24B4A';
+
+const trafficCameraConfigs = [
+  {
+    id: 'north',
+    label: 'Bắc',
+    status: 'OK',
+    icon: 'ti-camera',
+    tone: 'ok',
+    tag: 'CAM A4-01',
+    title: 'Camera hướng Bắc',
+    summary: 'Giám sát dòng xe vào nút A4 từ trục Bắc, ưu tiên phát hiện hàng chờ và xe dừng sai làn.',
+    route: ['Tín hiệu', 'AI VMS', 'Đội giao thông'],
+    stats: [['Trạng thái', 'Online'], ['Trễ hình', '0.8s'], ['SLA', '98%']],
+    steps: ['Giữ chu kỳ đèn hiện tại', 'Theo dõi mật độ trong 5 phút', 'Đồng bộ cảnh báo về bảng điều hành'],
+    statusText: 'Camera Bắc đang ổn định, chưa cần điều phối lại pha đèn.',
+    done: 'Đã xác nhận camera Bắc và cập nhật trạng thái theo dõi nút A4.',
+  },
+  {
+    id: 'south',
+    label: 'Nam',
+    status: 'OK',
+    icon: 'ti-camera',
+    tone: 'ok',
+    tag: 'CAM A4-02',
+    title: 'Camera hướng Nam',
+    summary: 'Kiểm tra luồng xe từ hướng Nam và nhận diện xe rẽ trái bất thường tại vạch dừng.',
+    route: ['Camera', 'Phân tích', 'Tổ trực A4'],
+    stats: [['Trạng thái', 'Online'], ['Tốc độ TB', '32km/h'], ['Tin cậy', '96%']],
+    steps: ['Kiểm tra làn rẽ trái', 'Ghim feed lên màn hình IOC', 'Gửi nhắc trực nếu tốc độ giảm'],
+    statusText: 'Camera Nam đang truyền feed tốt, luồng xe vẫn trong ngưỡng.',
+    done: 'Đã ghim feed Nam cho ca trực giao thông.',
+  },
+  {
+    id: 'east',
+    label: 'Đông',
+    status: '72%',
+    icon: 'ti-camera-exclamation',
+    tone: 'warn',
+    tag: 'CAM A4-03',
+    title: 'Camera hướng Đông',
+    summary: 'Feed hướng Đông có mức tin cậy 72%, cần theo dõi thêm do mật độ xe tăng nhanh gần giờ cao điểm.',
+    route: ['Cảnh báo', 'Camera Đông', 'Điều phối đèn'],
+    stats: [['Tin cậy', '72%'], ['Hàng chờ', '140m'], ['Ưu tiên', '+12s']],
+    steps: ['Mở rộng pha xanh hướng Đông', 'Kiểm tra lại vùng nhận diện', 'Báo đội hiện trường nếu feed tiếp tục giảm'],
+    statusText: 'Camera Đông cần cảnh báo: độ tin cậy 72% và hàng chờ đang tăng.',
+    done: 'Đã kích hoạt theo dõi camera Đông và đề xuất cộng thêm 12 giây pha xanh.',
+  },
+  {
+    id: 'west',
+    label: 'Tây',
+    status: 'OK',
+    icon: 'ti-camera',
+    tone: 'ok',
+    tag: 'CAM A4-04',
+    title: 'Camera hướng Tây',
+    summary: 'Theo dõi dòng xe thoát nút A4 về phía Tây, đảm bảo không tràn làn xe bus vào làn xe máy.',
+    route: ['Camera', 'Làn ưu tiên', 'Giám sát'],
+    stats: [['Trạng thái', 'Online'], ['Mật độ', 'Trung bình'], ['SLA', '97%']],
+    steps: ['Giữ làn ưu tiên mở', 'So khớp với cảm biến mặt đường', 'Cập nhật nếu mật độ tăng'],
+    statusText: 'Camera Tây ổn định, tốc độ thoát nút đang đạt mức bình thường.',
+    done: 'Đã xác nhận camera Tây và tiếp tục giám sát làn ưu tiên.',
+  },
+  {
+    id: 'turn',
+    label: 'Rẽ',
+    status: 'OK',
+    icon: 'ti-camera',
+    tone: 'ok',
+    tag: 'CAM A4-05',
+    title: 'Camera làn rẽ',
+    summary: 'Tập trung vào làn rẽ tại nút A4 để phát hiện xe đổi làn muộn và nguy cơ va chạm nhẹ.',
+    route: ['Làn rẽ', 'AI nhận diện', 'Cảnh báo'],
+    stats: [['Trạng thái', 'Online'], ['Vi phạm', '2'], ['Rủi ro', 'Thấp']],
+    steps: ['Theo dõi xe đổi làn', 'Bật cảnh báo nếu vi phạm tăng', 'Đồng bộ với bảng sự cố'],
+    statusText: 'Camera làn rẽ đang ghi nhận 2 vi phạm nhẹ, chưa cần can thiệp.',
+    done: 'Đã cập nhật camera làn rẽ vào danh sách theo dõi.',
+  },
+  {
+    id: 'line',
+    label: 'Vạch',
+    status: 'OK',
+    icon: 'ti-camera',
+    tone: 'ok',
+    tag: 'CAM A4-06',
+    title: 'Camera vạch dừng',
+    summary: 'Kiểm tra khu vực vạch dừng và hành vi lấn qua vạch khi đèn đỏ tại giao lộ A4.',
+    route: ['Vạch dừng', 'Xử lý ảnh', 'Tổ trực'],
+    stats: [['Trạng thái', 'Online'], ['Lấn vạch', '1'], ['Tin cậy', '95%']],
+    steps: ['Kiểm tra khung hình vạch dừng', 'Ghi nhận vi phạm nếu lặp lại', 'Liên kết cảnh báo với đèn đỏ'],
+    statusText: 'Camera vạch dừng ổn định, chỉ có 1 lần vượt vạch trong chu kỳ gần nhất.',
+    done: 'Đã xác nhận camera vạch dừng và lưu nhật ký theo dõi.',
+  },
+];
 
 function hudHead(title) {
   return `<div class="hud-head"><span>${title}</span><i class="ti ti-dots"></i></div>`;
@@ -80,11 +175,96 @@ function flowLineChart(chart) {
 }
 
 function compactCameraGrid(feeds) {
-  return `<div class="traffic-viz-camera-grid">
-    ${feeds.map((f, index) => `<span class="traffic-viz-camera traffic-viz-camera--${index === 2 ? 'warn' : 'ok'}">
-      <i class="ti ti-camera"></i><b>${f.label}</b><em>${index === 2 ? '72%' : 'OK'}</em>
-    </span>`).join('')}
+  const cameraItems = feeds.map((feed, index) => ({
+    ...trafficCameraConfigs[index],
+    label: feed.label || trafficCameraConfigs[index]?.label || `Cam ${index + 1}`,
+  }));
+  const hub = { x: 50, y: 33 };
+  const positions = [
+    { x: 50, y: 8 },
+    { x: 71.7, y: 20.5 },
+    { x: 71.7, y: 45.5 },
+    { x: 50, y: 58 },
+    { x: 28.3, y: 45.5 },
+    { x: 28.3, y: 20.5 },
+  ];
+  return `<div class="traffic-camera-map">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="traffic-camera-map__ring" cx="${hub.x}" cy="${hub.y}" r="22"/>
+      <circle class="traffic-camera-map__pulse" cx="${hub.x}" cy="${hub.y}" r="12"/>
+      ${positions.map((p, index) => `<line class="traffic-camera-map__link traffic-camera-map__link--${cameraItems[index]?.tone || 'ok'}" x1="${hub.x}" y1="${hub.y}" x2="${p.x}" y2="${p.y}"/>`).join('')}
+      <circle class="traffic-camera-map__hub-glow" cx="${hub.x}" cy="${hub.y}" r="14"/>
+      <circle class="traffic-camera-map__hub" cx="${hub.x}" cy="${hub.y}" r="8"/>
+      <path class="traffic-camera-map__hub-icon" d="M47 28L56 33L47 38Z"/>
+    </svg>
+    ${cameraItems.map((f, index) => {
+    const pos = positions[index] || positions[0];
+    return `<button type="button" class="traffic-camera-node traffic-camera-node--${f.tone} traffic-camera-node--${f.id}" data-traffic-camera="${f.id}" aria-label="Mở popup ${f.title}" style="--x:${pos.x}%;--y:${pos.y}%">
+      <span>${f.status}</span><b>${f.label}</b>
+    </button>`;
+  }).join('')}
+    <div class="traffic-camera-map__actions" aria-label="Mở nhanh camera nút A4">
+      ${cameraItems.map((f) => `<button type="button" class="traffic-camera-action traffic-camera-action--${f.tone}" data-traffic-camera="${f.id}" aria-label="Mở popup ${f.title}">
+        <b>${f.label}</b><span>${f.status}</span>
+      </button>`).join('')}
+    </div>
+    <div class="traffic-camera-map__summary">
+      <b>Camera nút A4</b><em>6 hướng · 5 OK · 1 cảnh báo</em>
+    </div>
   </div>`;
+}
+
+function trafficCameraModal() {
+  return `<div class="traffic-camera-modal" data-traffic-camera-modal hidden>
+    <button type="button" class="traffic-camera-modal__backdrop" data-traffic-camera-close aria-label="Đóng"></button>
+    <section class="traffic-camera-modal__panel" role="dialog" aria-modal="true" aria-label="Điều phối camera nút A4">
+      <button type="button" class="traffic-camera-modal__close" data-traffic-camera-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="traffic-camera-modal__head">
+        <span class="traffic-camera-modal__icon"><i class="ti ti-camera" data-traffic-camera-icon></i></span>
+        <div><small data-traffic-camera-tag>CAM A4</small><h3 data-traffic-camera-title>Camera nút A4</h3></div>
+      </div>
+      <p data-traffic-camera-summary></p>
+      <div class="traffic-camera-modal__route" data-traffic-camera-route></div>
+      <div class="traffic-camera-modal__stats" data-traffic-camera-stats></div>
+      <div class="traffic-camera-modal__steps" data-traffic-camera-steps></div>
+      <div class="traffic-camera-modal__status"><i class="ti ti-broadcast"></i><span data-traffic-camera-status>Chờ xác nhận thao tác camera.</span></div>
+      <button type="button" class="traffic-camera-modal__primary" data-traffic-camera-confirm>
+        <i class="ti ti-send"></i><span>Xác nhận theo dõi</span>
+      </button>
+    </section>
+  </div>`;
+}
+
+function getTrafficCameraModal(root = document) {
+  const modal = root.querySelector('[data-traffic-camera-modal]') || document.querySelector('[data-traffic-camera-modal]');
+  if (!modal) return null;
+  const bodyModal = document.body.querySelector('[data-traffic-camera-modal]');
+  if (bodyModal && bodyModal !== modal) bodyModal.remove();
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
+  return modal;
+}
+
+function openTrafficCameraModal(root, cameraId) {
+  const config = trafficCameraConfigs.find((item) => item.id === cameraId);
+  const modal = getTrafficCameraModal(root);
+  if (!config || !modal) return;
+  modal.querySelector('[data-traffic-camera-icon]').className = `ti ${config.icon}`;
+  modal.querySelector('[data-traffic-camera-tag]').textContent = config.tag;
+  modal.querySelector('[data-traffic-camera-title]').textContent = config.title;
+  modal.querySelector('[data-traffic-camera-summary]').textContent = config.summary;
+  modal.querySelector('[data-traffic-camera-status]').textContent = config.statusText;
+  modal.querySelector('[data-traffic-camera-confirm]').hidden = false;
+  modal.querySelector('[data-traffic-camera-route]').innerHTML = config.route
+    .map((item, index) => `${index ? '<i></i>' : ''}<span>${item}</span>`)
+    .join('');
+  modal.querySelector('[data-traffic-camera-stats]').innerHTML = config.stats
+    .map(([label, value]) => `<span><b>${value}</b><em>${label}</em></span>`)
+    .join('');
+  modal.querySelector('[data-traffic-camera-steps]').innerHTML = config.steps
+    .map((step, index) => `<span><b>0${index + 1}</b>${step}</span>`)
+    .join('');
+  modal.dataset.doneStatus = config.done;
+  modal.hidden = false;
 }
 
 function incidentMatrix(incidents) {
@@ -100,10 +280,39 @@ export function renderTrafficLeftSidebar(d) {
     <section class="hud-block traffic-viz-block">${hudHead(d.flow.title)}
       ${trafficPie3d(d.flow.groups)}
     </section>
+    <section class="hud-block traffic-viz-block">${hudHead('Vi phạm giao thông')}
+      ${renderTrafficViolations()}
+    </section>
     <section class="hud-block traffic-viz-block">${hudHead(d.flow.trend.title)}
       ${flowLineChart(d.flow.trend)}
     </section>
     <section class="hud-block traffic-viz-block">${hudHead(d.cameras.title)}
       ${compactCameraGrid(d.cameras.feeds)}
-    </section>`;
+    </section>
+    ${trafficCameraModal()}
+    ${redLightModal()}`;
+}
+
+export function bindTrafficCameraModal() {
+  if (document.documentElement.dataset.trafficCameraModalBound === 'true') return;
+  document.documentElement.dataset.trafficCameraModalBound = 'true';
+  document.addEventListener('click', (event) => {
+    const cameraBtn = event.target.closest('[data-traffic-camera]');
+    if (cameraBtn) {
+      openTrafficCameraModal(cameraBtn.closest('#page-traffic') || document, cameraBtn.dataset.trafficCamera);
+      return;
+    }
+
+    const activeModal = document.querySelector('[data-traffic-camera-modal]:not([hidden])');
+    if (!activeModal) return;
+    if (event.target.closest('[data-traffic-camera-close]')) {
+      activeModal.hidden = true;
+      return;
+    }
+    if (event.target.closest('[data-traffic-camera-confirm]')) {
+      activeModal.querySelector('[data-traffic-camera-status]').textContent =
+        activeModal.dataset.doneStatus || 'Đã xác nhận theo dõi camera nút A4.';
+      activeModal.querySelector('[data-traffic-camera-confirm]').hidden = true;
+    }
+  });
 }

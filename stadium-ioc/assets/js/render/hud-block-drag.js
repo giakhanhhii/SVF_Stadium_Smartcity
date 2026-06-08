@@ -61,8 +61,13 @@ function restoreOrder(root, panel) {
 }
 
 function closestBlock(target, panel) {
-  const block = target.closest?.('.hud-block, [data-security-mode-panel], [data-security-exterior-mode-panel], [data-services-mode-panel]');
-  return block?.parentElement === panel ? block : null;
+  const selector = '.hud-block, [data-security-mode-panel], [data-security-exterior-mode-panel], [data-services-mode-panel]';
+  let node = target;
+  while (node && node !== panel) {
+    if (node.matches?.(selector) && node.parentElement === panel) return node;
+    node = node.parentElement;
+  }
+  return null;
 }
 
 function canStartDrag(target, block) {

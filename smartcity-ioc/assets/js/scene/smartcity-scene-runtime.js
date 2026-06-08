@@ -133,6 +133,44 @@ function addLaneMarking(scene, x, z, w, h, color = 0xffffff) {
   scene.add(stripe);
 }
 
+function addCrosswalkBars(scene, axis, side, roadWidth, intersectionHalfSize) {
+  const barCount = 6;
+  const barWidth = 0.34;
+  const barGap = 0.42;
+  const barSpan = Math.min(roadWidth * 0.72, 6.2);
+  const start = intersectionHalfSize + 0.65;
+  const verticalRoadStart = intersectionHalfSize + 4.2;
+
+  if (axis === 'z') {
+    const z = side * (verticalRoadStart + barSpan / 2);
+    const startX = -((barCount - 1) * (barWidth + barGap)) / 2;
+    for (let i = 0; i < barCount; i += 1) {
+      const x = startX + i * (barWidth + barGap);
+      addLaneMarking(scene, x, z, barWidth, barSpan);
+    }
+    return;
+  }
+
+  for (let i = 0; i < barCount; i += 1) {
+    const offset = side * (start + i * (barWidth + barGap));
+    addLaneMarking(scene, offset, 0, barSpan, barWidth);
+  }
+}
+
+function addSideCrosswalkBars(scene, side, roadWidth, intersectionHalfSize) {
+  const barCount = 6;
+  const barWidth = 0.34;
+  const barGap = 0.48;
+  const barSpan = Math.min(roadWidth * 0.72, 6.2);
+  const x = side * (intersectionHalfSize + 2.35);
+  const start = -((barCount - 1) * (barWidth + barGap)) / 2;
+
+  for (let i = 0; i < barCount; i += 1) {
+    const z = start + i * (barWidth + barGap);
+    addLaneMarking(scene, x, z, barSpan, barWidth);
+  }
+}
+
 function addRoadNetwork(scene) {
   smartcitySceneData.roads.forEach((road) => addRoad(scene, road));
   const eastWestRoad = smartcitySceneData.roads.find((road) => road.id === 'road-main-ew');
@@ -154,12 +192,13 @@ function addRoadNetwork(scene) {
   }
   addLaneMarking(scene, 0, 0, eastWestRoad?.size[0] || 46, 0.12, 0xffcf4a);
   addLaneMarking(scene, 0, 0, 0.12, northSouthRoad?.size[1] || 46, 0xffcf4a);
-  [-4.4, 4.4].forEach((offset) => {
-    for (let i = -1.2; i <= 1.2; i += 0.48) {
-      addLaneMarking(scene, i, offset, 0.34, 2.5);
-      addLaneMarking(scene, offset, i, 2.5, 0.34);
-    }
-  });
+
+  const eastWestWidth = eastWestRoad?.size[1] || 8.8;
+  const northSouthWidth = northSouthRoad?.size[0] || 8.8;
+  addCrosswalkBars(scene, 'z', -1, northSouthWidth, eastWestWidth / 2);
+  addCrosswalkBars(scene, 'z', 1, northSouthWidth, eastWestWidth / 2);
+  addSideCrosswalkBars(scene, -1, eastWestWidth, northSouthWidth / 2);
+  addSideCrosswalkBars(scene, 1, eastWestWidth, northSouthWidth / 2);
 }
 
 function addBuilding(scene, data, muted = false) {

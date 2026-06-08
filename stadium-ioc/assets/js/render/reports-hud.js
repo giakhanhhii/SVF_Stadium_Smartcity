@@ -1,6 +1,32 @@
 import { hudHead } from './hud-charts.js';
 import { addOperationalReport, updateOperationalReport } from '../data/stadium-report-store.js';
 
+function reportDisplayId(sequence = { number: 1, year: new Date().getFullYear() }) {
+  const normalized = typeof sequence === 'number'
+    ? { number: sequence, year: new Date().getFullYear() }
+    : sequence;
+  return `BC-0${normalized.number}-${normalized.year}`;
+}
+
+function reportYear(item, fallbackYear = new Date().getFullYear()) {
+  if (!item?.createdAt) return fallbackYear;
+  const year = new Date(item.createdAt).getFullYear();
+  return Number.isFinite(year) ? year : fallbackYear;
+}
+
+function reportSequences(items = []) {
+  const fallbackYear = new Date().getFullYear();
+  const countsByYear = new Map();
+  const sequences = Array(items.length);
+  for (let index = items.length - 1; index >= 0; index -= 1) {
+    const year = reportYear(items[index], fallbackYear);
+    const next = (countsByYear.get(year) || 0) + 1;
+    countsByYear.set(year, next);
+    sequences[index] = { number: next, year };
+  }
+  return sequences;
+}
+
 function reportPhase(item) {
   if (item.resolved) return 'resolved';
   if (/đang/i.test(item.status || '')) return 'processing';
@@ -14,8 +40,10 @@ function reportTone(item) {
   return 'danger';
 }
 
-function displayReport(item) {
-  return { ...item, tone: reportTone(item) };
+function displayReport(item, sequence = { number: 1, year: new Date().getFullYear() }) {
+  const sourceId = item.sourceId || item.id;
+  const displayId = item.displayId || reportDisplayId(sequence);
+  return { ...item, id: displayId, displayId, sourceId, tone: reportTone(item) };
 }
 
 function historyItem(item, compact = false) {
@@ -82,15 +110,15 @@ function reportHistoryCase(item) {
   const display = displayReport(item);
   const action = display.resolved
     ? '<span class="report-case__closed"><i class="ti ti-check"></i>Đã đóng</span>'
-    : `<button type="button" class="report-case__resolve" data-report-resolve="${display.id}">
+    : `<button type="button" class="report-case__resolve" data-report-resolve="${display.sourceId}">
         <i class="ti ti-tool"></i><span>Giải quyết</span>
       </button>`;
   const escalation = !display.resolved && display.attempts >= 2
-    ? `<button type="button" class="report-case__escalate" data-report-escalate="${display.id}">
+    ? `<button type="button" class="report-case__escalate" data-report-escalate="${display.sourceId}">
         <i class="ti ti-message-report"></i><span>Khiếu nại phụ trách</span>
       </button>`
     : '';
-  return `<article class="report-case report-case--${display.tone}" data-report-case="${display.id}" data-report-resolved="${display.resolved ? 'true' : 'false'}">
+  return `<article class="report-case report-case--${display.tone}" data-report-case="${display.sourceId}" data-report-resolved="${display.resolved ? 'true' : 'false'}">
     <div class="report-case__main">
       <small>${display.id} · ${display.time}</small>
       <strong>${display.title}</strong>
@@ -166,7 +194,7 @@ function reportSummaryViz(reportCases = []) {
 function reportTimeline(items = []) {
   return `<div class="report-timeline">${items.map((item) => `
     <button type="button" class="report-timeline__node report-timeline__node--${reportTone(item)}" title="${item.title}">
-      <i></i><strong>${item.time}</strong><span>${item.id.replace('BC-2405-', '#')}</span><b>${item.status}</b>
+      <i></i><strong>${item.time}</strong><span>${item.id}</span><b>${item.status}</b>
     </button>
   `).join('')}</div>`;
 }
@@ -413,7 +441,9 @@ function focusMap() {
 }
 
 export function renderReportsLeft(d) {
-  const reportCases = (d.reportCases || []).map(displayReport);
+  const rawReportCases = d.reportCases || [];
+  const sequences = reportSequences(rawReportCases);
+  const reportCases = rawReportCases.map((item, index) => displayReport(item, sequences[index]));
   const resolvedCount = reportCases.filter((item) => reportPhase(item) === 'resolved').length;
   const processingCount = reportCases.filter((item) => reportPhase(item) === 'processing').length;
   const openCount = reportCases.filter((item) => reportPhase(item) === 'open').length;
@@ -558,14 +588,14 @@ export function bindReportsHistory(root) {
     const escalateBtn = e.target.closest('[data-report-escalate]');
     if (openHistoryModal && escalateBtn) {
       const card = openHistoryModal.querySelector(`[data-report-case="${escalateBtn.dataset.reportEscalate}"]`);
-      const item = cases.find((entry) => entry.id === escalateBtn.dataset.reportEscalate);
+      const item = cases.find((entry) => (entry.sourceId || entry.id) === escalateBtn.dataset.reportEscalate);
       const status = card?.querySelector('[data-report-case-status]');
       if (status && item) {
         status.textContent = `Đã gửi khiếu nại tới ${item.owner}; yêu cầu phản hồi trước mốc SLA tiếp theo.`;
         status.hidden = false;
         addOperationalReport({
           title: `Khiếu nại phụ trách: ${item.title}`,
-          summary: `Đã gửi khiếu nại tới ${item.owner} cho báo cáo ${item.id}.`,
+          summary: `Đã gửi khiếu nại tới ${item.owner} cho báo cáo ${item.displayId || item.id}.`,
           steps: ['Ghi nhận khiếu nại', 'Gửi người phụ trách', 'Theo dõi phản hồi SLA'],
           type: item.type,
           tone: 'warn',
@@ -581,12 +611,12 @@ export function bindReportsHistory(root) {
     const resolveBtn = e.target.closest('[data-report-resolve]');
     if (openHistoryModal && resolveModalAny && resolveBtn) {
       if (resolveModalAny.parentElement !== document.body) document.body.appendChild(resolveModalAny);
-      const item = cases.find((entry) => entry.id === resolveBtn.dataset.reportResolve);
+      const item = cases.find((entry) => (entry.sourceId || entry.id) === resolveBtn.dataset.reportResolve);
       const ui = reportCaseUi[item?.type] || reportCaseUi.crowd;
       if (!item) return;
-      resolveModalAny.dataset.activeCase = item.id;
+      resolveModalAny.dataset.activeCase = item.sourceId || item.id;
       resolveModalAny.querySelector('[data-report-resolve-icon]').className = `ti ${ui.icon}`;
-      resolveModalAny.querySelector('[data-report-resolve-tag]').textContent = `${item.id} · Lần ${item.attempts}`;
+      resolveModalAny.querySelector('[data-report-resolve-tag]').textContent = `${item.displayId || item.id} · Lần ${item.attempts}`;
       resolveModalAny.querySelector('[data-report-resolve-title]').textContent = ui.title;
       resolveModalAny.querySelector('[data-report-resolve-summary]').textContent = item.summary;
       resolveModalAny.querySelector('[data-report-resolve-primary]').textContent = ui.primary;

@@ -1,4 +1,4 @@
-﻿# Vinsmartcity
+# Vinsmartcity
 
 Prototype website cho Smart City IOC và Stadium IOC.
 

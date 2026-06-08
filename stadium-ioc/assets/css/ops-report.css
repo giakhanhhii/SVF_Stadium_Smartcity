@@ -2085,9 +2085,19 @@
   border-radius: 3px;
   background: rgba(0, 50, 80, 0.42);
   color: #d8ecff;
+  cursor: pointer;
+  font-family: inherit;
   font-size: 10px;
   font-style: normal;
   font-weight: 800;
+}
+
+.fac-thermal__cell:hover,
+.fac-thermal__cell:focus-visible {
+  border-color: rgba(0, 212, 255, 0.56);
+  color: #ffffff;
+  outline: none;
+  box-shadow: 0 0 14px rgba(0, 174, 255, 0.18);
 }
 
 .fac-thermal__cell--ok {

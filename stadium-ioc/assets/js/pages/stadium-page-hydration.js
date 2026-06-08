@@ -13,7 +13,7 @@ import { securityExteriorHud, SECURITY_LEGEND } from '../data/security-exterior-
 import { eventsHud } from '../data/stadium-events-hud-data.js';
 import { facilitiesHud } from '../data/stadium-facilities-hud-data.js';
 import { servicesHud } from '../data/stadium-services-hud-data.js';
-import { reportsData } from '../data/stadium-reports-data.js';
+import { getReportsData } from '../data/stadium-report-store.js';
 import { renderViewTabs } from '../render/scene-view-tabs.js';
 import { initHudBlockDrag } from '../render/hud-block-drag.js';
 
@@ -82,6 +82,7 @@ export function hydratePage(pageId) {
       if (tabs) tabs.innerHTML = renderViewTabs('services');
     },
     reports: () => {
+      const reportsData = getReportsData();
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderReportsLeft(reportsData);
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderReportsRight(reportsData);
       bindReportsHistory(root);
@@ -102,4 +103,18 @@ document.addEventListener('voc-security-view-changed', (event) => {
   const root = document.getElementById('page-security');
   if (!root?.classList.contains('active')) return;
   hydrateSecuritySidebars(event.detail === 'exterior' ? 'exterior' : 'interior');
+});
+
+document.addEventListener('stadium-report-history-updated', () => {
+  const root = document.getElementById('page-reports');
+  if (!root) return;
+  const left = root.querySelector('[data-mount="sidebar-left"]');
+  const right = root.querySelector('[data-mount="sidebar-right"]');
+  if (!left || !right) return;
+  const reportsData = getReportsData();
+  left.innerHTML = renderReportsLeft(reportsData);
+  right.innerHTML = renderReportsRight(reportsData);
+  const tabs = root.querySelector('[data-mount="view-tabs"]');
+  if (tabs) tabs.innerHTML = renderViewTabs('reports');
+  initHudBlockDrag(root);
 });

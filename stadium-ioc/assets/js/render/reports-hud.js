@@ -1,4 +1,5 @@
 import { hudHead } from './hud-charts.js';
+import { addOperationalReport, updateOperationalReport } from '../data/stadium-report-store.js';
 
 function historyItem(item, compact = false) {
   return `
@@ -125,14 +126,18 @@ function reportResolveModal(items = []) {
   </div>`;
 }
 
-function reportSummaryViz() {
+function reportSummaryViz(reportCases = []) {
+  const total = reportCases.length;
+  const closed = reportCases.filter((item) => item.resolved).length;
+  const open = Math.max(total - closed, 0);
+  const pct = total ? Math.round((closed / total) * 100) : 0;
   return `<div class="report-summary-viz">
-    <div class="report-summary-viz__ring" style="--pct:88">
-      <strong>42</strong><span>Báo cáo</span>
+    <div class="report-summary-viz__ring" style="--pct:${pct}">
+      <strong>${total}</strong><span>Báo cáo</span>
     </div>
     <div class="report-summary-viz__chips">
-      <span><b>37</b><em>Đã đóng</em></span>
-      <span class="report-summary-viz__warn"><b>5</b><em>Theo dõi</em></span>
+      <span><b>${closed}</b><em>Đã đóng</em></span>
+      <span class="report-summary-viz__warn"><b>${open}</b><em>Theo dõi</em></span>
     </div>
   </div>`;
 }
@@ -228,21 +233,25 @@ function reportSensorChart() {
   </div>`;
 }
 
-function reportSendForm() {
+function reportSendForm(reportCases = []) {
+  const total = reportCases.length;
+  const open = reportCases.filter((item) => !item.resolved).length;
+  const closed = total - open;
+  const closedPct = total ? Math.round((closed / total) * 100) : 0;
   return `<div class="report-send">
     <div class="report-send-flow" aria-hidden="true">
       <span><i class="ti ti-database"></i><b>VOC</b><em>Dữ liệu ca</em></span>
       <i></i>
-      <span><i class="ti ti-chart-bar"></i><b>42</b><em>Báo cáo</em></span>
+      <span><i class="ti ti-chart-bar"></i><b>${total}</b><em>Báo cáo</em></span>
       <i></i>
       <span><i class="ti ti-file-export"></i><b>Xuất</b><em>Tổng hợp</em></span>
       <i></i>
       <span><i class="ti ti-send"></i><b>Cấp trên</b><em>Chờ gửi</em></span>
     </div>
     <div class="report-send__summary">
-      <span><b>42</b><em>Báo cáo</em></span>
-      <span><b>5</b><em>Cần theo dõi</em></span>
-      <span><b>97%</b><em>Closed-loop</em></span>
+      <span><b>${total}</b><em>Báo cáo</em></span>
+      <span><b>${open}</b><em>Cần theo dõi</em></span>
+      <span><b>${closedPct}%</b><em>Closed-loop</em></span>
     </div>
     <button type="button" class="report-send__btn" data-report-send-open>
       <i class="ti ti-send"></i><span>Gửi báo cáo</span>
@@ -293,9 +302,9 @@ function reportSendForm() {
         </label>
       </div>
       <div class="report-send-modal__summary">
-        <span><b>42</b><em>Báo cáo</em></span>
-        <span><b>5</b><em>Cần theo dõi</em></span>
-        <span><b>97%</b><em>Closed-loop</em></span>
+        <span><b>${total}</b><em>Báo cáo</em></span>
+        <span><b>${open}</b><em>Cần theo dõi</em></span>
+        <span><b>${closedPct}%</b><em>Closed-loop</em></span>
       </div>
       <button type="button" class="report-send-modal__primary" data-report-send-confirm>
         <i class="ti ti-send"></i><span>Xác nhận gửi</span>
@@ -390,7 +399,7 @@ export function renderReportsLeft(d) {
 
   return `
     <section class="hud-block report-summary">${hudHead('Báo cáo vận hành')}
-      ${reportSummaryViz()}
+      ${reportSummaryViz(reportCases)}
     </section>
     <section class="hud-block report-history">${hudHead('Dòng báo cáo đã gửi')}
       ${reportTimeline(d.history)}
@@ -424,6 +433,7 @@ export function renderReportsLeft(d) {
 }
 
 export function renderReportsRight(d) {
+  const reportCases = d.reportCases || [];
   return `
     <section class="hud-block report-overview">${hudHead('Tổng quan báo cáo')}
       ${reportOverviewMap()}
@@ -435,7 +445,7 @@ export function renderReportsRight(d) {
       ${incidentMatrix(d.incidentMix)}
     </section>
     <section class="hud-block report-send-block">${hudHead('Gửi báo cáo cấp trên')}
-      ${reportSendForm()}
+      ${reportSendForm(reportCases)}
     </section>
     <section class="hud-block report-advice">${hudHead('Góp ý cho ban quản lý')}
       ${adviceDiagram(d.managementNotes)}
@@ -530,6 +540,15 @@ export function bindReportsHistory(root) {
       if (status && item) {
         status.textContent = `Đã gửi khiếu nại tới ${item.owner}; yêu cầu phản hồi trước mốc SLA tiếp theo.`;
         status.hidden = false;
+        addOperationalReport({
+          title: `Khiếu nại phụ trách: ${item.title}`,
+          summary: `Đã gửi khiếu nại tới ${item.owner} cho báo cáo ${item.id}.`,
+          steps: ['Ghi nhận khiếu nại', 'Gửi người phụ trách', 'Theo dõi phản hồi SLA'],
+          type: item.type,
+          tone: 'warn',
+          owner: item.owner,
+          status: 'Chưa giải quyết',
+        });
       }
       escalateBtn.disabled = true;
       escalateBtn.querySelector('span').textContent = 'Đã khiếu nại';
@@ -581,6 +600,11 @@ export function bindReportsHistory(root) {
         resolveButton.querySelector('span').textContent = 'Đang xử lý';
       }
       resolveModal.querySelector('[data-report-resolve-status]').textContent = 'Đã gửi thao tác xử lý tới bộ phận phụ trách.';
+      updateOperationalReport(id, {
+        status: 'Đang xử lý',
+        resolved: false,
+        tone: 'warn',
+      });
       return;
     }
 
@@ -598,6 +622,16 @@ export function bindReportsHistory(root) {
         ? 'tr\u1ef1c ti\u1ebfp t\u1eeb h\u1ec7 th\u1ed1ng'
         : `d\u01b0\u1edbi \u0111\u1ecbnh d\u1ea1ng ${format}`;
       if (status) status.textContent = `\u0110\u00e3 g\u1eedi b\u00e1o c\u00e1o t\u1ed5ng h\u1ee3p t\u1edbi ${recipient} ${method}.`;
+      addOperationalReport({
+        title: 'Gửi báo cáo tổng hợp ca vận hành',
+        summary: `Đã gửi báo cáo tổng hợp tới ${recipient} ${method}.`,
+        steps: ['Tổng hợp dữ liệu VOC', `Xuất ${format}`, `Gửi tới ${recipient}`],
+        type: 'crowd',
+        tone: 'ok',
+        resolved: true,
+        owner: recipient,
+        status: 'Đã gửi',
+      });
       sendModal.hidden = true;
       return;
     }
@@ -612,6 +646,16 @@ export function bindReportsHistory(root) {
       const priority = adviceModal.querySelector('[data-report-advice-priority]')?.value || 'theo d\u00f5i';
       const status = root.querySelector('[data-report-advice-status]');
       if (status) status.textContent = `\u0110\u00e3 g\u1eedi g\u00f3p \u00fd "${topic}" v\u1edbi m\u1ee9c ${priority} t\u1edbi ban qu\u1ea3n l\u00fd.`;
+      addOperationalReport({
+        title: `Góp ý ban quản lý: ${topic}`,
+        summary: `Đã gửi góp ý "${topic}" với mức ${priority} tới ban quản lý.`,
+        steps: ['Ghi nhận nội dung góp ý', 'Gửi ban quản lý', 'Theo dõi phản hồi sau ca'],
+        type: 'crowd',
+        tone: priority.includes('ngay') || priority.includes('Ưu') ? 'warn' : 'ok',
+        resolved: true,
+        owner: 'Ban quản lý sân',
+        status: 'Đã gửi',
+      });
       adviceModal.hidden = true;
     }
   });

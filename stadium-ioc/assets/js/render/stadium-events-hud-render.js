@@ -3,6 +3,7 @@ import { distributionChart, distributionMinis, distributionStack, radial3dChart 
 import {
   renderDispatchPanel, renderDispatchDialog, MEDICAL_DISPATCH, SECURITY_DISPATCH, openDispatchDialog,
 } from './emergency-dispatch.js';
+import { addOperationalReport } from '../data/stadium-report-store.js';
 
 function eventRadarChart(values, labels) {
   const cx = 56;
@@ -46,8 +47,8 @@ const CROWD_DENSITY_ZONES = [
 const DENSITY_ACTION_CONTEXT = {
   densityTeam: { focus: ['B12', 'B2', 'D'], plan: 'Điều 2 tổ an ninh tới B12, một tổ giữ B2 và một tổ theo dõi khu D.' },
   densityReduce: { focus: ['B12', 'B2', 'C1'], plan: 'Giảm dòng vào B12, mở tuyến B2/C1 và chuyển khán giả sang khu C1.' },
-  heatmap: { focus: ['A', 'B12', 'B2', 'D'], plan: 'Bật lớp bản đồ nhiệt toàn sân, ưu tiên các khu vàng/đỏ trong 60 giây tới.' },
-  heatmapB12: { focus: ['A', 'B12', 'B2', 'D'], plan: 'Bật lớp bản đồ nhiệt toàn sân, ưu tiên các khu vàng/đỏ trong 60 giây tới.' },
+  heatmap: { focus: ['A', 'B12', 'B2', 'D'], plan: 'Bật lớp bản đồ nhiệt toàn sân, ưu tiên các khu mật độ cao và cận ngưỡng trong 60 giây tới.' },
+  heatmapB12: { focus: ['A', 'B12', 'B2', 'D'], plan: 'Bật lớp bản đồ nhiệt toàn sân, ưu tiên các khu mật độ cao và cận ngưỡng trong 60 giây tới.' },
   isolateDense: { focus: ['B12', 'B2'], plan: 'Khoanh vùng các ô đông nhất quanh B12 và giữ hành lang B2 không bị quay đầu.' },
   nearestExit: { focus: ['B12', 'B2', 'C1', 'EXIT'], plan: 'Mở lối thoát gần nhất, dẫn luồng từ B12 qua B2 và C1.' },
   dispatchTeam: { focus: ['B12', 'A', 'D'], plan: 'Gửi đội cơ động gần nhất tới B12, đội dự phòng kiểm tra A/D trong vòng 2 phút.' },
@@ -78,22 +79,22 @@ const DENSITY_ACTION_UI = {
   },
   heatmap: {
     variant: 'heat',
-    metrics: [['01', 'Khu đỏ'], ['03', 'Khu vàng'], ['60s', 'Refresh']],
+    metrics: [['01', 'Đỉnh cao'], ['03', 'Cận ngưỡng'], ['60s', 'Refresh']],
     detail: `<div class="event-density-heat">
-      <span><b>92%</b><i></i><em>B12 đỏ</em></span>
-      <span><b>86%</b><i></i><em>B2 vàng</em></span>
-      <span><b>84%</b><i></i><em>D vàng</em></span>
-      <span><b>82%</b><i></i><em>A vàng</em></span>
+      <span><b>92%</b><i></i><em>B12 cao</em></span>
+      <span><b>86%</b><i></i><em>B2 cận</em></span>
+      <span><b>84%</b><i></i><em>D cận</em></span>
+      <span><b>82%</b><i></i><em>A cận</em></span>
     </div>`,
   },
   heatmapB12: {
     variant: 'heat',
-    metrics: [['01', 'Khu đỏ'], ['03', 'Khu vàng'], ['60s', 'Refresh']],
+    metrics: [['01', 'Đỉnh cao'], ['03', 'Cận ngưỡng'], ['60s', 'Refresh']],
     detail: `<div class="event-density-heat">
-      <span><b>92%</b><i></i><em>B12 đỏ</em></span>
-      <span><b>86%</b><i></i><em>B2 vàng</em></span>
-      <span><b>84%</b><i></i><em>D vàng</em></span>
-      <span><b>82%</b><i></i><em>A vàng</em></span>
+      <span><b>92%</b><i></i><em>B12 cao</em></span>
+      <span><b>86%</b><i></i><em>B2 cận</em></span>
+      <span><b>84%</b><i></i><em>D cận</em></span>
+      <span><b>82%</b><i></i><em>A cận</em></span>
     </div>`,
   },
   isolateDense: {
@@ -184,8 +185,8 @@ function densityMiniPanel() {
   const warnCount = CROWD_DENSITY_ZONES.filter((zone) => zone.tone === 'warn').length;
   return `<div class="event-density-overview event-density-overview--summary">
     <div class="event-risk__kpis">
-      <span><b>${hot.pct}%</b><em>Đỏ ${hot.id}</em></span>
-      <span><b>${warnCount}</b><em>Vàng</em></span>
+      <span><b>${hot.pct}%</b><em>${hot.id} cao</em></span>
+      <span><b>${warnCount}</b><em>Điểm cao</em></span>
       <span><b>04'</b><em>ETA</em></span>
     </div>
     <div class="event-density-mini-diagram event-density-mini-diagram--map" aria-label="Bản đồ mật độ hệ thống">
@@ -224,9 +225,9 @@ function densityModalMap(actionKey = 'densityTeam') {
   const context = DENSITY_ACTION_CONTEXT[actionKey] || DENSITY_ACTION_CONTEXT.densityTeam;
   const ui = DENSITY_ACTION_UI[actionKey] || DENSITY_ACTION_UI.densityTeam;
   const legend = [
-    ['hot', 'Đỏ', 'Cần điều ngay'],
-    ['warn', 'Vàng', 'Gần nguy cấp'],
-    ['ok', 'Xanh', 'Ổn định'],
+    ['hot', 'Đỉnh cao', 'Cần điều ngay'],
+    ['warn', 'Cận ngưỡng', 'Gần nguy cấp'],
+    ['ok', 'Ổn định', 'Trong ngưỡng'],
   ].map(([tone, label, desc]) => `<span class="event-density-legend__item event-density-legend__item--${tone}"><b>${label}</b><em>${desc}</em></span>`).join('');
   const zones = CROWD_DENSITY_ZONES.map((zone) =>
     `<span class="event-density-zone-row event-density-zone-row--${zone.tone}">
@@ -469,7 +470,7 @@ function overloadPressurePanel(crowd) {
       ${eventRadarChart([0.86, 0.92, 0.74, 0.68, 0.81, 0.58], ['A', 'B12', 'C1', 'EXIT', 'D', 'B2'])}
       <div class="event-overload__meter">
         <strong>92%</strong>
-        <span>Điểm đỏ B12</span>
+        <span>Đỉnh mật độ B12</span>
       </div>
     </div>
     <div class="event-overload__lanes">${sectors.map((s) =>
@@ -638,7 +639,7 @@ const EVENT_ACTIONS = {
     tag: 'CROWD OPS',
     title: 'Điều tổ an ninh theo bản đồ mật độ',
     icon: 'ti-users-group',
-    summary: 'Điều tổ theo bản đồ toàn sân: khu đỏ nhận đội ngay, khu vàng có đội giữ luồng dự phòng.',
+    summary: 'Điều tổ theo bản đồ toàn sân: khu mật độ cao nhận đội ngay, khu cận ngưỡng có đội giữ luồng dự phòng.',
     steps: ['Điều 2 tổ tới B12', 'Giữ luồng B2 và khu D', 'Báo VOC sau 3 phút'],
     primary: 'Điều tổ',
   },
@@ -646,7 +647,7 @@ const EVENT_ACTIONS = {
     tag: 'DENSITY OPS',
     title: 'Giảm mật độ khán đài',
     icon: 'ti-arrows-minimize',
-    summary: 'Giảm tải toàn sân bằng cách làm chậm dòng vào khu đỏ, mở tuyến nhận luồng ở B2/C1 và theo dõi các khu vàng.',
+    summary: 'Giảm tải toàn sân bằng cách làm chậm dòng vào khu mật độ cao, mở tuyến nhận luồng ở B2/C1 và theo dõi các khu cận ngưỡng.',
     steps: ['Tạm giảm dòng vào B12', 'Ưu tiên tuyến B2/C1', 'Theo dõi mật độ từng phút'],
     primary: 'Kích hoạt giảm mật độ',
   },
@@ -654,7 +655,7 @@ const EVENT_ACTIONS = {
     tag: 'HEATMAP',
     title: 'Bản đồ nhiệt toàn sân',
     icon: 'ti-map-search',
-    summary: 'Mở lớp bản đồ nhiệt toàn sân để thấy khu đỏ cần điều ngay và khu vàng gần nguy cấp.',
+    summary: 'Mở lớp bản đồ nhiệt toàn sân để thấy khu mật độ cao cần điều ngay và khu cận ngưỡng gần nguy cấp.',
     steps: ['Bật lớp mật độ toàn sân', 'So sánh B12/B2/D', 'Cập nhật VOC mỗi 60 giây'],
     primary: 'Xem bản đồ nhiệt',
   },
@@ -662,7 +663,7 @@ const EVENT_ACTIONS = {
     tag: 'HEATMAP',
     title: 'Bản đồ nhiệt toàn sân',
     icon: 'ti-map-search',
-    summary: 'Mở lớp bản đồ nhiệt toàn sân để thấy khu đỏ cần điều ngay và khu vàng gần nguy cấp.',
+    summary: 'Mở lớp bản đồ nhiệt toàn sân để thấy khu mật độ cao cần điều ngay và khu cận ngưỡng gần nguy cấp.',
     steps: ['Bật lớp mật độ toàn sân', 'So sánh B12/B2/D', 'Cập nhật VOC mỗi 60 giây'],
     primary: 'Xem bản đồ nhiệt',
   },
@@ -670,15 +671,15 @@ const EVENT_ACTIONS = {
     tag: 'GRID OPS',
     title: 'Cô lập ô DENSE',
     icon: 'ti-grid-dots',
-    summary: 'Khoanh vùng các điểm đỏ/vàng trên bản đồ mật độ toàn sân để chặn dòng quay lại và giữ hành lang thoát.',
-    steps: ['Đánh dấu ô đỏ/vàng', 'Chặn nhánh quay lại B12', 'Mở hành lang sang EXIT'],
+    summary: 'Khoanh vùng các điểm mật độ cao và cận ngưỡng trên bản đồ mật độ toàn sân để chặn dòng quay lại và giữ hành lang thoát.',
+    steps: ['Đánh dấu ô đông/cận ngưỡng', 'Chặn nhánh quay lại B12', 'Mở hành lang sang EXIT'],
     primary: 'Cô lập ô DENSE',
   },
   nearestExit: {
     tag: 'EXIT OPS',
     title: 'Mở EXIT gần nhất',
     icon: 'ti-door-exit',
-    summary: 'Ưu tiên mở cửa thoát gần nhất cho khu đỏ và khu vàng gần nguy cấp để giảm áp lực toàn tuyến.',
+    summary: 'Ưu tiên mở cửa thoát gần nhất cho khu mật độ cao và khu cận ngưỡng gần nguy cấp để giảm áp lực toàn tuyến.',
     steps: ['Chọn EXIT gần nhất', 'Điều bảo vệ giữ luồng', 'Theo dõi ETA sơ tán'],
     primary: 'Mở EXIT gần nhất',
   },
@@ -686,7 +687,7 @@ const EVENT_ACTIONS = {
     tag: 'DISPATCH',
     title: 'Gửi đội cơ động tới vùng đông',
     icon: 'ti-users-group',
-    summary: 'Chọn đội gần nhất theo bản đồ mật độ, ưu tiên tiếp cận B12 và kiểm tra các khu vàng A/D.',
+    summary: 'Chọn đội gần nhất theo bản đồ mật độ, ưu tiên tiếp cận B12 và kiểm tra các khu cận ngưỡng A/D.',
     steps: ['Đội nhanh 1 tới B12', 'Đội an ninh 4 giữ A/D', 'Kênh VOC-21 xác nhận'],
     primary: 'Gửi đội cơ động',
   },
@@ -694,7 +695,7 @@ const EVENT_ACTIONS = {
     tag: 'FLOW OPS',
     title: 'Chia luồng khán giả',
     icon: 'ti-arrows-split',
-    summary: 'Kích hoạt phân luồng từ khu đỏ sang các tuyến nhận luồng, giảm áp lực điểm nóng trong 4 phút.',
+    summary: 'Kích hoạt phân luồng từ khu mật độ cao sang các tuyến nhận luồng, giảm áp lực điểm nóng trong 4 phút.',
     steps: ['Mở rào mềm B2', 'Điều 2 tổ an ninh', 'Theo dõi bản đồ nhiệt'],
     primary: 'Kích hoạt chia luồng',
   },
@@ -904,6 +905,16 @@ export function bindEventsHudTabs(root, data) {
     modal.querySelector('[data-event-action-summary]').textContent = action.summary;
     modal.querySelector('[data-event-action-primary]').textContent = action.primary;
     modal.querySelector('[data-event-action-status]').textContent = 'Chờ xác nhận điều phối.';
+    delete modal.dataset.reportSent;
+    modal.dataset.reportPayload = encodeURIComponent(JSON.stringify({
+      title: action.title,
+      summary: action.summary,
+      steps: action.steps,
+      type: actionKey.includes('fire') ? 'fire' : 'crowd',
+      tone: actionKey.includes('heatmap') ? 'ok' : 'warn',
+      owner: action.tag,
+      status: 'Chưa giải quyết',
+    }));
     const densityMount = modal.querySelector('[data-event-density-map-mount]');
     if (densityMount) densityMount.innerHTML = densityModalMap(actionKey);
     modal.querySelector('[data-event-action-steps]').innerHTML = action.steps
@@ -943,6 +954,19 @@ export function bindEventsHudTabs(root, data) {
     }
     if (event.target.closest('[data-event-action-confirm]')) {
       activeModal.querySelector('[data-event-action-status]').textContent = 'Đã gửi lệnh điều phối tới PA, an ninh và đội cổng.';
+      if (activeModal.dataset.reportSent !== 'true') {
+        try {
+          addOperationalReport(JSON.parse(decodeURIComponent(activeModal.dataset.reportPayload || '%7B%7D')));
+        } catch {
+          addOperationalReport({
+            title: 'Kích hoạt điều phối sự kiện',
+            summary: 'Đã gửi lệnh điều phối tới PA, an ninh và đội cổng.',
+            type: 'crowd',
+            tone: 'warn',
+          });
+        }
+        activeModal.dataset.reportSent = 'true';
+      }
     }
   });
 
@@ -1094,6 +1118,21 @@ export function bindEventsHudTabs(root, data) {
 
   const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
 
+  const addPowerReport = (turnOn, zoneName = '') => {
+    addOperationalReport({
+      title: `${turnOn ? 'Mở điện' : 'Cắt điện'} ${zoneName || 'toàn bộ SVĐ'}`,
+      summary: zoneName
+        ? `Đã ${turnOn ? 'mở điện lại' : 'cắt điện'} ${zoneName} từ bảng điều khiển sự kiện.`
+        : `Đã ${turnOn ? 'mở điện lại' : 'cắt điện'} toàn bộ hệ thống sân vận động.`,
+      steps: ['Xác nhận thao tác nguồn', 'Cập nhật trạng thái từng khu', 'Ghi log BMS/VOC'],
+      type: 'power',
+      tone: turnOn ? 'ok' : 'warn',
+      resolved: true,
+      owner: 'Kỹ thuật điện',
+      status: 'Đã xử lý',
+    });
+  };
+
   const startFireAutoChain = async (button) => {
     if (!button || button.dataset.running === 'true') return;
     const status = root.querySelector('[data-fire-auto-status]');
@@ -1125,6 +1164,15 @@ export function bindEventsHudTabs(root, data) {
       view: window,
     }));
     if (status) status.textContent = 'Đã gọi cứu hỏa / sơ tán. Bấm Kết thúc & gửi yêu cầu trong form.';
+    addOperationalReport({
+      title: 'Auto PCCC đã kích hoạt',
+      summary: 'Auto PCCC đã cắt điện toàn bộ SVĐ, hút khói khu nguy cơ và gọi cứu hỏa / sơ tán tiếp nhận.',
+      steps: ['Cắt điện toàn bộ SVĐ', 'Hút khói khu nguy cơ', 'Gọi cứu hỏa / sơ tán'],
+      type: 'fire',
+      tone: 'danger',
+      owner: 'Phụ trách PCCC',
+      status: 'Chưa giải quyết',
+    });
     button.classList.remove('event-fire-auto__button--running');
     button.classList.add('event-fire-auto__button--done');
     button.disabled = false;
@@ -1140,7 +1188,20 @@ export function bindEventsHudTabs(root, data) {
 
     const fireBtn = event.target.closest('[data-fire-action]');
     if (!fireBtn) return;
-    if (fireBtn.dataset.fireAction === 'smoke') startSmokeExtraction();
+    if (fireBtn.dataset.fireAction === 'smoke') {
+      startSmokeExtraction().then(() => {
+        addOperationalReport({
+          title: 'Hút khói khu nguy cơ',
+          summary: 'Đã khởi động quạt hút khói và đưa cảm biến khu nguy cơ về ngưỡng an toàn.',
+          steps: ['Mở quạt hút khói', 'Tạo áp âm hành lang', 'Theo dõi cảm biến khói'],
+          type: 'fire',
+          tone: 'ok',
+          resolved: true,
+          owner: 'Phụ trách PCCC',
+          status: 'Đã xử lý',
+        });
+      });
+    }
     if (fireBtn.dataset.fireAction === 'power') preparePowerConfirm({ turnOn: false, showConfirm: false });
     if (fireBtn.dataset.fireAction === 'power-zone-b') {
       preparePowerConfirm({ turnOn: false, zoneName: 'Khán đài B', showConfirm: true });
@@ -1165,7 +1226,9 @@ export function bindEventsHudTabs(root, data) {
       return;
     }
     if (event.target.closest('[data-power-accept]')) {
-      runPowerSequence(activePowerModal.dataset.powerIntent === 'on', activePowerModal.dataset.powerZone);
+      const turnOn = activePowerModal.dataset.powerIntent === 'on';
+      const zoneName = activePowerModal.dataset.powerZone;
+      runPowerSequence(turnOn, zoneName).then(() => addPowerReport(turnOn, zoneName));
     }
   };
 
@@ -1173,7 +1236,9 @@ export function bindEventsHudTabs(root, data) {
   powerModal?.querySelector('[data-power-accept]')?.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
-    runPowerSequence(powerModal.dataset.powerIntent === 'on', powerModal.dataset.powerZone);
+    const turnOn = powerModal.dataset.powerIntent === 'on';
+    const zoneName = powerModal.dataset.powerZone;
+    runPowerSequence(turnOn, zoneName).then(() => addPowerReport(turnOn, zoneName));
   });
   powerModal?.querySelectorAll('[data-power-zone]').forEach((zoneNode) => {
     zoneNode.addEventListener('click', (event) => {
@@ -1215,7 +1280,9 @@ export function bindEventsHudTabs(root, data) {
       return;
     }
     if (event.target.closest('[data-power-accept]')) {
-      runPowerSequence(activePowerModal.dataset.powerIntent === 'on', activePowerModal.dataset.powerZone);
+      const turnOn = activePowerModal.dataset.powerIntent === 'on';
+      const zoneName = activePowerModal.dataset.powerZone;
+      runPowerSequence(turnOn, zoneName).then(() => addPowerReport(turnOn, zoneName));
     }
   });
 }

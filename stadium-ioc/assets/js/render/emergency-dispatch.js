@@ -1,3 +1,5 @@
+import { addOperationalReport } from '../data/stadium-report-store.js';
+
 const DISPATCH_CFG = {
   medical: {
     defaultType: 'medical',
@@ -269,6 +271,7 @@ function bindDispatchDialogs() {
 
     if (openBtn) {
       rt.selectedType = openBtn.dataset.dispatchTypePreset || cfg.defaultType;
+      delete dialog.dataset.dispatchReportSent;
       resetRecorder(dialog, rt);
       showDispatchDialog(dialog);
       dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {
@@ -331,6 +334,19 @@ function bindDispatchDialogs() {
       const label = serviceLabel(id, rt.selectedType);
       setCallStatus(dialog, rt.selectedType, 'Đã kết nối');
       if (status) status.textContent = `Cuộc gọi tới ${dispatchTypeConfig(dialog, rt.selectedType).hotline} đã kết nối. Yêu cầu đang được chuyển đến ${label.toLowerCase()}.`;
+      if (dialog.dataset.dispatchReportSent !== 'true') {
+        const note = dialog.querySelector('[data-dispatch-note]')?.value?.trim();
+        addOperationalReport({
+          title: `Gửi yêu cầu ${label}`,
+          summary: note || `Cuộc gọi tới ${dispatchTypeConfig(dialog, rt.selectedType).hotline} đã kết nối và yêu cầu được chuyển đến ${label.toLowerCase()}.`,
+          steps: ['Chọn tổng đài phản ứng', 'Kết nối cuộc gọi VOC', 'Gửi yêu cầu tới đội phụ trách'],
+          type: rt.selectedType === 'fire' ? 'fire' : (id === 'medical' ? 'medical' : 'crowd'),
+          tone: rt.selectedType === 'fire' ? 'danger' : 'warn',
+          owner: label,
+          status: 'Chưa giải quyết',
+        });
+        dialog.dataset.dispatchReportSent = 'true';
+      }
       if (rt.etaTimer) clearTimeout(rt.etaTimer);
       rt.etaTimer = setTimeout(() => {
         const info = DISPATCH_CFG[id].types[rt.selectedType];
@@ -350,6 +366,7 @@ export function openDispatchDialog(id, opts = {}) {
   const rt = getRt(id);
   const type = opts.type || cfg?.defaultType;
   rt.selectedType = type;
+  delete dialog.dataset.dispatchReportSent;
   showDispatchDialog(dialog);
   dialog.querySelectorAll('[data-dispatch-type]').forEach((btn) => {
     btn.classList.toggle('svc-emergency__line--active', btn.dataset.dispatchType === type);

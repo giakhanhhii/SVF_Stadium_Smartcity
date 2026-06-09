@@ -31,8 +31,8 @@ export const smartcitySceneData = {
     overview: { pos: [24, 26, 34], target: [0, 3, 0], fov: 42, hint: 'Tổng quan thành phố' },
     traffic: { pos: [18, 16, 18], target: [0, 1.2, 0], fov: 38, hint: 'Theo dõi giao thông' },
     security: { pos: [10, 18, 16], target: [4, 8, -3], fov: 36, hint: 'Camera an ninh và đội xử lý' },
-    environment: { pos: [-18, 15, 16], target: [-7, 2, 5], fov: 40, hint: 'Cảm biến môi trường' },
-    utilities: { pos: [18, 14, -18], target: [8, 2, -8], fov: 38, hint: 'Hạ tầng tiện ích' },
+  environment: { pos: [-18, 15, 16], target: [-7, 2, 5], fov: 40, hint: 'Cảm biến hạ tầng' },
+  utilities: { pos: [18, 14, -18], target: [8, 2, -8], fov: 38, hint: 'Hạ tầng dịch vụ' },
     reports: { pos: [0, 34, 38], target: [0, 2, 0], fov: 48, hint: 'Báo cáo tổng hợp' },
   },
   roads: [
@@ -124,6 +124,6 @@ export const smartcitySceneData = {
     { id: 'report-traffic', group: 'reports', pos: [-9, 0, -10], height: 4.5, color: '#185FA5', label: 'Giao thông' },
     { id: 'report-security', group: 'reports', pos: [-3, 0, -10], height: 5.8, color: '#85B7EB', label: 'An ninh' },
     { id: 'report-energy', group: 'reports', pos: [3, 0, -10], height: 3.6, color: '#EF9F27', label: 'Năng lượng' },
-    { id: 'report-environment', group: 'reports', pos: [9, 0, -10], height: 4.9, color: '#1D9E75', label: 'Môi trường' },
+  { id: 'report-environment', group: 'reports', pos: [9, 0, -10], height: 4.9, color: '#1D9E75', label: 'Hạ tầng' },
   ],
 };

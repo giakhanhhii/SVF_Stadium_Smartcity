@@ -1,6 +1,6 @@
 export const environmentData = {
   banner: {
-    title: 'Environmental Monitoring — Quan trắc môi trường đô thị',
+    title: 'Infrastructure Monitoring — Hạ tầng đô thị',
     chips: [
       { label: 'AQI', active: true },
       { label: 'Nước', active: true },

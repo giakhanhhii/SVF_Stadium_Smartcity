@@ -51,7 +51,7 @@ function environmentThermalMap() {
     { label: 'Park', value: 'OK', tone: 'ok' },
   ];
   return `<section class="hud-block sc-diagram" data-diagram-family="thermal-grid">
-    ${hudHead('Bản đồ môi trường FIFA')}
+    ${hudHead('Bản đồ hạ tầng')}
     <div class="sc-thermal">
       <div class="sc-thermal__dial" style="--pct:92"><strong>92%</strong><span>VOC score</span></div>
       <div class="sc-thermal__grid">
@@ -76,7 +76,7 @@ function environmentNetwork() {
     return { ...node, x: 50 + Math.cos(angle) * 36, y: 50 + Math.sin(angle) * 31 };
   });
   return `<section class="hud-block sc-diagram" data-diagram-family="sensor-network">
-    ${hudHead('Mạng cảm biến môi trường')}
+    ${hudHead('Mạng cảm biến hạ tầng')}
     <div class="sc-node-map sc-node-map--environment">
       <svg viewBox="0 0 100 100" aria-hidden="true">
         <circle class="sc-node-map__halo" cx="50" cy="50" r="19"/>
@@ -160,7 +160,7 @@ function utilityNodeMap() {
     return { ...node, x: 50 + Math.cos(angle) * 37, y: 50 + Math.sin(angle) * 32 };
   });
   return `<section class="hud-block sc-diagram" data-diagram-family="utility-node-map">
-    ${hudHead('Sơ đồ node tiện ích Matchday')}
+    ${hudHead('Sơ đồ node dịch vụ')}
     <div class="sc-node-map sc-node-map--utility">
       <svg viewBox="0 0 100 100" aria-hidden="true">
         <rect class="sc-node-map__pitch" x="35" y="37" width="30" height="26" rx="13"/>
@@ -183,7 +183,7 @@ function utilityServiceMap() {
     { label: 'Concourse', value: 76, tone: 'warn' },
   ];
   return `<section class="hud-block sc-diagram" data-diagram-family="service-map">
-    ${hudHead('Phân bổ tải tiện ích')}
+    ${hudHead('Phân bổ tải dịch vụ')}
     <div class="sc-service-map">
       <div class="sc-service-map__top">
         <div class="sc-service-map__ring" style="--pct:91"><strong>91%</strong><span>SLA</span></div>
@@ -242,7 +242,7 @@ function utilityLoadTowers() {
     { label: '20h', value: 69 },
   ];
   return `<section class="hud-block sc-diagram" data-diagram-family="queue-bars">
-    ${hudHead('Tải tiện ích theo giờ')}
+    ${hudHead('Tải dịch vụ theo giờ')}
     <div class="sc-queue-bars">
       ${bars.map((bar) => `<span class="sc-queue-bar sc-queue-bar--${bar.value >= 84 ? 'warn' : 'ok'}">
         <em>${bar.label}</em><i style="height:${bar.value}%"></i><b>${bar.value}%</b>
@@ -315,8 +315,8 @@ function reportResolution() {
 
 function reportIncidentMatrix() {
   const items = [
-    { label: 'Môi trường', value: 18 },
-    { label: 'Tiện ích', value: 24 },
+    { label: 'Hạ tầng', value: 18 },
+    { label: 'Dịch vụ', value: 24 },
     { label: 'An ninh', value: 22 },
     { label: 'Giao thông', value: 19 },
     { label: 'FIFA', value: 17 },
@@ -388,7 +388,7 @@ const pageRenderers = {
   environment: {
     left: () => [
       heroMetric({
-        title: 'Môi trường VOC/FIFA',
+        title: 'Hạ tầng đô thị',
         icon: 'ti-leaf',
         label: 'Chỉ số comfort',
         value: '92/100',
@@ -400,13 +400,13 @@ const pageRenderers = {
     ].join(''),
     right: () => [
       environmentRadar(),
-      standardChecklist('Chuẩn vận hành môi trường', [
+      standardChecklist('Chuẩn vận hành hạ tầng', [
         { label: 'PM2.5 dưới ngưỡng', value: '18 µg', icon: 'ti-mist' },
         { label: 'FOP 18-26°C', value: 'OK', icon: 'ti-temperature' },
         { label: 'Noise < 85 dB', value: '54 dB', icon: 'ti-volume' },
         { label: 'Nước pH 6.5-8.5', value: '7.2', icon: 'ti-droplet' },
       ]),
-      statusAlerts('Cảnh báo môi trường', [
+      statusAlerts('Cảnh báo hạ tầng', [
         { tag: 'VOC', title: 'Chỉ số VOC khu Fan zone tăng nhẹ', time: '6 phút', tone: AMBER },
         { tag: 'FOP', title: 'Nhiệt độ sân thi đấu trong dải FIFA', time: '12 phút', tone: GREEN },
         { tag: 'Lake', title: 'Hồ công viên đạt pH 7.2, không cần xử lý', time: '21 phút', tone: BLUE },
@@ -416,7 +416,7 @@ const pageRenderers = {
   utilities: {
     left: () => [
       heroMetric({
-        title: 'Tiện ích Matchday',
+        title: 'Dịch vụ đô thị',
         icon: 'ti-bolt',
         label: 'SLA kỹ thuật',
         value: '99.1%',
@@ -429,13 +429,13 @@ const pageRenderers = {
     right: () => [
       utilityLoadTowers(),
       utilityLuxGrid(),
-      standardChecklist('Chuẩn tiện ích FIFA', [
+      standardChecklist('Chuẩn dịch vụ', [
         { label: 'Nguồn điện 2N', value: 'Ready', icon: 'ti-bolt' },
         { label: 'UPS thiết bị trọng yếu', value: '38m', icon: 'ti-battery-3' },
         { label: 'Broadcast lux', value: '1400', icon: 'ti-bulb' },
         { label: 'PA/LED online', value: '100%', icon: 'ti-device-tv' },
       ]),
-      statusAlerts('Cảnh báo tiện ích', [
+      statusAlerts('Cảnh báo dịch vụ', [
         { tag: 'Lux', title: 'Camera VAR cần cân lại vùng sáng phụ', time: '4 phút', tone: AMBER },
         { tag: 'UPS', title: 'UPS-B đang giữ tải ưu tiên ổn định', time: '10 phút', tone: BLUE },
         { tag: 'Water', title: 'Áp lực nước khu vệ sinh đạt SLA', time: '17 phút', tone: GREEN },
@@ -456,7 +456,7 @@ const pageRenderers = {
       standardChecklist('Checklist báo cáo FIFA', [
         { label: 'Matchday command log', value: 'Done', icon: 'ti-file-check' },
         { label: 'SLA khép vòng', value: '94%', icon: 'ti-refresh' },
-        { label: 'KPI môi trường', value: 'OK', icon: 'ti-leaf' },
+      { label: 'KPI hạ tầng', value: 'OK', icon: 'ti-building-estate' },
         { label: 'Gửi BTC/FIFA', value: '20:30', icon: 'ti-send' },
       ]),
       statusAlerts('Dòng báo cáo', [

@@ -5,16 +5,16 @@ const NAV_LEFT = [
 ];
 
 const NAV_RIGHT = [
-  { id: 'environment', label: 'Môi trường', icon: 'ti-leaf' },
-  { id: 'utilities', label: 'Tiện ích', icon: 'ti-bolt' },
+  { id: 'environment', label: 'Hạ tầng', icon: 'ti-building-estate' },
+  { id: 'utilities', label: 'Dịch vụ', icon: 'ti-bolt' },
   { id: 'reports', label: 'Báo cáo', icon: 'ti-chart-bar' },
 ];
 
 const NOTIFICATIONS = [
   { id: 'n1', source: 'Trung tâm IOC', title: 'Cảnh báo ùn tắc tại nút A4', detail: 'Điều phối ưu tiên đèn tín hiệu và camera AI trong 15 phút tới.', time: '2 phút' },
-  { id: 'n2', source: 'Môi trường', title: 'AQI tăng ngưỡng tại trạm B2', detail: 'Kích hoạt đội kiểm tra hiện trường và đối chiếu dữ liệu PM2.5.', time: '8 phút' },
+  { id: 'n2', source: 'Hạ tầng', title: 'Cảm biến khu B2 tăng ngưỡng', detail: 'Kích hoạt đội kỹ thuật kiểm tra hiện trường và đối chiếu dữ liệu cảm biến.', time: '8 phút' },
   { id: 'n3', source: 'An ninh', title: 'Sự cố camera khu C2 đã được gán đội ứng phó', detail: 'Đội #03 đang di chuyển, ETA 6 phút.', time: '12 phút' },
-  { id: 'n4', source: 'Tiện ích', title: 'Cụm đèn D5 cần lịch bảo trì nhanh', detail: 'Ticket #4821 đã tạo, ưu tiên xử lý trong ca trực hiện tại.', time: '18 phút' },
+  { id: 'n4', source: 'Dịch vụ', title: 'Cụm đèn D5 cần lịch bảo trì nhanh', detail: 'Ticket #4821 đã tạo, ưu tiên xử lý trong ca trực hiện tại.', time: '18 phút' },
 ];
 
 let notifyBound = false;

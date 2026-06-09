@@ -1,6 +1,6 @@
 export const utilitiesData = {
   banner: {
-    title: 'Urban Public Utilities — Tiện ích & Hạ tầng đô thị',
+    title: 'Urban Resident Services — Dịch vụ & Hạ tầng đô thị',
     chips: [
       { label: 'Điện', active: true },
       { label: 'Chiếu sáng', active: true },

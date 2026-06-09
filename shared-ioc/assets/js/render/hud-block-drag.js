@@ -27,7 +27,8 @@ function storageKey(root, panel) {
   const pageId = root?.id || 'stadium-page';
   const mount = panel.dataset.mount || 'sidebar';
   const namespace = panel.dataset.hudDragNamespace || root?.dataset.hudDragNamespace || 'ioc';
-  return `${DEFAULT_STORAGE_PREFIX}:${namespace}:${pageId}:${mount}`;
+  const version = panel.dataset.hudDragVersion || root?.dataset.hudDragVersion || 'v1';
+  return `${DEFAULT_STORAGE_PREFIX}:${namespace}:${version}:${pageId}:${mount}`;
 }
 
 function directBlocks(panel) {

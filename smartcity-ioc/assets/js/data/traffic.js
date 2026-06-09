@@ -39,7 +39,7 @@ export const trafficData = {
   },
   right: {
     kpiRadar: {
-      title: 'KPI giao thông',
+      title: 'Tai nạn giao thông',
       labels: ['SLA', 'Tốc', 'Đèn', 'Camera', 'Làn'],
       values: [0.88, 0.72, 0.84, 0.97, 0.76],
     },

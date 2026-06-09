@@ -189,6 +189,7 @@ function smartcityDeviceModal() {
 }
 
 export function renderLeftSidebar(d) {
+  const devicesTitle = d.devices?.title || 'Thiết bị';
   return `
     <section class="hud-block">${hudHead(d.personnel.title)}
       ${residentPie3d(d.personnel.groups)}
@@ -201,7 +202,7 @@ export function renderLeftSidebar(d) {
       </div>
       ${renderModePanels()}
     </section>
-    <section class="hud-block hud-block--devices">${hudHead(d.devices.title)}
+    <section class="hud-block hud-block--devices">${hudHead(devicesTitle)}
       <div class="hud-tabs hud-tabs--wrap" data-smartcity-device-tabs>
         ${Object.entries(SMARTCITY_DEVICE_PRESETS).map(([key, item], i) =>
           `<button class="hud-tab hud-tab--sm${i === 0 ? ' hud-tab--active' : ''}" data-smartcity-device-tab="${key}">${item.label}</button>`,

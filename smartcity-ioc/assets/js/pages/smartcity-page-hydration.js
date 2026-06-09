@@ -14,8 +14,13 @@ import {
   bindTrafficSignalControls,
 } from '../render/traffic-panels-right.js';
 import { bindRedLightModal } from '../render/traffic-violations.js';
-import { renderLeftSidebar } from '../render/security-panels-left.js';
-import { renderRightSidebar } from '../render/security-panels-right.js';
+import { bindSecurityModeTabs, renderLeftSidebar } from '../render/security-panels-left.js';
+import {
+  bindRiskZoneTabs,
+  bindSmartcityDeviceControls,
+  bindSmartcityFireExitControls,
+  renderRightSidebar,
+} from '../render/security-panels-right.js';
 import { renderSmartcityDomainLeft, renderSmartcityDomainRight } from '../render/smartcity-domain-command-panels.js';
 import { overviewData } from '../data/smartcity-overview-data.js';
 import { trafficData } from '../data/traffic.js';
@@ -62,6 +67,10 @@ export function hydratePage(pageId) {
 export function hydrateAllPages() {
   ['overview', 'traffic', 'security', 'environment', 'utilities', 'reports'].forEach(hydratePage);
   bindTrafficCameraModal();
+  bindSecurityModeTabs();
+  bindRiskZoneTabs();
+  bindSmartcityDeviceControls();
+  bindSmartcityFireExitControls();
   bindRedLightModal();
   bindTrafficKpiControls();
   bindTrafficFlowControls();

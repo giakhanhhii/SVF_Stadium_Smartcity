@@ -162,7 +162,7 @@ function addSideCrosswalkBars(scene, side, roadWidth, intersectionHalfSize) {
   const barWidth = 0.34;
   const barGap = 0.48;
   const barSpan = Math.min(roadWidth * 0.72, 6.2);
-  const x = side * (intersectionHalfSize + 2.35);
+  const x = side * (intersectionHalfSize + 4.2 + barSpan / 2);
   const start = -((barCount - 1) * (barWidth + barGap)) / 2;
 
   for (let i = 0; i < barCount; i += 1) {

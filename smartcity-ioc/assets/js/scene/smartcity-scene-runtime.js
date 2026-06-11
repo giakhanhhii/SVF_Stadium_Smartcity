@@ -20,12 +20,19 @@ const animatedObjects = [];
 let trafficRuntime = null;
 
 const SPACE_REVERSE_DELAY_SECONDS = 0.1;
-const SPACE_REVERSE_MAX_SECONDS = 3;
-const SPACE_REVERSE_MIN_SECONDS = 1.5;
+const SPACE_REVERSE_MAX_SECONDS = 2.6;
+const SPACE_REVERSE_MIN_SECONDS = 0.8;
 const SPACE_REVERSE_SPEED_FACTOR = 0.72;
-const SPACE_REVERSE_COOLDOWN_MIN_SECONDS = 1.15;
-const SPACE_REVERSE_COOLDOWN_MAX_SECONDS = 1.85;
-const GRIDLOCK_RECOVERY_SECONDS = 2.4;
+const ROUNDABOUT_MAX_SMOOTH_VEHICLES = 6;
+const ROUNDABOUT_MAX_ACTIVE_PER_APPROACH = 1;
+const ROUNDABOUT_MIN_SPAWN_INTERVAL_SECONDS = 2.1;
+const ROUNDABOUT_STALE_RELEASE_SECONDS = 3.6;
+const ROUNDABOUT_STALE_CRAWL_SPEED_FACTOR = 0.32;
+const ROUNDABOUT_CONTINUOUS_REVERSE_SECONDS = 1.6;
+const ROUNDABOUT_CONTINUOUS_CLEARANCE_DISTANCE = 6.2;
+const ROUNDABOUT_REVERSE_BACKOUT_DISTANCE = 8.5;
+const ROUNDABOUT_CONTACT_SEPARATE_SECONDS = 0.08;
+const ROUNDABOUT_CONTACT_DESPAWN_SECONDS = 1.05;
 
 const TRAFFIC_LIGHT_GROUPS = {
   N: ['NS_STRAIGHT_RIGHT', 'NS_LEFT'],
@@ -271,6 +278,27 @@ function buildRoundaboutRoutes(layout, roundabout) {
 }
 
 function getRouteSample(route, distance) {
+  if (distance < 0 && route.points.length > 1) {
+    const prev = route.points[0];
+    const next = route.points[1];
+    const heading = Math.atan2(next.x - prev.x, next.z - prev.z);
+    return {
+      x: prev.x + Math.sin(heading) * distance,
+      z: prev.z + Math.cos(heading) * distance,
+      heading,
+    };
+  }
+  if (distance > route.length && route.points.length > 1) {
+    const prev = route.points[route.points.length - 2];
+    const next = route.points[route.points.length - 1];
+    const heading = Math.atan2(next.x - prev.x, next.z - prev.z);
+    const overshoot = distance - route.length;
+    return {
+      x: next.x + Math.sin(heading) * overshoot,
+      z: next.z + Math.cos(heading) * overshoot,
+      heading,
+    };
+  }
   const s = Math.max(0, Math.min(route.length, distance));
   let i = 1;
   while (i < route.lengths.length - 1 && route.lengths[i] < s) i += 1;
@@ -327,9 +355,9 @@ function canSpawnVehicle(vehicle, t) {
   if (!vehicle.route || t < vehicle.respawnAt) return false;
   const roundabout = trafficSceneData.roundabout;
   const activeVehicles = trafficRuntime?.vehicles.filter((other) => other.mesh.visible) || [];
-  const maxActiveVehicles = roundabout?.maxActiveVehicles || 9;
-  const maxActivePerApproach = roundabout?.maxActivePerApproach || 2;
-  const spawnInterval = roundabout?.spawnIntervalSeconds || 1.5;
+  const maxActiveVehicles = Math.min(roundabout?.maxActiveVehicles || ROUNDABOUT_MAX_SMOOTH_VEHICLES, ROUNDABOUT_MAX_SMOOTH_VEHICLES);
+  const maxActivePerApproach = Math.min(roundabout?.maxActivePerApproach || ROUNDABOUT_MAX_ACTIVE_PER_APPROACH, ROUNDABOUT_MAX_ACTIVE_PER_APPROACH);
+  const spawnInterval = Math.max(roundabout?.spawnIntervalSeconds || ROUNDABOUT_MIN_SPAWN_INTERVAL_SECONDS, ROUNDABOUT_MIN_SPAWN_INTERVAL_SECONDS);
   if (activeVehicles.length >= maxActiveVehicles) return false;
   if (t - (trafficRuntime?.lastSpawnAt || 0) < spawnInterval) return false;
   if (vehicle.route.mode === 'roundabout') {
@@ -359,6 +387,8 @@ function resetVehicleOnRoute(vehicle, t = 0) {
   vehicle.reverseReason = null;
   vehicle.reverseBlockedBy = null;
   vehicle.reverseBlockedAt = 0;
+  vehicle.continuousReverse = false;
+  vehicle.bodyContactFor = 0;
   vehicle.state = vehicle.route.mode === 'roundabout' ? 'APPROACHING' : 'queued';
   vehicle.enteredIntersection = false;
   vehicle.exitedIntersection = false;
@@ -381,6 +411,8 @@ function despawnVehicle(vehicle, t, state = 'despawned') {
   vehicle.reverseReason = null;
   vehicle.reverseBlockedBy = null;
   vehicle.reverseBlockedAt = 0;
+  vehicle.continuousReverse = false;
+  vehicle.bodyContactFor = 0;
   vehicle.state = state;
   vehicle.respawnAt = t + 4 + Math.random() * 8;
   if (vehicle.label) vehicle.label.visible = false;
@@ -471,19 +503,21 @@ function isRoundaboutExitClear(vehicle) {
 function getVehicleFootprintGap(vehicle, other) {
   const baseGap = trafficSceneData.roundabout?.minimumVehicleGap || 4.9;
   const busExtra = vehicle.vehicleKind === 'bus' || other.vehicleKind === 'bus' ? 1.9 : 0;
-  const motoReduction = (vehicle.vehicleKind === 'moto' ? 1.25 : 0) + (other.vehicleKind === 'moto' ? 1.25 : 0);
-  return baseGap + busExtra - motoReduction;
+  const bothMoto = vehicle.vehicleKind === 'moto' && other.vehicleKind === 'moto';
+  const mixedMoto = !bothMoto && (vehicle.vehicleKind === 'moto' || other.vehicleKind === 'moto');
+  const motoAdjustment = bothMoto ? -0.65 : mixedMoto ? 0.85 : 0;
+  return Math.max(3.6, baseGap + busExtra + motoAdjustment);
 }
 
 function getVehicleFootprintSize(vehicle) {
   if (vehicle.vehicleKind === 'bus') return { width: 2.1, length: 5.2 };
-  if (vehicle.vehicleKind === 'moto') return { width: 0.55, length: 1.65 };
+  if (vehicle.vehicleKind === 'moto') return { width: 0.85, length: 2.25 };
   return { width: 1.8, length: 3.65 };
 }
 
 function getVehicleFootprintBox(vehicle, sample = null, padding = null) {
   const size = getVehicleFootprintSize(vehicle);
-  const bodyPadding = padding ?? (vehicle.vehicleKind === 'moto' ? 0.08 : 0.22);
+  const bodyPadding = padding ?? (vehicle.vehicleKind === 'moto' ? 0.18 : 0.22);
   const heading = sample?.heading ?? vehicle.mesh.rotation.y;
   return {
     center: {
@@ -584,6 +618,18 @@ function hasActualBodyContact(vehicle, candidateDistance, ignoredVehicle = null)
   });
 }
 
+function hasAnyBodyOverlap(vehicle, candidateDistance, ignoredVehicle = null) {
+  const sample = getRouteSample(vehicle.route, candidateDistance);
+  const candidateBox = getVehicleFootprintBox(vehicle, sample, 0);
+  return animatedObjects.some((other) => {
+    if (other === ignoredVehicle) return false;
+    if (other === vehicle || other.type !== 'vehicle' || other.route?.mode !== 'roundabout' || !other.mesh.visible) return false;
+    if (other.distance >= other.route.length + 0.8) return false;
+    const otherBox = getVehicleFootprintBox(other, null, 0);
+    return vehicleFootprintsOverlap(candidateBox, otherBox);
+  });
+}
+
 function findBodyContactBlocker(vehicle, candidateDistance) {
   const sample = getRouteSample(vehicle.route, candidateDistance);
   const candidateBox = getVehicleFootprintBox(vehicle, sample, 0);
@@ -671,15 +717,15 @@ function chooseEscapeDistance(vehicle, delta, targetVehicle = null) {
   const step = Math.max(0.18, (vehicle.speed || 5) * delta * 1.35);
   const candidates = [
     Math.min(vehicle.route.length + 1.5, vehicle.distance + step),
-    Math.max(0, vehicle.distance - step),
+    Math.max(getReverseLimit(vehicle), vehicle.distance - step),
     Math.min(vehicle.route.length + 1.5, vehicle.distance + step * 1.8),
-    Math.max(0, vehicle.distance - step * 1.8),
+    Math.max(getReverseLimit(vehicle), vehicle.distance - step * 1.8),
     Math.min(vehicle.route.length + 1.5, vehicle.distance + step * 2.7),
-    Math.max(0, vehicle.distance - step * 2.7),
+    Math.max(getReverseLimit(vehicle), vehicle.distance - step * 2.7),
     Math.min(vehicle.route.length + 1.5, vehicle.distance + step * 4.2),
-    Math.max(0, vehicle.distance - step * 4.2),
+    Math.max(getReverseLimit(vehicle), vehicle.distance - step * 4.2),
     Math.min(vehicle.route.length + 1.5, vehicle.distance + step * 5.8),
-    Math.max(0, vehicle.distance - step * 5.8),
+    Math.max(getReverseLimit(vehicle), vehicle.distance - step * 5.8),
   ];
   const currentScore = getEscapeScoreAt(vehicle, vehicle.distance, targetVehicle);
   let best = { distance: vehicle.distance, score: currentScore };
@@ -696,6 +742,94 @@ function chooseEscapeDistance(vehicle, delta, targetVehicle = null) {
   return vehicle.distance;
 }
 
+function shouldYieldContact(vehicle, other) {
+  if (vehicle.vehicleKind === 'moto' && other.vehicleKind !== 'moto') return true;
+  if (other.vehicleKind === 'moto' && vehicle.vehicleKind !== 'moto') return false;
+  return !hasTrafficConflictPriority(vehicle, other);
+}
+
+function findEmergencyContactClearDistance(vehicle, delta, targetVehicle = null) {
+  const step = Math.max(0.22, (vehicle.speed || 5) * Math.max(delta, 0.025) * 1.6);
+  const limitMin = getReverseLimit(vehicle);
+  const limitMax = vehicle.route.length + 1.5;
+  const distances = [chooseEscapeDistance(vehicle, delta, targetVehicle)];
+
+  [-1, 1].forEach((direction) => {
+    [1.5, 2.8, 4.5, 7, 10, 14, 19, 25].forEach((multiplier) => {
+      distances.push(Math.max(limitMin, Math.min(limitMax, vehicle.distance + direction * step * multiplier)));
+    });
+  });
+
+  let best = null;
+  distances.forEach((distance) => {
+    if (Math.abs(distance - vehicle.distance) < 0.01) return;
+    if (hasAnyBodyOverlap(vehicle, distance)) return;
+    const sample = getRouteSample(vehicle.route, distance);
+    const targetDistance = targetVehicle?.mesh?.visible
+      ? Math.hypot(sample.x - targetVehicle.mesh.position.x, sample.z - targetVehicle.mesh.position.z)
+      : 0;
+    const routeMove = Math.abs(distance - vehicle.distance);
+    const score = targetDistance * 2 - routeMove * 0.15 + (distance < vehicle.distance ? 1 : 0);
+    const option = { distance, score };
+    if (!best || option.score > best.score) best = option;
+  });
+
+  return best?.distance ?? null;
+}
+
+function forceContactRecovery(vehicle, t, targetVehicle = null) {
+  const shouldYield = !targetVehicle || shouldYieldContact(vehicle, targetVehicle);
+  const victim = shouldYield ? vehicle : targetVehicle;
+  if (!victim?.mesh?.visible || victim.route?.mode !== 'roundabout') return false;
+  despawnVehicle(victim, t, 'CONTACT_RECOVERY');
+  return true;
+}
+
+function trySeparateContactPair(vehicle, delta, t, blocker) {
+  const other = blocker?.other;
+  if (!other || (vehicle.bodyContactFor || 0) < ROUNDABOUT_CONTACT_SEPARATE_SECONDS) return false;
+  const shouldYield = shouldYieldContact(vehicle, other);
+  const step = Math.max(0.16, (vehicle.speed || 5) * delta * 1.2);
+  const directions = shouldYield ? [-1, 1] : [1, -1];
+  const limitMin = getReverseLimit(vehicle);
+  const limitMax = vehicle.route.length + 1.5;
+  const distances = [chooseEscapeDistance(vehicle, delta, other)];
+
+  directions.forEach((direction) => {
+    [1.2, 2.4, 4.2, 6.4, 8.5].forEach((multiplier) => {
+      distances.push(Math.max(limitMin, Math.min(limitMax, vehicle.distance + direction * step * multiplier)));
+    });
+  });
+
+  let best = null;
+  distances.forEach((distance) => {
+    if (Math.abs(distance - vehicle.distance) < 0.01) return;
+    if (hasAnyBodyOverlap(vehicle, distance)) return;
+    const score = getEscapeScoreAt(vehicle, distance, other);
+    if (score === -Infinity) return;
+    const preferredDirection = shouldYield ? distance < vehicle.distance : distance > vehicle.distance;
+    const option = { distance, score: score + (preferredDirection ? 0.6 : 0) };
+    if (!best || option.score > best.score) best = option;
+  });
+
+  if (!best && (vehicle.bodyContactFor || 0) >= ROUNDABOUT_CONTACT_SEPARATE_SECONDS * 2) {
+    const emergencyDistance = findEmergencyContactClearDistance(vehicle, delta, other);
+    if (emergencyDistance !== null) best = { distance: emergencyDistance, score: 0 };
+  }
+
+  if (!best) return false;
+  vehicle.distance = best.distance;
+  vehicle.velocity = 0;
+  vehicle.blockedFor = Math.max(vehicle.blockedFor || 0, SPACE_REVERSE_DELAY_SECONDS);
+  vehicle.continuousReverse = vehicle.continuousReverse || shouldYield;
+  vehicle.state = 'CLEARING_GRIDLOCK';
+  vehicle.enteredIntersection = vehicle.distance >= vehicle.route.entryS;
+  vehicle.exitedIntersection = vehicle.distance >= vehicle.route.exitS;
+  applyVehicleRoutePose(vehicle, delta);
+  if (vehicle.distance <= limitMin + 0.05) requestVehicleSpace(other, vehicle, t);
+  return true;
+}
+
 function requestVehicleSpace(vehicle, requester, t, depth = 0) {
   if (!vehicle || !requester || depth > 3) return;
   if (!vehicle.mesh?.visible || vehicle.type !== 'vehicle' || vehicle.route?.mode !== 'roundabout') return;
@@ -703,61 +837,8 @@ function requestVehicleSpace(vehicle, requester, t, depth = 0) {
   vehicle.spaceRequestFrom = requester;
   vehicle.spaceRequestUntil = Math.max(vehicle.spaceRequestUntil || 0, t + SPACE_REVERSE_MAX_SECONDS + SPACE_REVERSE_MIN_SECONDS);
   vehicle.reverseRequestedAt = vehicle.reverseRequestedAt || t;
-}
-
-function getReverseCooldownSeconds(vehicle) {
-  const vehicleIndex = Math.max(0, trafficRuntime?.vehicles.indexOf(vehicle) ?? 0);
-  const spread = SPACE_REVERSE_COOLDOWN_MAX_SECONDS - SPACE_REVERSE_COOLDOWN_MIN_SECONDS;
-  return SPACE_REVERSE_COOLDOWN_MIN_SECONDS + ((vehicleIndex % 5) / 4) * spread;
-}
-
-function clearReverseCoordinatorIfIdle(t) {
-  if (!trafficRuntime) return;
-  const active = trafficRuntime.activeReverseVehicle;
-  if (!active) return;
-  if (!active.mesh?.visible || active.reverseUntil <= t || active.route?.mode !== 'roundabout') {
-    trafficRuntime.activeReverseVehicle = null;
-  }
-}
-
-function getReversePriority(vehicle) {
-  const requestAge = vehicle.reverseRequestedAt || vehicle.spaceRequestUntil || 0;
-  const outerDistanceScore = Math.max(0, vehicle.route?.entryS ?? 0) - vehicle.distance;
-  const rearScore = vehicle.distance < (vehicle.route?.entryS ?? 0) ? 8 : 0;
-  return rearScore + outerDistanceScore * 0.4 + (vehicle.blockedFor || 0) * 1.6 + requestAge * 0.02;
-}
-
-function getBestReverseCandidate() {
-  if (!trafficRuntime) return null;
-  let best = null;
-  trafficRuntime.vehicles.forEach((vehicle) => {
-    if (!vehicle.mesh?.visible || vehicle.type !== 'vehicle' || vehicle.route?.mode !== 'roundabout') return;
-    if (vehicle.distance <= 0.05 || vehicle.distance >= vehicle.route.length + 0.8) return;
-    if (!vehicle.spaceRequestFrom && !vehicle.reverseRequestedAt && (vehicle.blockedFor || 0) < SPACE_REVERSE_DELAY_SECONDS) return;
-    const probeDistance = Math.max(0, vehicle.distance - 0.45);
-    if (findBodyContactBlocker(vehicle, probeDistance)) return;
-    const priority = getReversePriority(vehicle);
-    if (!best || priority > best.priority) best = { vehicle, priority };
-  });
-  return best?.vehicle || null;
-}
-
-function canAcquireReverseSlot(vehicle, t) {
-  clearReverseCoordinatorIfIdle(t);
-  if (!trafficRuntime) return true;
-  if (trafficRuntime.activeReverseVehicle && trafficRuntime.activeReverseVehicle !== vehicle) return false;
-  if (!trafficRuntime.activeReverseVehicle && (trafficRuntime.reverseCooldownUntil || 0) > t) return false;
-  const bestCandidate = getBestReverseCandidate();
-  if (bestCandidate && bestCandidate !== vehicle) return false;
-  trafficRuntime.activeReverseVehicle = vehicle;
-  return true;
-}
-
-function releaseReverseSlot(vehicle, t, withCooldown = true) {
-  if (!trafficRuntime || trafficRuntime.activeReverseVehicle !== vehicle) return;
-  trafficRuntime.activeReverseVehicle = null;
-  if (withCooldown) {
-    trafficRuntime.reverseCooldownUntil = Math.max(trafficRuntime.reverseCooldownUntil || 0, t + getReverseCooldownSeconds(vehicle));
+  if (requester.continuousReverse || (requester.blockedFor || 0) >= ROUNDABOUT_CONTINUOUS_REVERSE_SECONDS) {
+    vehicle.continuousReverse = true;
   }
 }
 
@@ -769,25 +850,26 @@ function clearSpaceRequest(vehicle) {
   vehicle.reverseBlockedAt = 0;
 }
 
+function getReverseLimit(vehicle) {
+  return vehicle.route?.mode === 'roundabout' ? -ROUNDABOUT_REVERSE_BACKOUT_DISTANCE : 0;
+}
+
 function startSpaceReverse(vehicle, t, reason = 'blocked') {
   if (vehicle.reverseUntil > t) return true;
-  if (!canAcquireReverseSlot(vehicle, t)) {
-    vehicle.state = 'SPACE_READY';
-    return false;
+  if ((vehicle.blockedFor || 0) >= ROUNDABOUT_CONTINUOUS_REVERSE_SECONDS) {
+    vehicle.continuousReverse = true;
   }
-  if (vehicle.distance <= 0.05) {
+  if (vehicle.distance <= getReverseLimit(vehicle) + 0.05) {
     vehicle.reverseBlockedBy = null;
     vehicle.reverseBlockedAt = t;
-    releaseReverseSlot(vehicle, t, false);
     return false;
   }
-  const probeDistance = Math.max(0, vehicle.distance - 0.45);
+  const probeDistance = Math.max(getReverseLimit(vehicle), vehicle.distance - 0.45);
   const rearBlocker = findBodyContactBlocker(vehicle, probeDistance);
   if (rearBlocker) {
     vehicle.reverseBlockedBy = rearBlocker.other;
     vehicle.reverseBlockedAt = t;
     requestVehicleSpace(rearBlocker.other, vehicle, t);
-    releaseReverseSlot(vehicle, t, false);
     return false;
   }
   vehicle.reverseBlockedBy = null;
@@ -799,8 +881,36 @@ function startSpaceReverse(vehicle, t, reason = 'blocked') {
   return true;
 }
 
+function hasStableForwardClearance(vehicle) {
+  const maxCheck = Math.min(vehicle.route.length, vehicle.distance + ROUNDABOUT_CONTINUOUS_CLEARANCE_DISTANCE);
+  const checks = [
+    vehicle.distance,
+    Math.min(vehicle.route.length, vehicle.distance + 0.9),
+    Math.min(vehicle.route.length, vehicle.distance + 1.8),
+    Math.min(vehicle.route.length, vehicle.distance + 3.6),
+    maxCheck,
+  ];
+  return checks.every((distance) => (
+    !hasActualBodyContact(vehicle, distance)
+    && !findGlobalProximityBlocker(vehicle, distance)
+  ));
+}
+
+function canExitContinuousReverse(vehicle) {
+  if (!vehicle.continuousReverse) return true;
+  const requester = vehicle.spaceRequestFrom;
+  const requesterStillNeedsSpace = requester?.mesh?.visible
+    && requester.route?.mode === 'roundabout'
+    && !isYieldTargetClear(requester, vehicle);
+  return !requesterStillNeedsSpace
+    && !vehicle.reverseBlockedBy
+    && !hasActualBodyContact(vehicle, vehicle.distance)
+    && hasStableForwardClearance(vehicle);
+}
+
 function hasEnoughSpaceToStopReversing(vehicle, t) {
   if (!vehicle.reverseUntil || t - (vehicle.reverseStartedAt || t) < SPACE_REVERSE_MIN_SECONDS) return false;
+  if (vehicle.continuousReverse) return canExitContinuousReverse(vehicle);
   const requester = vehicle.spaceRequestFrom;
   if (requester?.mesh?.visible && requester.route?.mode === 'roundabout') {
     return isYieldTargetClear(requester, vehicle);
@@ -809,49 +919,50 @@ function hasEnoughSpaceToStopReversing(vehicle, t) {
   return !hasActualBodyContact(vehicle, vehicle.distance) && !findGlobalProximityBlocker(vehicle, forwardCheck);
 }
 
-function stopSpaceReverse(vehicle, t = 0) {
+function stopSpaceReverse(vehicle, keepContinuous = false) {
   vehicle.reverseUntil = 0;
   vehicle.reverseStartedAt = 0;
   vehicle.reverseReason = null;
   vehicle.reverseBlockedBy = null;
   vehicle.reverseBlockedAt = 0;
+  vehicle.continuousReverse = keepContinuous;
   vehicle.velocity = 0;
-  releaseReverseSlot(vehicle, t, true);
-}
-
-function abortSpaceReverse(vehicle, t) {
-  vehicle.reverseUntil = 0;
-  vehicle.reverseStartedAt = 0;
-  vehicle.reverseReason = null;
-  vehicle.velocity = 0;
-  releaseReverseSlot(vehicle, t, false);
 }
 
 function resolveSpaceReverse(vehicle, delta, t) {
   if (vehicle.reverseUntil <= t) {
     if (vehicle.reverseUntil) {
-      const shouldKeepReversing = !hasEnoughSpaceToStopReversing(vehicle, t) && vehicle.distance > 0.05;
+      const shouldKeepReversing = (vehicle.continuousReverse || !hasEnoughSpaceToStopReversing(vehicle, t))
+        && vehicle.distance > getReverseLimit(vehicle) + 0.05;
       const reverseReason = vehicle.reverseReason || 'continue';
-      stopSpaceReverse(vehicle, t);
+      const keepContinuous = vehicle.continuousReverse && shouldKeepReversing;
+      stopSpaceReverse(vehicle, keepContinuous);
       if (shouldKeepReversing && startSpaceReverse(vehicle, t, reverseReason)) {
         return resolveSpaceReverse(vehicle, delta, t);
+      }
+      if (shouldKeepReversing) {
+        vehicle.velocity = 0;
+        vehicle.state = 'SPACE_WAIT_REAR';
+        applyVehicleRoutePose(vehicle, delta);
+        return true;
       }
     }
     return false;
   }
 
-  if (hasEnoughSpaceToStopReversing(vehicle, t)) {
-    stopSpaceReverse(vehicle, t);
+  if (!vehicle.continuousReverse && hasEnoughSpaceToStopReversing(vehicle, t)) {
+    stopSpaceReverse(vehicle);
     clearSpaceRequest(vehicle);
     return false;
   }
 
   const reverseStep = Math.min((vehicle.speed || 5) * SPACE_REVERSE_SPEED_FACTOR * delta, (vehicle.speed || 5) * delta);
-  const reverseDistance = Math.max(0, vehicle.distance - reverseStep);
+  const reverseDistance = Math.max(getReverseLimit(vehicle), vehicle.distance - reverseStep);
   const rearBlocker = findBodyContactBlocker(vehicle, reverseDistance);
   if (rearBlocker) {
+    vehicle.reverseBlockedBy = rearBlocker.other;
+    vehicle.reverseBlockedAt = t;
     requestVehicleSpace(rearBlocker.other, vehicle, t);
-    abortSpaceReverse(vehicle, t);
     vehicle.velocity = 0;
     vehicle.state = 'SPACE_WAIT_REAR';
     applyVehicleRoutePose(vehicle, delta);
@@ -891,7 +1002,7 @@ function resolveSpaceRequest(vehicle, delta, t) {
     return resolveSpaceReverse(vehicle, delta, t);
   }
 
-  if (vehicle.distance <= 0.05) {
+  if (vehicle.distance <= getReverseLimit(vehicle) + 0.05) {
     clearSpaceRequest(vehicle);
     vehicle.blockedFor = 0;
     return false;
@@ -903,13 +1014,34 @@ function resolveSpaceRequest(vehicle, delta, t) {
 }
 
 function tryCrawlOutWhenReverseBlocked(vehicle, delta, t, state = 'CLEARING_GRIDLOCK') {
-  if (vehicle.distance > 0.05 || vehicle.reverseBlockedBy) return false;
+  if (vehicle.distance > getReverseLimit(vehicle) + 0.05 || vehicle.reverseBlockedBy) return false;
   const crawlDistance = Math.min(vehicle.route.length + 1.5, vehicle.distance + Math.max(0.08, (vehicle.speed || 5) * delta * 0.45));
   if (hasActualBodyContact(vehicle, crawlDistance)) return false;
   vehicle.distance = crawlDistance;
   vehicle.velocity = 0;
   vehicle.blockedFor = SPACE_REVERSE_DELAY_SECONDS;
   vehicle.state = state;
+  applyVehicleRoutePose(vehicle, delta);
+  return true;
+}
+
+function tryReleaseStaleRoundaboutVehicle(vehicle, delta, targetVehicle = null) {
+  if ((vehicle.blockedFor || 0) < ROUNDABOUT_STALE_RELEASE_SECONDS) return false;
+  const despawnDistance = vehicle.route.length + 1.5;
+  const crawlStep = Math.max(0.08, (vehicle.speed || 5) * delta * ROUNDABOUT_STALE_CRAWL_SPEED_FACTOR);
+  const crawlDistance = Math.min(despawnDistance, vehicle.distance + crawlStep);
+  const escapeDistance = chooseEscapeDistance(vehicle, delta, targetVehicle);
+  const nextDistance = escapeDistance > vehicle.distance + 0.02 ? Math.min(despawnDistance, escapeDistance) : crawlDistance;
+
+  if (nextDistance <= vehicle.distance + 0.002) return false;
+  if (hasActualBodyContact(vehicle, nextDistance)) return false;
+
+  vehicle.distance = nextDistance;
+  vehicle.velocity = 0;
+  vehicle.blockedFor = 1.2;
+  vehicle.state = 'CLEARING_GRIDLOCK';
+  vehicle.enteredIntersection = vehicle.distance >= vehicle.route.entryS;
+  vehicle.exitedIntersection = vehicle.distance >= vehicle.route.exitS;
   applyVehicleRoutePose(vehicle, delta);
   return true;
 }
@@ -982,16 +1114,28 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
   if (bodyContactBlocker) {
     vehicle.velocity = 0;
     vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
+    vehicle.bodyContactFor = (vehicle.bodyContactFor || 0) + delta;
+    if (vehicle.blockedFor >= ROUNDABOUT_CONTINUOUS_REVERSE_SECONDS) vehicle.continuousReverse = true;
+    if (trySeparateContactPair(vehicle, delta, t, bodyContactBlocker)) {
+      return true;
+    }
+    if (vehicle.bodyContactFor >= ROUNDABOUT_CONTACT_DESPAWN_SECONDS && forceContactRecovery(vehicle, t, bodyContactBlocker.other)) {
+      return true;
+    }
     if (vehicle.blockedFor >= SPACE_REVERSE_DELAY_SECONDS && startSpaceReverse(vehicle, t, 'body-contact')) {
       return resolveSpaceReverse(vehicle, delta, t);
     }
     if (vehicle.blockedFor >= SPACE_REVERSE_DELAY_SECONDS && tryCrawlOutWhenReverseBlocked(vehicle, delta, t)) {
       return true;
     }
+    if (tryReleaseStaleRoundaboutVehicle(vehicle, delta, bodyContactBlocker.other)) {
+      return true;
+    }
     vehicle.state = 'SPACE_BLOCKED';
     applyVehicleRoutePose(vehicle, delta);
     return true;
   }
+  vehicle.bodyContactFor = 0;
 
   if (vehicle.yieldingTo) {
     vehicle.yieldingTo = null;
@@ -1045,10 +1189,12 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
   if (hardBlocker) {
     vehicle.velocity = 0;
     vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
+    if (vehicle.blockedFor >= ROUNDABOUT_CONTINUOUS_REVERSE_SECONDS) vehicle.continuousReverse = true;
     if (vehicle.blockedFor >= SPACE_REVERSE_DELAY_SECONDS && startSpaceReverse(vehicle, t, 'forward-blocked')) {
       return resolveSpaceReverse(vehicle, delta, t);
     } else if (vehicle.blockedFor >= SPACE_REVERSE_DELAY_SECONDS) {
       if (tryCrawlOutWhenReverseBlocked(vehicle, delta, t)) return true;
+      if (tryReleaseStaleRoundaboutVehicle(vehicle, delta, hardBlocker.other)) return true;
       vehicle.state = 'SPACE_WAIT_REAR';
     } else {
       const crawlDistance = Math.min(despawnDistance, vehicle.distance + Math.max(0.05, (vehicle.speed || 5) * delta * 0.35));
@@ -1067,6 +1213,8 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
     }
   } else {
     vehicle.blockedFor = 0;
+    vehicle.bodyContactFor = 0;
+    vehicle.continuousReverse = false;
     vehicle.yieldingTo = null;
     vehicle.yieldUntil = 0;
     vehicle.distance = nextDistance;
@@ -1135,55 +1283,6 @@ function updateTrafficVehicle(vehicle, delta, t, signal) {
   return true;
 }
 
-function recoverRoundaboutGridlock(delta, t) {
-  if (!trafficRuntime) return;
-  const blockedVehicles = trafficRuntime.vehicles.filter((vehicle) => (
-    vehicle.mesh?.visible
-    && vehicle.type === 'vehicle'
-    && vehicle.route?.mode === 'roundabout'
-    && vehicle.distance < vehicle.route.length + 0.8
-    && Math.abs(vehicle.velocity || 0) < 0.04
-    && ((vehicle.blockedFor || 0) >= SPACE_REVERSE_DELAY_SECONDS || ['SPACE_BLOCKED', 'SPACE_WAIT_REAR', 'SPACE_READY', 'WAITING_TO_ENTER', 'YIELDING'].includes(vehicle.state))
-  ));
-
-  if (blockedVehicles.length < 3) {
-    trafficRuntime.gridlockSince = 0;
-    return;
-  }
-
-  trafficRuntime.gridlockSince ||= t;
-  if (t - trafficRuntime.gridlockSince < GRIDLOCK_RECOVERY_SECONDS) return;
-
-  clearReverseCoordinatorIfIdle(t);
-  if (trafficRuntime.activeReverseVehicle?.reverseUntil > t) return;
-  trafficRuntime.reverseCooldownUntil = Math.min(trafficRuntime.reverseCooldownUntil || 0, t + 0.25);
-
-  const candidate = blockedVehicles
-    .slice()
-    .sort((a, b) => {
-      if (hasTrafficConflictPriority(a, b)) return -1;
-      if (hasTrafficConflictPriority(b, a)) return 1;
-      return b.distance - a.distance;
-    })[0];
-  if (!candidate) return;
-
-  const blocker = findBodyContactBlocker(candidate, candidate.distance) || findGlobalProximityBlocker(candidate, candidate.distance);
-  const escapeDistance = chooseEscapeDistance(candidate, delta, blocker?.other || null);
-  const crawlDistance = Math.min(candidate.route.length + 1.5, candidate.distance + Math.max(0.12, (candidate.speed || 5) * delta * 0.55));
-  const nextDistance = escapeDistance > candidate.distance + 0.02 ? escapeDistance : crawlDistance;
-
-  if (nextDistance > candidate.distance && !hasActualBodyContact(candidate, nextDistance)) {
-    candidate.distance = nextDistance;
-    candidate.velocity = 0;
-    candidate.blockedFor = 0.4;
-    candidate.state = 'CLEARING_GRIDLOCK';
-    candidate.enteredIntersection = candidate.distance >= candidate.route.entryS;
-    candidate.exitedIntersection = candidate.distance >= candidate.route.exitS;
-    applyVehicleRoutePose(candidate, delta);
-    trafficRuntime.gridlockSince = t + 0.6;
-  }
-}
-
 function updateRoundaboutFleet(delta, t) {
   releaseRoundaboutReservations(t);
   trafficRuntime.entryGrantedThisStep = false;
@@ -1200,7 +1299,6 @@ function updateRoundaboutFleet(delta, t) {
   const hidden = roundaboutVehicles.filter((vehicle) => !vehicle.mesh.visible);
 
   [...circulating, ...exiting, ...approaching, ...hidden].forEach((vehicle) => updateRoundaboutVehicle(vehicle, delta, t));
-  recoverRoundaboutGridlock(delta, t);
 }
 
 function getLayer(name) {
@@ -1883,6 +1981,8 @@ function createVehicle(vehicle) {
     reverseReason: null,
     reverseBlockedBy: null,
     reverseBlockedAt: 0,
+    continuousReverse: false,
+    bodyContactFor: 0,
     respawnAt: spawnFromOutside ? (vehicle.startDelay || 0) : 0,
     state: spawnFromOutside ? 'WAITING_TO_SPAWN' : route ? 'queued' : 'moving',
     enteredIntersection: route ? initialDistance >= route.entryS : false,
@@ -1989,9 +2089,6 @@ function addTrafficLayer() {
     vehicles: [],
     entryReservations: new Map(),
     entryGrantedThisStep: false,
-    activeReverseVehicle: null,
-    reverseCooldownUntil: 0,
-    gridlockSince: 0,
     lastSpawnAt: -Infinity,
     phaseSprite: null,
   };
@@ -2006,7 +2103,6 @@ function addTrafficLayer() {
     }))));
   }
   smartcitySceneData.trafficLights.forEach(addTrafficLight);
-  smartcitySceneData.densityMarkers.forEach((marker) => addStatusMarker(marker, 'traffic'));
   if (trafficRuntime.debug) {
     addTrafficDebugLayer(getLayer('traffic'));
   }
@@ -2031,25 +2127,7 @@ function addEnvironmentLayer() {
 }
 
 function addUtilitiesLayer() {
-  const colors = { power: 0xef9f27, water: 0x2d9cdb, lighting: 0xffdd58, iot: 0x85b7eb };
-  smartcitySceneData.utilities.forEach((utility) => {
-    const group = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.1, 1.15), makeMaterial(colors[utility.type] || 0x85b7eb));
-    body.position.y = 0.55;
-    group.add(body);
-    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 1.15, 8), makeMaterial(0xffffff));
-    antenna.position.y = 1.68;
-    group.add(antenna);
-    const statusColor = utility.status === 'warning' ? 0xef9f27 : 0x1d9e75;
-    const status = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18, 14, 10),
-      new THREE.MeshBasicMaterial({ color: statusColor }),
-    );
-    status.position.set(0.48, 1.24, 0.48);
-    group.add(status);
-    group.position.set(...utility.pos);
-    getLayer('utilities').add(group);
-  });
+  // Utility status blocks are kept out of the 3D city view for a cleaner map.
 }
 
 function addStatusMarker(marker, layerName = marker.group) {
@@ -2070,7 +2148,7 @@ function addStatusMarker(marker, layerName = marker.group) {
 }
 
 function addIncidents() {
-  smartcitySceneData.incidents.forEach((incident) => addStatusMarker(incident));
+  // Incident rings are shown in the UI panels, not as colored 3D dots on the road.
 }
 
 function addReportsLayer() {

@@ -56,6 +56,8 @@ const TRAFFIC_ACCIDENT_CASES = [
     severity: 'Cao',
     status: 'open',
     camera: 'CAM A4-05',
+    vehicle: '2 xe máy',
+    plate: '29-X7 482.16 · 30-M1 918.42',
     summary: 'Hai xe máy va chạm tại vạch qua đường, một làn đang bị chiếm dụng.',
     metrics: [['2 xe', 'Liên quan'], ['01', 'Người bị nhẹ'], ['7 phút', 'Tồn tại']],
     timeline: ['AI phát hiện va chạm', 'Camera A4-05 ghim clip', 'Đội phản ứng chưa xác nhận'],
@@ -68,6 +70,8 @@ const TRAFFIC_ACCIDENT_CASES = [
     severity: 'Vừa',
     status: 'open',
     camera: 'CAM B2-02',
+    vehicle: '1 ô tô con',
+    plate: '30-F8 246.91',
     summary: 'Xe con dừng sau va quệt nhẹ, luồng xe phía sau giảm tốc.',
     metrics: [['1 xe', 'Liên quan'], ['0', 'Thương tích'], ['12km/h', 'Tốc độ']],
     timeline: ['Phát hiện giảm tốc đột ngột', 'Đèn cảnh báo chuyển pha ưu tiên', 'Chờ đội trực xác minh'],
@@ -80,6 +84,8 @@ const TRAFFIC_ACCIDENT_CASES = [
     severity: 'Nhẹ',
     status: 'done',
     camera: 'CAM A4-03',
+    vehicle: '2 ô tô con',
+    plate: '29-A7 638.20 · 30-H5 102.77',
     summary: 'Va quệt nhẹ đã xử lý, phương tiện rời hiện trường.',
     metrics: [['2 xe', 'Liên quan'], ['0', 'Thương tích'], ['6 phút', 'Xử lý']],
     timeline: ['AI phát hiện', 'Đội trực xác nhận', 'Hiện trường đã thông'],
@@ -88,7 +94,10 @@ const TRAFFIC_ACCIDENT_CASES = [
 
 function accidentCaseButton(item) {
   return `<button type="button" class="traffic-accident-case traffic-accident-case--${item.status}" data-accident-case="${item.id}" data-accident-status="${item.status}">
-    <span><b>${item.title}</b><em>${item.location} · ${item.time}</em></span>
+    <span>
+      <b>${item.title}</b>
+      <em>${item.time} · ${item.vehicle} · ${item.plate}</em>
+    </span>
     <strong>${item.status === 'open' ? 'Chưa xử lý' : 'Đã xử lý'}</strong>
   </button>`;
 }
@@ -96,31 +105,73 @@ function accidentCaseButton(item) {
 function trafficAccidentDashboard() {
   const open = TRAFFIC_ACCIDENT_CASES.filter((item) => item.status === 'open').length;
   const done = TRAFFIC_ACCIDENT_CASES.filter((item) => item.status === 'done').length;
+  const total = TRAFFIC_ACCIDENT_CASES.length || 1;
   const stats = [
-    { id: 'all', label: 'Tổng', value: TRAFFIC_ACCIDENT_CASES.length, note: 'tai nạn hôm nay' },
-    { id: 'open', label: 'Chưa xử lý', value: open, note: 'cần điều phối' },
-    { id: 'done', label: 'Đã xử lý', value: done, note: 'đã thông hiện trường' },
+    { id: 'all', label: 'Tổng', value: TRAFFIC_ACCIDENT_CASES.length, note: 'tai nạn hôm nay', pct: 100 },
+    { id: 'open', label: 'Chưa xử lý', value: open, note: 'cần điều phối', pct: Math.round((open / total) * 100) },
+    { id: 'done', label: 'Đã xử lý', value: done, note: 'đã thông hiện trường', pct: Math.round((done / total) * 100) },
   ];
+  const chartPoints = TRAFFIC_ACCIDENT_CASES.map((item, index) => ({
+    ...item,
+    chartScore: Math.max(26, Math.min(100, (item.severity === 'Cao' ? 92 : item.severity === 'Vừa' ? 66 : 42) + (item.status === 'open' ? 10 : -4))),
+  }));
+
+  return `<div class="traffic-accidents" data-traffic-accidents>
+    <div class="traffic-accidents__stats">
+      ${stats.map((item) => `<div class="traffic-accident-stat traffic-accident-stat--${item.id}" aria-label="${item.label} ${item.value}">
+        <span>${item.label}</span><b>${item.value}</b><i><em style="width:${item.pct}%"></em></i><em>${item.note}</em>
+      </div>`).join('')}
+    </div>
+    <div class="traffic-accidents__caption">Biểu đồ mức độ theo ca trong ngày</div>
+    <div class="traffic-accidents__chart" data-accident-chart>
+      <div class="traffic-accidents__chart-head">
+        <strong>${open}/${done}</strong>
+      </div>
+      <div class="traffic-accidents__chart-body">
+        <svg viewBox="0 0 100 92" aria-hidden="true">
+          <g class="traffic-accidents__chart-grid">
+            <line x1="8" y1="22" x2="94" y2="22"></line>
+            <line x1="8" y1="44" x2="94" y2="44"></line>
+            <line x1="8" y1="66" x2="94" y2="66"></line>
+          </g>
+        </svg>
+        <div class="traffic-accidents__bars">
+          ${chartPoints.map((item) => `<span class="traffic-accidents__bar traffic-accidents__bar--${item.status}" data-accident-bar="${item.id}" style="--bar:${item.chartScore}%">
+            <i><em></em></i><b>${item.time}</b><strong>${item.severity}</strong>
+          </span>`).join('')}
+        </div>
+      </div>
+      <button type="button" class="traffic-accidents__detail" data-accident-list-open>
+        <i class="ti ti-list-details"></i><span>Xem chi tiết tai nạn giao thông</span>
+      </button>
+    </div>
+  </div>`;
+}
+
+function trafficAccidentListModal() {
   const filters = [
     { id: 'all', label: 'Tất cả' },
     { id: 'open', label: 'Chưa xử lý' },
     { id: 'done', label: 'Đã xử lý' },
   ];
 
-  return `<div class="traffic-accidents" data-traffic-accidents>
-    <div class="traffic-accidents__stats">
-      ${stats.map((item) => `<button type="button" class="traffic-accident-stat traffic-accident-stat--${item.id}" data-accident-filter="${item.id}">
-        <span>${item.label}</span><b>${item.value}</b><em>${item.note}</em>
-      </button>`).join('')}
-    </div>
-    <div class="traffic-accidents__filters" role="group" aria-label="Lọc tai nạn giao thông">
-      ${filters.map((filter, index) => `<button type="button" class="traffic-kpi-action${index === 0 ? ' traffic-kpi-action--active' : ''}" data-accident-filter="${filter.id}">
-        ${filter.label}
-      </button>`).join('')}
-    </div>
-    <div class="traffic-accidents__list" data-accident-list>
-      ${TRAFFIC_ACCIDENT_CASES.map(accidentCaseButton).join('')}
-    </div>
+  return `<div class="traffic-accident-list-modal" data-traffic-accident-list-modal hidden>
+    <button type="button" class="traffic-accident-list-modal__backdrop" data-accident-list-close aria-label="Đóng"></button>
+    <section class="traffic-accident-list-modal__panel" role="dialog" aria-modal="true" aria-label="Danh sách tai nạn giao thông">
+      <button type="button" class="traffic-accident-list-modal__close" data-accident-list-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="traffic-accident-list-modal__head">
+        <span class="traffic-accident-list-modal__icon"><i class="ti ti-car-crash"></i></span>
+        <div><small>SMART CITY · GIAO THÔNG</small><h3>Danh sách tai nạn giao thông</h3></div>
+      </header>
+      <div class="traffic-accidents__filters" role="group" aria-label="Lọc tai nạn giao thông">
+        ${filters.map((filter, index) => `<button type="button" class="traffic-kpi-action${index === 0 ? ' traffic-kpi-action--active' : ''}" data-accident-filter="${filter.id}">
+          ${filter.label}
+        </button>`).join('')}
+      </div>
+      <div class="traffic-accident-list-modal__cards" data-accident-list-cards>
+        ${TRAFFIC_ACCIDENT_CASES.map(accidentCaseButton).join('')}
+      </div>
+    </section>
   </div>`;
 }
 
@@ -163,6 +214,19 @@ function trafficAccidentModal() {
   </div>`;
 }
 
+function signalStatus(state) {
+  const phase = state.phase || `${state.label || 'Xanh'} đang hoạt động`;
+  const remaining = Number.isFinite(Number(state.remaining)) ? Number(state.remaining) : 18;
+  const mode = state.autoMode || 'Tự động';
+
+  return `<div class="traffic-cycle__status" data-signal-status>
+    <strong>${phase} · còn ${remaining} giây</strong>
+    <span><b>Pha hiện tại</b><em>${phase}</em></span>
+    <span><b>Còn bao nhiêu giây</b><em>${remaining}s</em></span>
+    <span><b>Chế độ tự động</b><em>${mode}</em></span>
+  </div>`;
+}
+
 function signalCycle(d) {
   const initialMode = d.tabs?.[0] || 'A4';
   const state = d.datasets?.[initialMode] || { label: 'Xanh', pct: 75, metrics: d.metrics };
@@ -171,6 +235,7 @@ function signalCycle(d) {
   </span>`).join('');
   return `<div class="traffic-cycle" data-traffic-signal data-signal-mode="${initialMode}">
     <div class="traffic-cycle__ring" data-signal-ring>${ringSvg(state.pct, state.label)}</div>
+    ${signalStatus(state)}
     <div class="traffic-cycle__bars">${bars}</div>
   </div>`;
 }
@@ -238,6 +303,7 @@ export function renderTrafficRightSidebar(d) {
       <div class="hud-tabs hud-tabs--wrap" data-traffic-flow-tabs data-flow-datasets="${flowDataset}">${flowTabs}</div>
       ${flowAreaChart(d.flow)}
     </section>
+    ${trafficAccidentListModal()}
     ${trafficAccidentModal()}`;
 }
 
@@ -247,6 +313,12 @@ export function bindTrafficKpiControls() {
 
   const getAccidentModal = () => {
     const modal = document.querySelector('[data-traffic-accident-modal]');
+    if (modal?.parentElement !== document.body) document.body.appendChild(modal);
+    return modal;
+  };
+
+  const getAccidentListModal = () => {
+    const modal = document.querySelector('[data-traffic-accident-list-modal]');
     if (modal?.parentElement !== document.body) document.body.appendChild(modal);
     return modal;
   };
@@ -280,21 +352,32 @@ export function bindTrafficKpiControls() {
   const refreshAccidentStats = () => {
     const root = document.querySelector('[data-traffic-accidents]');
     if (!root) return;
-    const cases = [...root.querySelectorAll('[data-accident-case]')];
+    const cases = TRAFFIC_ACCIDENT_CASES;
     const totals = {
       all: cases.length,
-      open: cases.filter((item) => item.dataset.accidentStatus === 'open').length,
-      done: cases.filter((item) => item.dataset.accidentStatus === 'done').length,
+      open: cases.filter((item) => item.status === 'open').length,
+      done: cases.filter((item) => item.status === 'done').length,
     };
     Object.entries(totals).forEach(([key, value]) => {
       root.querySelector(`.traffic-accident-stat--${key} b`)?.replaceChildren(String(value));
     });
+    root.querySelector('.traffic-accidents__chart-head strong')?.replaceChildren(`${totals.open}/${totals.done}`);
   };
 
   document.addEventListener('click', (event) => {
+    const listOpen = event.target.closest('[data-accident-list-open]');
+    if (listOpen) {
+      const listModal = getAccidentListModal();
+      if (!listModal) return;
+      listModal.hidden = false;
+      listModal.querySelectorAll('[data-accident-filter]').forEach((btn, index) => btn.classList.toggle('traffic-kpi-action--active', index === 0));
+      listModal.querySelectorAll('[data-accident-case]').forEach((btn) => { btn.hidden = false; });
+      return;
+    }
+
     const accidentFilter = event.target.closest('[data-accident-filter]');
     if (accidentFilter) {
-      const root = accidentFilter.closest('[data-traffic-accidents]');
+      const root = accidentFilter.closest('[data-traffic-accident-list-modal]');
       if (!root) return;
       const filter = accidentFilter.dataset.accidentFilter;
       root.querySelectorAll('[data-accident-filter]').forEach((btn) => btn.classList.toggle('traffic-kpi-action--active', btn === accidentFilter));
@@ -306,7 +389,15 @@ export function bindTrafficKpiControls() {
 
     const accidentCase = event.target.closest('[data-accident-case]');
     if (accidentCase) {
+      const listModal = accidentCase.closest('[data-traffic-accident-list-modal]');
+      if (listModal) listModal.hidden = true;
       setAccidentCase(getAccidentModal(), accidentCase.dataset.accidentCase);
+      return;
+    }
+
+    const accidentListModal = document.querySelector('[data-traffic-accident-list-modal]:not([hidden])');
+    if (accidentListModal && event.target.closest('[data-accident-list-close]')) {
+      accidentListModal.hidden = true;
       return;
     }
 
@@ -329,13 +420,16 @@ export function bindTrafficKpiControls() {
         accidentModal.querySelector('[data-accident-tag]').textContent = `${item.id} · ĐÃ XỬ LÝ`;
         accidentModal.querySelector('[data-accident-status-text]').textContent = `Đã điều phối xử lý ${item.id}, hiện trường đang được giải phóng và clip camera đã lưu.`;
         accidentModal.querySelector('[data-accident-resolve]').hidden = true;
-        const caseButton = document.querySelector(`[data-accident-case="${item.id}"]`);
-        if (caseButton) {
+        document.querySelectorAll(`[data-accident-case="${item.id}"]`).forEach((caseButton) => {
           caseButton.dataset.accidentStatus = 'done';
-          caseButton.classList.remove('traffic-accident-case--open');
+          caseButton.classList.remove('traffic-accident-case--open', 'traffic-accident-point--open');
           caseButton.classList.add('traffic-accident-case--done');
           caseButton.querySelector('strong').textContent = 'Đã xử lý';
-        }
+        });
+        document.querySelectorAll(`[data-accident-bar="${item.id}"]`).forEach((bar) => {
+          bar.classList.remove('traffic-accidents__bar--open');
+          bar.classList.add('traffic-accidents__bar--done');
+        });
         refreshAccidentStats();
         return;
       }
@@ -413,6 +507,7 @@ export function bindTrafficSignalControls() {
     tabs.querySelectorAll('[data-signal-tab]').forEach((btn) => btn.classList.toggle('hud-tab--active', btn === tab));
     signal.dataset.signalMode = tab.dataset.signalTab;
     signal.querySelector('[data-signal-ring]').innerHTML = ringSvg(state.pct, state.label);
+    signal.querySelector('[data-signal-status]').outerHTML = signalStatus(state);
     signal.querySelector('.traffic-cycle__bars').innerHTML = state.metrics.map((m) => `<span class="traffic-cycle-bar" data-signal-metric>
       <em>${m.label}</em><i style="width:${m.pct}%"></i><b>${m.value}</b>
     </span>`).join('');

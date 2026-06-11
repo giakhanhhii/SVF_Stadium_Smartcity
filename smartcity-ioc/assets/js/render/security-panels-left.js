@@ -62,8 +62,7 @@ function lineTrendSvg(bars, className = 'security-mini-line') {
 
 function blacklistBars(values) {
   const max = Math.max(...values.map((item) => item.value), 1);
-  return `<div class="security-blacklist-chart">
-    <div class="security-blacklist-bars" aria-hidden="true">
+  return `<div class="security-blacklist-bars" aria-hidden="true">
       ${values.map((item, index) => {
         const height = 42 + (item.value / max) * 58;
         return `<span class="security-blacklist-bar security-blacklist-bar--${index % 2 ? 'blue' : 'cyan'}" title="${item.label}: ${item.value}" style="height:${height.toFixed(0)}%"></span>`;
@@ -71,8 +70,7 @@ function blacklistBars(values) {
     </div>
     <div class="security-blacklist-labels">
       ${values.map((item) => `<span><b>${item.value}</b><em>${item.label}</em></span>`).join('')}
-    </div>
-  </div>`;
+    </div>`;
 }
 
 function routeDiagram(items) {
@@ -211,7 +209,7 @@ export function renderLeftSidebar(d) {
       ${devicePanel('camera')}
     </section>
     ${smartcityDeviceModal()}
-    <section class="hud-block">${hudHead(d.blacklist.title)}
+    <section class="hud-block hud-block--blacklist">${hudHead(d.blacklist.title)}
       <div class="hud-risk-gauge">
         <i class="ti ti-user-minus"></i>
         <strong>${d.blacklist.value}</strong>

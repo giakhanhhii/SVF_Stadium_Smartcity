@@ -690,7 +690,7 @@ export function renderFacilitiesRight(d) {
     <section class="hud-block">${hudHead('Cảnh báo hạ tầng')}${statusRail(d.alerts)}</section>
     <section class="hud-block">${hudHead('Tải thiết bị BMS')}${sensorBars()}</section>
     <section class="hud-block hud-block--roof">${hudHead(d.roofCtrl.title)}
-      <div class="hud-env-row">${ringSvg(100, 'Mái mở')}<div class="hud-env-bars">${bars}</div></div>
+      <div class="hud-env-row">${ringSvg(92, 'An toàn')}<div class="hud-env-bars">${bars}</div></div>
       <div class="hud-vent-row">
         <button class="hud-vent-btn" data-roof="open">Mở mái</button>
         <button class="hud-vent-btn" data-roof="close">Đóng mái</button>

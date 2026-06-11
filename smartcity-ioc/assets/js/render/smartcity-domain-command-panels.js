@@ -40,27 +40,236 @@ function standardChecklist(title, items) {
 }
 
 function environmentThermalMap() {
-  const cells = [
-    { label: 'FOP', value: '24.2°', tone: 'ok' },
-    { label: 'VIP', value: '23.8°', tone: 'ok' },
-    { label: 'A', value: '25.1°', tone: 'ok' },
-    { label: 'B', value: '26.4°', tone: 'warn' },
-    { label: 'Media', value: '24.8°', tone: 'ok' },
-    { label: 'Fan', value: '27.1°', tone: 'warn' },
-    { label: 'Lake', value: 'pH 7.2', tone: 'ok' },
-    { label: 'Park', value: 'OK', tone: 'ok' },
+  const metrics = [
+    { label: 'Tòa nhà', value: '24', tone: 'ok' },
+    { label: 'Phòng cháy chữa cháy', value: '3', tone: 'danger', tab: 'pccc' },
+    { label: 'Cư trú', value: '42', tone: 'info', tab: 'residency' },
+    { label: 'Cần xử lý', value: '12', tone: 'warn', tab: 'tasks' },
   ];
-  return `<section class="hud-block sc-diagram" data-diagram-family="thermal-grid">
-    ${hudHead('Bản đồ hạ tầng')}
-    <div class="sc-thermal">
-      <div class="sc-thermal__dial" style="--pct:92"><strong>92%</strong><span>VOC score</span></div>
-      <div class="sc-thermal__grid">
-        ${cells.map((cell) => `<i class="sc-thermal__cell sc-thermal__cell--${cell.tone}">
-          <b>${cell.label}</b><span>${cell.value}</span>
-        </i>`).join('')}
-      </div>
+  return `<section class="hud-block sc-diagram infra-ops-card" data-diagram-family="infrastructure-ops">
+    ${hudHead('Quản lý vận hành')}
+    <button type="button" class="infra-ops-card__visual" data-infra-ops-open="overview" aria-label="Mở chi tiết vận hành tòa nhà">
+      <svg class="infra-ops-spark" viewBox="0 0 180 56" aria-hidden="true">
+        <path class="infra-ops-spark__grid" d="M4 9H176M4 28H176M4 47H176"/>
+        <polyline class="infra-ops-spark__line" points="4,40 29,33 56,29 84,20 113,25 143,18 172,23"/>
+        <g class="infra-ops-spark__dots">
+          <circle cx="4" cy="40" r="3.2"/><circle cx="29" cy="33" r="3.2"/><circle cx="56" cy="29" r="3.2"/>
+          <circle cx="84" cy="20" r="3.2"/><circle cx="113" cy="25" r="3.2"/><circle cx="143" cy="18" r="3.2"/>
+          <circle cx="172" cy="23" r="3.2"/>
+        </g>
+      </svg>
+      <span class="infra-ops-card__caption">Vận hành tòa nhà · 7 ngày</span>
+    </button>
+    <div class="infra-ops-metrics">
+      ${metrics.map((metric) => `<button type="button" class="infra-ops-metric infra-ops-metric--${metric.tone}" data-infra-ops-open="${metric.tab || 'overview'}">
+        <b>${metric.value}</b><span>${metric.label}</span>
+      </button>`).join('')}
+    </div>
+    <div class="infra-ops-actions">
+      <button type="button" data-infra-ops-open="overview">Chi tiết vận hành</button>
     </div>
   </section>`;
+}
+
+const infraOpsBuildings = [
+  ['S1.01', 'An toàn', '2 HS', 'Thấp'],
+  ['S1.02', 'Cảnh báo', '6 HS', 'Cao'],
+  ['S2.03', 'An toàn', '0 HS', 'Thấp'],
+  ['S3.01', 'Kiểm tra', '4 HS', 'Vừa'],
+];
+
+const infraOpsTabs = [
+  ['overview', 'Tất cả'],
+  ['pccc', 'Phòng cháy chữa cháy'],
+  ['residency', 'Cư trú'],
+  ['tasks', 'Cần xử lý'],
+];
+
+let pcccRequestCreated = false;
+let residencyListVisible = false;
+
+function renderInfraOpsTabs(activeTab) {
+  return `<div class="infra-ops-modal__tabs">
+    ${infraOpsTabs.map(([id, label]) => `<button type="button" class="${id === activeTab ? 'is-active' : ''}" data-infra-ops-tab="${id}">${label}</button>`).join('')}
+  </div>`;
+}
+
+function renderInfraOpsOverview() {
+  return `<div class="infra-ops-modal__table">
+    ${renderInfraOpsTabs('overview')}
+    <div class="infra-ops-table-row infra-ops-table-row--head infra-ops-table-row--overview"><span>Tòa nhà</span><span>Phòng cháy chữa cháy</span><span>Cư trú</span><span>Mức độ</span></div>
+    ${infraOpsBuildings.map((row) => `<button type="button" class="infra-ops-table-row infra-ops-table-row--overview" data-infra-ops-tab="${row[1] === 'Cảnh báo' ? 'pccc' : 'residency'}">
+      ${row.map((cell) => `<span>${cell}</span>`).join('')}
+    </button>`).join('')}
+  </div>
+  <aside class="infra-ops-modal__alerts">
+    <h4>Cảnh báo ưu tiên</h4>
+    <p><b>S1.02</b><span>Cảm biến khói tầng 12 · cập nhật 3 phút trước</span></p>
+    <p><b>S2.01</b><span>Bình chữa cháy hết hạn · cần kiểm tra</span></p>
+    <p><b>S2.04</b><span>6 hồ sơ tạm trú chưa hoàn tất · chỉ mở chi tiết trong danh sách xử lý</span></p>
+  </aside>`;
+}
+
+function renderInfraOpsPccc() {
+  const status = pcccRequestCreated ? 'Đang xử lý' : 'Cảnh báo mức cao';
+  return `<div class="infra-ops-modal__table infra-ops-modal__table--full">
+    ${renderInfraOpsTabs('pccc')}
+    <section class="infra-ops-tab-panel">
+      <header class="infra-ops-tab-panel__head"><h4>PCCC</h4><span data-pccc-status>${status}</span></header>
+      <div class="infra-ops-fact-grid">
+        <span>Cảm biến khói</span><b>1 cảnh báo</b>
+        <span>Bình chữa cháy</span><b>Đạt 96%</b>
+        <span>Lối thoát hiểm</span><b>Bình thường</b>
+        <span>Kiểm tra gần nhất</span><b>08/06/2026</b>
+        <span>Kiểm tra tiếp theo</span><b>08/07/2026</b>
+      </div>
+      <div class="infra-ops-check-zone">
+        <h5>Vị trí cần kiểm tra</h5>
+        <p><i class="infra-ops-dot infra-ops-dot--red"></i>Tầng 12 · Hành lang · Cảm biến khói bất thường</p>
+        <p><i class="infra-ops-dot infra-ops-dot--yellow"></i>Tầng B1 · Bình chữa cháy sắp hết hạn</p>
+      </div>
+      <div class="infra-ops-panel-actions">
+        <button type="button">Xác nhận cảnh báo</button>
+        <button type="button" data-pccc-create-request>Tạo yêu cầu kiểm tra</button>
+        <button type="button">Đánh dấu xử lý</button>
+      </div>
+    </section>
+  </div>`;
+}
+
+function renderInfraOpsResidency() {
+  return `<div class="infra-ops-modal__table infra-ops-modal__table--full">
+    ${renderInfraOpsTabs('residency')}
+    <section class="infra-ops-tab-panel">
+      <header class="infra-ops-tab-panel__head"><h4>Tạm trú / Thường trú</h4></header>
+      <div class="infra-ops-fact-grid">
+        <span>Chưa khai báo</span><b>3 hồ sơ</b>
+        <span>Thiếu thông tin</span><b>2 hồ sơ</b>
+        <span>Đang chờ xác nhận</span><b>1 hồ sơ</b>
+        <span>Quá hạn trên 7 ngày</span><b>4 hồ sơ</b>
+      </div>
+      <div class="infra-ops-age-zone">
+        <h5>Thời gian chưa hoàn tất</h5>
+        <p><span>Dưới 3 ngày</span><i style="--w:70%"></i><b>12</b></p>
+        <p><span>Từ 3 đến 7 ngày</span><i style="--w:48%"></i><b>7</b></p>
+        <p><span>Trên 7 ngày</span><i style="--w:32%"></i><b>4</b></p>
+      </div>
+      <div class="infra-ops-panel-actions">
+        <button type="button">Gửi nhắc bổ sung hồ sơ</button>
+        <button type="button" data-residency-show-list>Xem danh sách cần xử lý</button>
+      </div>
+      ${residencyListVisible ? `<div class="infra-ops-resident-list">
+        <div class="infra-ops-table-row infra-ops-table-row--head infra-ops-table-row--residents"><span>Mã hồ sơ</span><span>Tòa nhà</span><span>Trạng thái</span><span>Quá hạn</span></div>
+        ${[
+          ['HS-0421', 'S2.04', 'Thiếu xác nhận tạm trú', '8 ngày'],
+          ['HS-0428', 'S2.04', 'Thiếu giấy tờ bổ sung', '9 ngày'],
+          ['HS-0433', 'S3.01', 'Chưa khai báo thường trú', '11 ngày'],
+        ].map((row) => `<div class="infra-ops-table-row infra-ops-table-row--residents">${row.map((cell) => `<span>${cell}</span>`).join('')}</div>`).join('')}
+      </div>` : ''}
+    </section>
+  </div>`;
+}
+
+function renderInfraOpsTasks() {
+  const filters = ['Tất cả: 12', 'Khẩn cấp: 3', 'PCCC: 3', 'Phí dịch vụ: 5', 'Cư trú: 4'];
+  const tasks = [
+    ['🔴 Cao', 'S1.02', 'PCCC', 'Cảm biến khói tầng 12', '3 phút'],
+    ['🔴 Cao', 'S2.01', 'PCCC', 'Bình chữa cháy hết hạn', '2 ngày'],
+    ['🟠 Vừa', 'S3.01', 'Phí dịch vụ', '18 căn chưa đóng phí', 'Trên 30 ngày'],
+    ['🟡 Vừa', 'S2.04', 'Cư trú', '6 hồ sơ chưa hoàn tất', 'Trên 7 ngày'],
+  ];
+  return `<div class="infra-ops-modal__table infra-ops-modal__table--full">
+    ${renderInfraOpsTabs('tasks')}
+    <section class="infra-ops-tab-panel">
+      <header class="infra-ops-tab-panel__head"><h4>Cần xử lý</h4><span>12 tác vụ</span></header>
+      <div class="infra-ops-task-filters">${filters.map((filter, index) => `<button type="button" class="${index === 0 ? 'is-active' : ''}">${filter}</button>`).join('')}</div>
+      <div class="infra-ops-table-row infra-ops-table-row--head infra-ops-table-row--tasks"><span>Mức độ</span><span>Tòa nhà</span><span>Hạng mục</span><span>Nội dung</span><span>Quá hạn</span></div>
+      ${tasks.map((row) => `<button type="button" class="infra-ops-table-row infra-ops-table-row--tasks">${row.map((cell) => `<span>${cell}</span>`).join('')}</button>`).join('')}
+      <div class="infra-ops-panel-actions infra-ops-panel-actions--left"><button type="button">Xem thêm tác vụ</button></div>
+    </section>
+  </div>`;
+}
+
+function renderInfraOpsModalBody(activeTab) {
+  if (activeTab === 'pccc') return renderInfraOpsPccc();
+  if (activeTab === 'residency') return renderInfraOpsResidency();
+  if (activeTab === 'tasks') return renderInfraOpsTasks();
+  return renderInfraOpsOverview();
+}
+
+function renderInfrastructureOpsModal(activeTab = 'overview') {
+  return `<div class="infra-ops-modal" data-infra-ops-modal>
+    <div class="infra-ops-modal__panel" role="dialog" aria-modal="true" aria-label="Chi tiết vận hành tòa nhà">
+      <button type="button" class="infra-ops-modal__close" data-infra-ops-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="infra-ops-modal__head">
+        <div>
+          <small>Quản lý vận hành</small>
+          <h3>Hạ tầng & vận hành tòa nhà</h3>
+          <p>Theo dõi trạng thái vận hành, phòng cháy chữa cháy và hồ sơ cư trú. Thông tin cư dân chi tiết chỉ mở sau khi chọn danh sách cần xử lý.</p>
+        </div>
+      </header>
+      <section class="infra-ops-modal__kpis">
+        <button type="button"><span>Tổng tòa nhà</span><b>24</b><em>Đang vận hành</em></button>
+        <button type="button" data-infra-ops-tab="pccc"><span>Phòng cháy chữa cháy</span><b>3</b><em>Cần xử lý ngay</em></button>
+        <button type="button" data-infra-ops-tab="residency"><span>Hồ sơ cư trú</span><b>42 hồ sơ</b><em>18 quá hạn</em></button>
+        <button type="button" data-infra-ops-tab="tasks"><span>Cần xử lý</span><b>12</b><em>3 khẩn cấp</em></button>
+      </section>
+      <section class="infra-ops-modal__body" data-infra-ops-body>
+        ${renderInfraOpsModalBody(activeTab)}
+      </section>
+    </div>
+  </div>`;
+}
+
+function setInfraOpsTab(tab) {
+  const body = document.querySelector('[data-infra-ops-body]');
+  if (body) body.innerHTML = renderInfraOpsModalBody(tab);
+}
+
+function showInfraOpsToast(message) {
+  document.querySelector('[data-infra-ops-toast]')?.remove();
+  document.body.insertAdjacentHTML('beforeend', `<div class="infra-ops-toast" data-infra-ops-toast>${message}</div>`);
+  window.setTimeout(() => document.querySelector('[data-infra-ops-toast]')?.remove(), 2200);
+}
+
+export function bindInfrastructureOpsModal() {
+  if (document.body.dataset.infraOpsBound === 'true') return;
+  document.body.dataset.infraOpsBound = 'true';
+
+  document.addEventListener('click', (event) => {
+    const opener = event.target.closest('[data-infra-ops-open]');
+    if (opener) {
+      const tab = opener.dataset.infraOpsOpen || 'overview';
+      residencyListVisible = false;
+      document.querySelector('[data-infra-ops-modal]')?.remove();
+      document.body.insertAdjacentHTML('beforeend', renderInfrastructureOpsModal(tab));
+      return;
+    }
+
+    const tabButton = event.target.closest('[data-infra-ops-tab]');
+    if (tabButton) {
+      setInfraOpsTab(tabButton.dataset.infraOpsTab);
+      return;
+    }
+
+    if (event.target.closest('[data-pccc-create-request]')) {
+      pcccRequestCreated = true;
+      setInfraOpsTab('pccc');
+      showInfraOpsToast('Đã tạo yêu cầu kiểm tra');
+      return;
+    }
+
+    if (event.target.closest('[data-residency-show-list]')) {
+      residencyListVisible = true;
+      setInfraOpsTab('residency');
+      return;
+    }
+
+    const modal = event.target.closest('[data-infra-ops-modal]');
+    if (event.target.closest('[data-infra-ops-close]') || event.target === modal) {
+      document.querySelector('[data-infra-ops-modal]')?.remove();
+    }
+  });
 }
 
 function environmentNetwork() {

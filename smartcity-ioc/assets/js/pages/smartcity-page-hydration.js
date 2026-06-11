@@ -21,7 +21,11 @@ import {
   bindSmartcityFireExitControls,
   renderRightSidebar,
 } from '../render/security-panels-right.js';
-import { renderSmartcityDomainLeft, renderSmartcityDomainRight } from '../render/smartcity-domain-command-panels.js';
+import {
+  bindInfrastructureOpsModal,
+  renderSmartcityDomainLeft,
+  renderSmartcityDomainRight,
+} from '../render/smartcity-domain-command-panels.js';
 import { overviewData } from '../data/smartcity-overview-data.js';
 import { trafficData } from '../data/traffic.js';
 import { securityData } from '../data/smartcity-security-data.js';
@@ -50,6 +54,7 @@ export function hydratePage(pageId) {
     environment: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('environment');
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('environment');
+      bindInfrastructureOpsModal();
     },
     utilities: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('utilities');

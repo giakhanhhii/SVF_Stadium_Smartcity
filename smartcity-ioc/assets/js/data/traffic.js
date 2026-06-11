@@ -50,6 +50,9 @@ export const trafficData = {
         A4: {
           label: 'Xanh',
           pct: 75,
+          phase: 'Bắc – Nam đang xanh',
+          remaining: 18,
+          autoMode: 'Tự động thích ứng',
           metrics: [
             { label: 'Chu kỳ', value: '90s', pct: 75 },
             { label: 'Trễ', value: '1.2s', pct: 20 },
@@ -59,6 +62,9 @@ export const trafficData = {
         B2: {
           label: 'Xanh',
           pct: 62,
+          phase: 'Đông – Tây đang xanh',
+          remaining: 24,
+          autoMode: 'Tự động ưu tiên',
           metrics: [
             { label: 'Chu kỳ', value: '74s', pct: 62 },
             { label: 'Trễ', value: '0.8s', pct: 14 },

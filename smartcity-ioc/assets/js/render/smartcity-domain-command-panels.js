@@ -232,6 +232,277 @@ function showInfraOpsToast(message) {
   window.setTimeout(() => document.querySelector('[data-infra-ops-toast]')?.remove(), 2200);
 }
 
+const infrastructureHotspotItems = [
+  { key: 'power', label: 'Điện', value: '1', icon: 'ti-bolt', title: 'Trạm điện B2 quá tải', status: 'Giảm tải nhánh B2 trong 15 phút.', action: 'Điều phối kỹ thuật điện', location: 'Trạm B2 · Tủ MSB-02', owner: 'Đội điện ca A', deadline: '15 phút', metrics: [['Tải', '94%'], ['Dự phòng', '2N'], ['UPS', '38m']], steps: ['Giảm tải nhánh B2', 'Kiểm tra nhiệt tủ MSB', 'Xác nhận tải về dưới 80%'] },
+  { key: 'water', label: 'Nước', value: '2', icon: 'ti-droplet', title: 'Áp suất nước thấp', status: 'Hai cụm bơm cần kiểm tra áp lực.', action: 'Mở lệnh kiểm tra bơm', location: 'Cụm bơm P07/P11', owner: 'Đội nước', deadline: '32 phút', metrics: [['Áp suất', '2.1 bar'], ['Bơm online', '23/24'], ['Van', '92%']], steps: ['Kiểm tra bơm P07', 'Mở tuyến cấp bù', 'Đối chiếu áp suất tầng cao'] },
+  { key: 'lift', label: 'Thang', value: '1', icon: 'ti-elevator', title: 'Cabin thang báo lỗi', status: 'Tòa S2, thang số 03 cần khóa tạm.', action: 'Gửi đội bảo trì thang', location: 'S2 · Thang 03', owner: 'Bảo trì thang máy', deadline: '18 phút', metrics: [['Lỗi', 'E42'], ['Cabin', 'Tầng 12'], ['SLA', '86%']], steps: ['Khóa gọi tầng', 'Thông báo cư dân S2', 'Reset bộ điều khiển cabin'] },
+  { key: 'site', label: 'Công trường', value: '3', icon: 'ti-barrier-block', title: 'Bụi và tiếng ồn tăng', status: 'Ba điểm thi công vượt dải giám sát.', action: 'Nhắc nhà thầu xử lý', location: 'Cổng C · Khu thi công', owner: 'Ban an toàn công trường', deadline: '20 phút', metrics: [['Bụi', '72%'], ['Ồn', '68 dB'], ['Điểm', '3']], steps: ['Tưới giảm bụi', 'Giảm khung giờ ồn', 'Ghi nhận ảnh hiện trường'] },
+  { key: 'camera', label: 'Camera', value: '3', icon: 'ti-device-cctv', title: 'Camera offline', status: 'Ba camera vành đai mất tín hiệu.', action: 'Kiểm tra tuyến mạng', location: 'Vành đai B/C', owner: 'Đội mạng camera', deadline: '26 phút', metrics: [['Offline', '3'], ['Online', '72'], ['NVR', 'OK']], steps: ['Ping camera offline', 'Kiểm tra switch PoE', 'Ghim camera thay thế'] },
+  { key: 'light', label: 'Đèn', value: '5', icon: 'ti-bulb', title: 'Chiếu sáng cần kiểm tra', status: 'Năm đèn LED chưa phản hồi điều khiển.', action: 'Tạo phiếu bảo trì đèn', location: 'Trục đường D2', owner: 'Đội chiếu sáng', deadline: '1 giờ', metrics: [['Đèn lỗi', '5'], ['Lux TB', '78%'], ['Tủ', 'D2-04']], steps: ['Kiểm tra tủ D2-04', 'Bật kịch bản bù sáng', 'Tạo phiếu thay driver LED'] },
+];
+
+function renderInfrastructureHotspotModal(item) {
+  return `<div class="infra-hotspot-modal" data-infra-hotspot-modal>
+    <div class="infra-hotspot-modal__panel" role="dialog" aria-modal="true" aria-label="${item.title}">
+      <button type="button" class="infra-hotspot-modal__close" data-infra-hotspot-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="infra-hotspot-modal__head">
+        <span><i class="ti ${item.icon}"></i></span>
+        <div><small>${item.label}</small><h3>${item.title}</h3></div>
+        <b>${item.value}</b>
+      </div>
+      <p>${item.status}</p>
+      <div class="infra-hotspot-modal__meta">
+        <span><b>Vị trí</b><em>${item.location}</em></span>
+        <span><b>Phụ trách</b><em>${item.owner}</em></span>
+        <span><b>SLA</b><em>${item.deadline}</em></span>
+      </div>
+      <div class="infra-hotspot-modal__metrics">
+        ${item.metrics.map((metric) => `<span><b>${metric[1]}</b><em>${metric[0]}</em></span>`).join('')}
+      </div>
+      <div class="infra-hotspot-modal__steps">
+        ${item.steps.map((step, index) => `<span><b>${String(index + 1).padStart(2, '0')}</b><em>${step}</em></span>`).join('')}
+      </div>
+      <div class="infra-hotspot-modal__status">
+        <i></i><span>Ưu tiên điều phối trong ca hiện tại</span>
+      </div>
+      <button type="button" class="infra-hotspot-modal__action">${item.action}</button>
+    </div>
+  </div>`;
+}
+
+function renderInfrastructureTaskSummaryModal() {
+  const rows = [
+    ['Khẩn cấp', 'Điện', 'Trạm B2 quá tải', '15 phút'],
+    ['Quá hạn', 'Nước', 'Áp suất thấp cụm bơm', '32 phút'],
+    ['Đang xử lý', 'Thang', 'Cabin S2-03 báo lỗi', '18 phút'],
+    ['Đang xử lý', 'Camera', '3 camera offline', '26 phút'],
+    ['Theo dõi', 'Đèn', '5 đèn chưa phản hồi', '1 giờ'],
+  ];
+  return `<div class="infra-hotspot-modal infra-task-summary-modal" data-infra-task-summary-modal>
+    <div class="infra-hotspot-modal__panel" role="dialog" aria-modal="true" aria-label="Danh sách xử lý hạ tầng">
+      <button type="button" class="infra-hotspot-modal__close" data-infra-task-summary-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="infra-hotspot-modal__head">
+        <span><i class="ti ti-list-check"></i></span>
+        <div><small>HẠ TẦNG</small><h3>Danh sách xử lý hạ tầng</h3></div>
+        <b>12</b>
+      </div>
+      <div class="infra-task-summary-list">
+        ${rows.map((row) => `<button type="button">
+          <b>${row[0]}</b><span>${row[1]}</span><em>${row[2]}</em><strong>${row[3]}</strong>
+        </button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+const infrastructureSlaItems = [
+  { label: 'Dien', display: 'Điện', value: 96, visual: 96, status: 'Ổn định', need: 'Giữ 1 kỹ thuật trực', move: 'Không cần đổi ca' },
+  { label: 'Nuoc', display: 'Nước', value: 91, visual: 76, status: 'Theo dõi', need: 'Bổ sung kiểm tra bơm', move: 'Chuyển 1 người từ Điện sang Nước' },
+  { label: 'Thang', display: 'Thang', value: 86, visual: 56, status: 'Nguy cơ trễ', need: 'Cần xử lý lỗi cabin nhanh', move: 'Gán đội bảo trì thang ưu tiên 18 phút' },
+  { label: 'Den', display: 'Đèn', value: 94, visual: 88, status: 'Ổn định', need: 'Giữ lịch bảo trì', move: 'Không cần đổi ca' },
+  { label: 'Cam', display: 'Cam', value: 88, visual: 64, status: 'Cần kéo lên', need: 'Thiếu người kiểm tra switch PoE', move: 'Chuyển 1 kỹ thuật mạng sang Camera' },
+  { label: 'CT', display: 'CT', value: 82, visual: 40, status: 'Thấp nhất', need: 'Cần nhắc nhà thầu tại hiện trường', move: 'Gán giám sát hiện trường hỗ trợ Công trường' },
+];
+
+function renderInfrastructureSlaModal(mode = 'risk') {
+  const weakItems = infrastructureSlaItems.filter((item) => item.value < 90);
+  const activeTitle = mode === 'rebalance' ? 'Đề xuất cân ca SLA' : 'Điểm nghẽn SLA trong ca';
+  return `<div class="infra-sla-modal" data-infra-sla-modal>
+    <div class="infra-sla-modal__panel" role="dialog" aria-modal="true" aria-label="${activeTitle}">
+      <button type="button" class="infra-sla-modal__close" data-infra-sla-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="infra-sla-modal__head">
+        <small>Không trùng ticket điểm nóng</small>
+        <h3>${activeTitle}</h3>
+        <p>Dùng để cân người trong ca trước khi ticket quá hạn, không mở xử lý sự cố riêng lẻ.</p>
+      </header>
+      <div class="infra-sla-modal__body">
+        <section class="infra-sla-modal__risk">
+          <h4>Nhóm cần kéo SLA lên</h4>
+          ${weakItems.map((item) => `<button type="button" data-infra-sla-focus="${item.display}">
+            <b>${item.display}</b><span>${item.value}%</span><em>${item.need}</em>
+          </button>`).join('')}
+        </section>
+        <section class="infra-sla-modal__plan">
+          <h4>Kịch bản điều phối</h4>
+          ${infrastructureSlaItems.map((item) => `<span class="${item.value < 90 ? 'is-weak' : ''}">
+            <i>${item.value}%</i><b>${item.status}</b><em>${mode === 'rebalance' ? item.move : item.need}</em>
+          </span>`).join('')}
+        </section>
+      </div>
+      <footer class="infra-sla-modal__foot">
+        <span data-infra-sla-status>Ưu tiên kéo CT, Thang và Cam lên trên 90% trong 30 phút.</span>
+        <button type="button" data-infra-sla-apply>Áp dụng gợi ý ca</button>
+      </footer>
+    </div>
+  </div>`;
+}
+
+function showInfrastructureHotspotModal(key) {
+  const item = infrastructureHotspotItems.find((entry) => entry.key === key) || infrastructureHotspotItems[0];
+  document.querySelector('[data-infra-hotspot-modal]')?.remove();
+  document.body.insertAdjacentHTML('beforeend', renderInfrastructureHotspotModal(item));
+}
+
+function showInfrastructureTaskSummaryModal() {
+  document.querySelector('[data-infra-task-summary-modal]')?.remove();
+  document.body.insertAdjacentHTML('beforeend', renderInfrastructureTaskSummaryModal());
+}
+
+function showInfrastructureSlaModal(mode) {
+  document.querySelector('[data-infra-sla-modal]')?.remove();
+  document.body.insertAdjacentHTML('beforeend', renderInfrastructureSlaModal(mode));
+}
+
+const constructionSites = [
+  { id: 'S5A', name: 'Tòa S5A', progress: 88, status: 'Hoàn thiện', risk: 'Bụi thấp', crew: '86 công nhân', eta: 'Q3/2026' },
+  { id: 'S6B', name: 'Tòa S6B', progress: 64, status: 'Kết cấu', risk: 'Cần che chắn', crew: '124 công nhân', eta: 'Q4/2026' },
+  { id: 'S7C', name: 'Tòa S7C', progress: 76, status: 'MEP', risk: 'Ổn định', crew: '72 công nhân', eta: 'Q4/2026' },
+  { id: 'S8D', name: 'Tòa S8D', progress: 96, status: 'Nghiệm thu', risk: 'Sẵn sàng bàn giao', crew: '34 công nhân', eta: '06/2026' },
+];
+
+function renderConstructionModal(mode = 'progress') {
+  const isConflict = mode === 'conflict';
+  return `<div class="construction-modal" data-construction-modal>
+    <div class="construction-modal__panel" role="dialog" aria-modal="true" aria-label="${isConflict ? 'Xung đột thi công' : 'Tiến độ tòa đang xây'}">
+      <button type="button" class="construction-modal__close" data-construction-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="construction-modal__head">
+        <small>Thông tin công trình</small>
+        <h3>${isConflict ? 'Xung đột thi công cần xử lý' : 'Tiến độ các tòa đang xây dựng'}</h3>
+        <p>${isConflict ? 'Tập trung các điểm có thể ảnh hưởng cư dân: bụi, tiếng ồn, xe vật liệu và che chắn.' : 'Theo dõi tiến độ từng tòa để ưu tiên giám sát, nghiệm thu và điều phối hiện trường.'}</p>
+      </header>
+      <div class="construction-modal__grid">
+        ${constructionSites.map((site) => `<button type="button" data-construction-site="${site.id}">
+          <b>${site.name}</b><strong>${site.progress}%</strong><span>${site.status}</span><em>${isConflict ? site.risk : site.eta}</em>
+        </button>`).join('')}
+      </div>
+      <section class="construction-modal__detail">
+        <h4>${isConflict ? 'Khuyến nghị vận hành' : 'Kế hoạch giám sát'}</h4>
+        <div>
+          <span><b>S6B</b><em>${isConflict ? 'Bổ sung lưới chắn bụi, đổi khung giờ xe vật liệu.' : 'Cần kiểm tra che chắn và luồng vận chuyển vật liệu.'}</em></span>
+          <span><b>S7C</b><em>${isConflict ? 'Giữ đường nội khu sạch trước 17:00.' : 'Theo dõi MEP, chuẩn bị lịch nghiệm thu theo tầng.'}</em></span>
+        </div>
+      </section>
+      <footer class="construction-modal__foot">
+        <span data-construction-status>Chọn một tòa để xem ưu tiên giám sát trong ca.</span>
+        <button type="button" data-construction-apply>${isConflict ? 'Tạo nhắc hiện trường' : 'Ghim lịch giám sát'}</button>
+      </footer>
+    </div>
+  </div>`;
+}
+
+function showConstructionModal(mode) {
+  document.querySelector('[data-construction-modal]')?.remove();
+  document.body.insertAdjacentHTML('beforeend', renderConstructionModal(mode));
+}
+
+function showPcccModal(type) {
+  document.querySelectorAll('[data-pccc-risk-modal], [data-pccc-sensor-modal], [data-pccc-history-modal], [data-pccc-dispatch-modal], [data-pccc-power-modal], [data-pccc-smoke-modal]').forEach((modal) => modal.remove());
+  const modalByType = {
+    risk: pcccRiskModal,
+    sensor: pcccSensorModal,
+    history: pcccHistoryModal,
+    alarm: () => pcccDispatchModal(),
+    smoke: pcccSmokeModal,
+    power: () => pcccPowerModal(),
+  };
+  document.body.insertAdjacentHTML('beforeend', (modalByType[type] || modalByType.risk)());
+}
+
+function runPcccSmokeGauge() {
+  return new Promise((resolve) => {
+    const modal = document.querySelector('[data-pccc-smoke-modal]');
+    const ring = modal?.querySelector('[data-pccc-smoke-ring]');
+    const pctEl = modal?.querySelector('[data-pccc-smoke-pct]');
+    const status = modal?.querySelector('[data-pccc-smoke-status]');
+    if (!modal || !ring || !pctEl || !status) {
+      resolve();
+      return;
+    }
+    const circ = 2 * Math.PI * 52;
+    ring.style.strokeDasharray = String(circ);
+    ring.style.strokeDashoffset = String(circ);
+    let pct = 0;
+    const timer = window.setInterval(() => {
+      pct = Math.min(100, pct + 20);
+      pctEl.textContent = String(pct);
+      ring.style.strokeDashoffset = String(circ * (1 - pct / 100));
+      status.textContent = pct >= 100
+        ? 'Đã hút khói khu nguy cơ, cảm biến đang trở về ngưỡng an toàn.'
+        : 'Đang hút khói, quạt áp lực và cảm biến khói đang cập nhật theo thời gian thực.';
+      if (pct >= 100) {
+        window.clearInterval(timer);
+        resolve();
+      }
+    }, 220);
+  });
+}
+
+function runPcccPowerSequence() {
+  return new Promise((resolve) => {
+    const modal = document.querySelector('[data-pccc-power-modal]');
+    const zones = Array.from(modal?.querySelectorAll('[data-pccc-power-zone]') || []);
+    const status = modal?.querySelector('[data-pccc-power-status]');
+    let index = 0;
+    const tick = () => {
+      const zone = zones[index];
+      if (!zone) {
+        if (status) status.textContent = 'Đã cắt điện toàn thành phố. Nguồn ưu tiên vẫn hoạt động.';
+        resolve();
+        return;
+      }
+      zone.classList.remove('smartcity-power-zone--on');
+      zone.classList.add('smartcity-power-zone--off');
+      if (status) status.textContent = `Đang cắt điện ${zone.dataset.pcccPowerZone}...`;
+      index += 1;
+      window.setTimeout(tick, 170);
+    };
+    tick();
+  });
+}
+
+function triggerPcccDispatchCall(modal) {
+  const readyCall = modal?.querySelector('[data-pccc-dispatch-call]');
+  if (!readyCall || readyCall.classList.contains('smartcity-dispatch-ready--calling')) return;
+  const line = modal.querySelector('[data-pccc-dispatch-line]')?.textContent.trim() || '114 · VOC-12';
+  const status = modal.querySelector('[data-pccc-dispatch-status]');
+  const badge = readyCall.querySelector('small');
+  readyCall.classList.remove('smartcity-dispatch-ready--connected');
+  readyCall.classList.add('smartcity-dispatch-ready--calling');
+  if (badge) badge.textContent = 'ĐANG GỌI';
+  if (status) status.textContent = `Đang gọi ${line}...`;
+  window.setTimeout(() => {
+    readyCall.classList.remove('smartcity-dispatch-ready--calling');
+    readyCall.classList.add('smartcity-dispatch-ready--connected');
+    if (badge) badge.textContent = 'ĐÃ GỌI';
+    if (status) status.textContent = `Cuộc gọi đã kết nối với ${line}. Bấm Kết thúc & gửi yêu cầu trong form.`;
+  }, 1400);
+}
+
+async function startPcccAutoChain(button) {
+  if (!button || button.dataset.running === 'true') return;
+  const status = document.querySelector('[data-pccc-card-status]');
+  button.dataset.running = 'true';
+  button.classList.add('event-fire-auto__button--running');
+  if (status) status.textContent = '01 · Đang cắt điện toàn thành phố';
+  showPcccModal('power');
+  await runPcccPowerSequence();
+  await new Promise((resolve) => window.setTimeout(resolve, 420));
+  document.querySelector('[data-pccc-power-modal]')?.remove();
+  if (status) status.textContent = '02 · Đang mở hút khói khu nguy cơ';
+  showPcccModal('smoke');
+  await runPcccSmokeGauge();
+  await new Promise((resolve) => window.setTimeout(resolve, 420));
+  document.querySelector('[data-pccc-smoke-modal]')?.remove();
+  if (status) status.textContent = '03 · Đang gọi cứu hỏa / sơ tán';
+  document.body.insertAdjacentHTML('beforeend', pcccDispatchModal({ auto: true }));
+  const dispatchModal = document.querySelector('[data-pccc-dispatch-modal]');
+  window.setTimeout(() => triggerPcccDispatchCall(dispatchModal), 220);
+  if (status) status.textContent = 'Đã cắt điện, hút khói và mở yêu cầu cứu hỏa / sơ tán.';
+  button.classList.remove('event-fire-auto__button--running');
+  button.classList.add('event-fire-auto__button--done');
+  button.dataset.running = 'false';
+}
+
 export function bindInfrastructureOpsModal() {
   if (document.body.dataset.infraOpsBound === 'true') return;
   document.body.dataset.infraOpsBound = 'true';
@@ -265,6 +536,175 @@ export function bindInfrastructureOpsModal() {
       return;
     }
 
+    if (event.target.closest('[data-infra-task-summary-open]')) {
+      showInfrastructureTaskSummaryModal();
+      return;
+    }
+
+    const infraSlaOpen = event.target.closest('[data-infra-sla-open]');
+    if (infraSlaOpen) {
+      showInfrastructureSlaModal(infraSlaOpen.dataset.infraSlaOpen || 'risk');
+      return;
+    }
+
+    const infraSlaModal = event.target.closest('[data-infra-sla-modal]');
+    if (event.target.closest('[data-infra-sla-close]') || event.target === infraSlaModal) {
+      infraSlaModal?.remove();
+      return;
+    }
+
+    const infraSlaFocus = event.target.closest('[data-infra-sla-focus]');
+    if (infraSlaFocus) {
+      const status = infraSlaFocus.closest('[data-infra-sla-modal]')?.querySelector('[data-infra-sla-status]');
+      if (status) status.textContent = `Đã chọn nhóm ${infraSlaFocus.dataset.infraSlaFocus}: ưu tiên kiểm tra nguồn lực trong ca hiện tại.`;
+      return;
+    }
+
+    if (event.target.closest('[data-infra-sla-apply]')) {
+      const status = event.target.closest('[data-infra-sla-modal]')?.querySelector('[data-infra-sla-status]');
+      if (status) status.textContent = 'Đã áp dụng gợi ý cân ca: CT, Thang và Cam được kéo vào danh sách ưu tiên.';
+      showInfraOpsToast('Đã áp dụng gợi ý cân ca SLA');
+      return;
+    }
+
+    const constructionOpen = event.target.closest('[data-construction-open]');
+    if (constructionOpen) {
+      showConstructionModal(constructionOpen.dataset.constructionOpen || 'progress');
+      return;
+    }
+
+    const constructionModal = event.target.closest('[data-construction-modal]');
+    if (event.target.closest('[data-construction-close]') || event.target === constructionModal) {
+      constructionModal?.remove();
+      return;
+    }
+
+    const constructionSite = event.target.closest('[data-construction-site]');
+    if (constructionSite) {
+      const status = constructionSite.closest('[data-construction-modal]')?.querySelector('[data-construction-status]');
+      if (status) status.textContent = `Đã chọn ${constructionSite.dataset.constructionSite}: ghim vào ca giám sát hiện trường.`;
+      return;
+    }
+
+    if (event.target.closest('[data-construction-apply]')) {
+      const status = event.target.closest('[data-construction-modal]')?.querySelector('[data-construction-status]');
+      if (status) status.textContent = 'Đã gửi nhắc hiện trường và ghim lịch giám sát cho ca này.';
+      showInfraOpsToast('Đã cập nhật giám sát công trình');
+      return;
+    }
+
+    const infraAlertOpen = event.target.closest('[data-infra-alert-open]');
+    if (infraAlertOpen) {
+      showInfrastructureAlertModal(infraAlertOpen.dataset.infraAlertOpen || 'routes');
+      return;
+    }
+
+    const infraAlertModal = event.target.closest('[data-infra-alert-modal]');
+    if (event.target.closest('[data-infra-alert-close]') || event.target === infraAlertModal) {
+      infraAlertModal?.remove();
+      return;
+    }
+
+    const infraAlertItem = event.target.closest('[data-infra-alert-modal] [data-infra-alert-item]');
+    if (infraAlertItem) {
+      const status = infraAlertItem.closest('[data-infra-alert-modal]')?.querySelector('[data-infra-alert-status]');
+      const item = infrastructureAlertItems.find((entry) => entry.id === infraAlertItem.dataset.infraAlertItem);
+      if (status && item) status.textContent = `Đã chọn ${item.tag}: ${item.action}`;
+      return;
+    }
+
+    if (event.target.closest('[data-infra-alert-apply]')) {
+      const status = event.target.closest('[data-infra-alert-modal]')?.querySelector('[data-infra-alert-status]');
+      if (status) status.textContent = 'Đã ghim tuyến xử lý và gửi thông báo cho đội phụ trách.';
+      showInfraOpsToast('Đã cập nhật cảnh báo hạ tầng');
+      return;
+    }
+
+    const infraTaskSummaryModal = event.target.closest('[data-infra-task-summary-modal]');
+    if (event.target.closest('[data-infra-task-summary-close]') || event.target === infraTaskSummaryModal) {
+      infraTaskSummaryModal?.remove();
+      return;
+    }
+
+    const infraHotspot = event.target.closest('[data-infra-hotspot]');
+    if (infraHotspot) {
+      showInfrastructureHotspotModal(infraHotspot.dataset.infraHotspot);
+      return;
+    }
+
+    const infraHotspotModal = event.target.closest('[data-infra-hotspot-modal]');
+    if (event.target.closest('[data-infra-hotspot-close]') || event.target === infraHotspotModal) {
+      infraHotspotModal?.remove();
+      return;
+    }
+
+    const pcccOpen = event.target.closest('[data-pccc-open]');
+    if (pcccOpen) {
+      const modalType = pcccOpen.dataset.pcccOpen;
+      if (modalType === 'auto') {
+        startPcccAutoChain(pcccOpen);
+        return;
+      }
+      showPcccModal(modalType);
+      if (modalType === 'smoke') runPcccSmokeGauge();
+      return;
+    }
+
+    const pcccBuildingAlert = event.target.closest('[data-pccc-building-alert]');
+    if (pcccBuildingAlert) {
+      const buildingId = pcccBuildingAlert.dataset.pcccBuildingAlert;
+      const status = document.querySelector(`[data-pccc-building-status="${buildingId}"]`);
+      if (status) status.textContent = 'Đã bật cảnh báo';
+      pcccBuildingAlert.textContent = 'Đã bật';
+      pcccBuildingAlert.classList.add('is-active');
+      const riskStatus = document.querySelector('[data-pccc-risk-status]');
+      if (riskStatus) riskStatus.textContent = `Đã bật cảnh báo cho tòa ${buildingId}.`;
+      showInfraOpsToast(`Đã bật cảnh báo cho tòa ${buildingId}`);
+      return;
+    }
+
+    const pcccDispatchOption = event.target.closest('[data-pccc-dispatch-option]');
+    if (pcccDispatchOption) {
+      const dispatchModal = pcccDispatchOption.closest('[data-pccc-dispatch-modal]');
+      const isFire = pcccDispatchOption.dataset.pcccDispatchOption === '114';
+      dispatchModal?.querySelectorAll('[data-pccc-dispatch-option]').forEach((option) => {
+        option.classList.toggle('smartcity-dispatch-option--active', option === pcccDispatchOption);
+      });
+      dispatchModal.querySelector('[data-pccc-dispatch-line]').textContent = isFire ? '114 · VOC-12' : '115 · VOC-11';
+      dispatchModal.querySelector('[data-pccc-dispatch-type]').textContent = isFire ? 'Cứu hỏa / sơ tán' : 'Y tế khẩn cấp';
+      dispatchModal.querySelector('[data-pccc-dispatch-status]').textContent = `Đã chọn ${isFire ? '114 · VOC-12' : '115 · VOC-11'}. Bấm icon điện thoại để gọi.`;
+      return;
+    }
+
+    const pcccDispatchCall = event.target.closest('[data-pccc-dispatch-call]');
+    if (pcccDispatchCall) {
+      triggerPcccDispatchCall(pcccDispatchCall.closest('[data-pccc-dispatch-modal]'));
+      return;
+    }
+
+    if (event.target.closest('[data-pccc-dispatch-submit]')) {
+      const dispatchModal = event.target.closest('[data-pccc-dispatch-modal]');
+      const status = dispatchModal?.querySelector('[data-pccc-dispatch-status]');
+      if (status) status.textContent = 'Đã kết thúc và gửi yêu cầu hỗ trợ tới VOC.';
+      showInfraOpsToast('Đã gửi yêu cầu hỗ trợ tới VOC');
+      return;
+    }
+
+    const pcccPowerZone = event.target.closest('[data-pccc-power-zone]');
+    if (pcccPowerZone) {
+      pcccPowerZone.classList.toggle('smartcity-power-zone--on');
+      pcccPowerZone.classList.toggle('smartcity-power-zone--off');
+      const status = pcccPowerZone.closest('[data-pccc-power-modal]')?.querySelector('[data-pccc-power-status]');
+      if (status) status.textContent = `Đã cập nhật nguồn khu ${pcccPowerZone.dataset.pcccPowerZone}.`;
+      return;
+    }
+
+    const pcccModal = event.target.closest('[data-pccc-risk-modal], [data-pccc-sensor-modal], [data-pccc-history-modal], [data-pccc-dispatch-modal], [data-pccc-power-modal], [data-pccc-smoke-modal]');
+    if (event.target.closest('[data-pccc-modal-close]') || event.target === pcccModal) {
+      pcccModal?.remove();
+      return;
+    }
+
     const modal = event.target.closest('[data-infra-ops-modal]');
     if (event.target.closest('[data-infra-ops-close]') || event.target === modal) {
       document.querySelector('[data-infra-ops-modal]')?.remove();
@@ -272,86 +712,362 @@ export function bindInfrastructureOpsModal() {
   });
 }
 
+function infraPiePoint(cx, cy, r, angle) {
+  const rad = (angle - 90) * Math.PI / 180;
+  return `${(cx + Math.cos(rad) * r).toFixed(1)} ${(cy + Math.sin(rad) * r).toFixed(1)}`;
+}
+
+function infraPiePath(cx, cy, r, start, end) {
+  const large = end - start > 180 ? 1 : 0;
+  return `M ${cx} ${cy} L ${infraPiePoint(cx, cy, r, start)} A ${r} ${r} 0 ${large} 1 ${infraPiePoint(cx, cy, r, end)} Z`;
+}
+
+function infrastructureHealthSnapshot() {
+  const metrics = [
+    { label: 'Khẩn cấp', value: '3', pct: 25 },
+    { label: 'Quá hạn', value: '4', pct: 33 },
+    { label: 'Đang xử lý', value: '5', pct: 42 },
+  ];
+  return `<section class="hud-block sc-diagram infra-blue-card" data-diagram-family="infra-health">
+    ${hudHead('Tác vụ hạ tầng cần xử lý')}
+    <div class="infra-health-viz">
+      <div class="infra-health-viz__gauge" style="--pct:92">
+        <strong>12</strong><span>việc</span>
+      </div>
+      <div class="infra-health-viz__bars">
+        ${metrics.map((m) => `<span><b>${m.label}</b><i><em style="width:${m.pct}%"></em></i><strong>${m.value}</strong></span>`).join('')}
+      </div>
+    </div>
+    <button type="button" class="infra-health-viz__action" data-infra-task-summary-open>
+      <i class="ti ti-list-check"></i><span>Mở danh sách xử lý</span>
+    </button>
+  </section>`;
+}
+
 function environmentNetwork() {
-  const nodes = [
-    { label: 'PM2.5', value: '18', icon: 'ti-mist', tone: 'ok' },
-    { label: 'CO2', value: '642', icon: 'ti-cloud', tone: 'ok' },
-    { label: 'Noise', value: '54dB', icon: 'ti-volume', tone: 'ok' },
-    { label: 'Temp', value: '24°', icon: 'ti-temperature', tone: 'ok' },
-    { label: 'Humidity', value: '61%', icon: 'ti-droplet', tone: 'ok' },
-    { label: 'VOC', value: '0.18', icon: 'ti-leaf', tone: 'warn' },
-  ].map((node, index, arr) => {
-    const angle = (-90 + index * (360 / arr.length)) * Math.PI / 180;
-    return { ...node, x: 50 + Math.cos(angle) * 36, y: 50 + Math.sin(angle) * 31 };
+  let angle = -22;
+  const slices = [
+    { label: 'Mới', value: 43, color: '#00d4ff' },
+    { label: 'Đang xử lý', value: 36, color: '#168fff' },
+    { label: 'Theo dõi', value: 21, color: '#74c7ff' },
+  ].map((item) => {
+    const span = item.value * 3.6;
+    const path = infraPiePath(58, 58, 45, angle, angle + span - 3);
+    const mid = angle + span / 2;
+    const dot = infraPiePoint(58, 58, 33, mid).split(' ');
+    const pin = infraPiePoint(58, 58, 56, mid).split(' ');
+    angle += span;
+    return { ...item, path, dot, pin };
   });
   return `<section class="hud-block sc-diagram" data-diagram-family="sensor-network">
-    ${hudHead('Mạng cảm biến hạ tầng')}
-    <div class="sc-node-map sc-node-map--environment">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <circle class="sc-node-map__halo" cx="50" cy="50" r="19"/>
-        <circle class="sc-node-map__hub" cx="50" cy="50" r="7"/>
-        ${nodes.map((n) => `<line class="sc-node-map__line sc-node-map__line--${n.tone}" x1="50" y1="50" x2="${n.x.toFixed(1)}" y2="${n.y.toFixed(1)}"/>`).join('')}
-        ${nodes.map((n) => `<circle class="sc-node-map__node sc-node-map__node--${n.tone}" cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="5.4"/>`).join('')}
+    ${hudHead('Điểm nóng cần điều phối')}
+    <div class="infra-hotspot-summary">
+      <svg viewBox="0 0 122 122" aria-hidden="true">
+        <ellipse class="infra-hotspot-summary__shadow" cx="58" cy="66" rx="45" ry="34"/>
+        ${slices.map((s) => `<path class="infra-hotspot-summary__slice" d="${s.path}" fill="${s.color}"/>`).join('')}
+        ${slices.map((s) => `<line class="infra-hotspot-summary__pin" x1="${s.dot[0]}" y1="${s.dot[1]}" x2="${s.pin[0]}" y2="${s.pin[1]}"/>
+          <circle class="infra-hotspot-summary__dot" cx="${s.pin[0]}" cy="${s.pin[1]}" r="2.2"/>`).join('')}
+        <circle class="infra-hotspot-summary__core" cx="58" cy="58" r="18"/>
+        <circle class="infra-hotspot-summary__core-light" cx="58" cy="58" r="9"/>
       </svg>
-      <div class="sc-node-map__labels">
-        ${nodes.map((n) => `<span class="sc-node-label sc-node-label--${n.tone}"><i class="ti ${n.icon}"></i><b>${n.label}</b><em>${n.value}</em></span>`).join('')}
+      <div class="infra-hotspot-summary__legend">
+        ${slices.map((item) => `<span><i style="background:${item.color}"></i><b>${item.label}</b><em>${item.value}%</em></span>`).join('')}
       </div>
+    </div>
+    <div class="infra-hotspot-actions">
+      ${infrastructureHotspotItems.map((item) => `<button type="button" data-infra-hotspot="${item.key}">
+        <i class="ti ${item.icon}"></i><span>${item.label}</span><b>${item.value}</b>
+      </button>`).join('')}
     </div>
   </section>`;
 }
 
+const pcccRiskBuildings = [
+  { id: 'S1.02', area: 'Tầng 12 · Hành lang', sensor: 'Khói', level: 82, smoke: 64, status: 'Cảnh báo mức cao' },
+  { id: 'S2.01', area: 'Tầng B1 · Phòng kỹ thuật', sensor: 'Nhiệt', level: 76, smoke: 48, status: 'Bình chữa cháy hết hạn' },
+];
+
+const pcccFireHistory = [
+  {
+    id: 'F-2026-0611-03',
+    time: '11/06 · 09:42',
+    location: 'S1.02 · Tầng 12 · Hành lang',
+    source: 'Cảm biến khói + camera AI',
+    level: 'Cao',
+    cause: 'Khói từ khu kỹ thuật điều hòa',
+    response: 'Đã hút khói, khóa thang S1-03, đội PCCC xác minh tại chỗ',
+    status: 'Đã đóng',
+    duration: '18 phút',
+  },
+  {
+    id: 'F-2026-0610-01',
+    time: '10/06 · 21:18',
+    location: 'S2.01 · Tầng B1 · Phòng kỹ thuật',
+    source: 'Nhiệt tăng + cảnh báo tủ điện',
+    level: 'Trung bình',
+    cause: 'Tủ điện phụ tải nóng bất thường',
+    response: 'Cắt tải nhánh phụ, kiểm tra bằng camera nhiệt',
+    status: 'Theo dõi',
+    duration: '26 phút',
+  },
+  {
+    id: 'F-2026-0608-02',
+    time: '08/06 · 14:05',
+    location: 'TMDV · Khu bếp nhà hàng',
+    source: 'Nút báo cháy thủ công',
+    level: 'Thấp',
+    cause: 'Khói bếp cục bộ',
+    response: 'Xác minh false alarm, reset đầu báo, nhắc đơn vị vận hành',
+    status: 'Đã đóng',
+    duration: '9 phút',
+  },
+];
+
+const pcccPowerZones = ['IOC', 'Khu căn hộ A', 'Khu căn hộ B', 'TMDV', 'Hầm xe', 'Công viên', 'Trạm bơm', 'Cổng B2'];
+
+function renderPcccRiskBuildings() {
+  return pcccRiskBuildings.map((building) => `<div class="pccc-risk-row" data-pccc-building="${building.id}">
+    <div>
+      <b>${building.id}</b>
+      <span>${building.area}</span>
+      <em data-pccc-building-status="${building.id}">${building.status}</em>
+    </div>
+    <button type="button" data-pccc-building-alert="${building.id}">Bật cảnh báo</button>
+  </div>`).join('');
+}
+
+function pcccRiskModal() {
+  return `<div class="smartcity-action-modal pccc-risk-modal" data-pccc-risk-modal>
+    <div class="smartcity-action-modal__panel" role="dialog" aria-modal="true" aria-label="Tòa nhà có nguy cơ cháy nổ">
+      <button type="button" class="smartcity-action-modal__close" data-pccc-modal-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="smartcity-action-modal__head">
+        <span class="smartcity-action-modal__icon"><i class="ti ti-flame"></i></span>
+        <div><small>PCCC</small><h3>Tòa nhà có nguy cơ cháy nổ</h3></div>
+      </div>
+      <p>Danh sách tòa nhà đang có tín hiệu khói, nhiệt hoặc thiết bị PCCC cần kiểm tra. Có thể bật cảnh báo riêng cho từng tòa nhà.</p>
+      <div class="pccc-risk-list">${renderPcccRiskBuildings()}</div>
+      <div class="smartcity-action-modal__status"><i class="ti ti-broadcast"></i><span data-pccc-risk-status>Chờ chọn tòa nhà để bật cảnh báo.</span></div>
+    </div>
+  </div>`;
+}
+
+function pcccSensorModal() {
+  return `<div class="smartcity-smoke-modal pccc-sensor-modal" data-pccc-sensor-modal>
+    <div class="smartcity-smoke-modal__panel" role="dialog" aria-modal="true" aria-label="Cảm biến cháy nổ">
+      <button type="button" class="smartcity-modal__close" data-pccc-modal-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="smartcity-modal__head">
+        <span class="smartcity-modal__icon"><i class="ti ti-flame"></i></span>
+        <div><small>FIRE SENSOR</small><h3>Cảm biến cháy nổ</h3></div>
+      </div>
+      <div class="pccc-sensor-grid">
+        ${[
+    ['Nhiệt', 82],
+    ['Khói', 64],
+    ['Gas', 38],
+    ['Điện', 52],
+  ].map(([label, value]) => `<div class="event-fire-bar event-fire-bar--${value > 70 ? 'hot' : value > 45 ? 'warn' : 'ok'}">
+          <span>${label}</span><div class="event-fire-bar__track"><i style="height:${value}%"></i></div><b>${value}%</b>
+        </div>`).join('')}
+      </div>
+      <p data-pccc-sensor-status>Cảm biến đang giám sát S1.02 và S2.01 theo thời gian thực.</p>
+      <div class="smartcity-modal__steps">
+        <span><b>01</b>Ghim camera tầng nguy cơ</span><span><b>02</b>Báo ca trực PCCC</span><span><b>03</b>Theo dõi khói/nhiệt</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function pcccHistoryModal() {
+  return `<div class="smartcity-action-modal pccc-history-modal" data-pccc-history-modal>
+    <div class="smartcity-action-modal__panel" role="dialog" aria-modal="true" aria-label="Lịch sử hỏa hoạn">
+      <button type="button" class="smartcity-action-modal__close" data-pccc-modal-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="smartcity-action-modal__head">
+        <span class="smartcity-action-modal__icon"><i class="ti ti-history"></i></span>
+        <div><small>FIRE HISTORY</small><h3>Lịch sử hỏa hoạn</h3></div>
+      </div>
+      <div class="pccc-history-summary">
+        <span><b>${pcccFireHistory.length}</b><em>Sự kiện gần đây</em></span>
+        <span><b>2</b><em>Đã đóng</em></span>
+        <span><b>1</b><em>Đang theo dõi</em></span>
+        <span><b>18p</b><em>MTTR trung bình</em></span>
+      </div>
+      <div class="pccc-history-list">
+        ${pcccFireHistory.map((item) => `<article class="pccc-history-item pccc-history-item--${item.level === 'Cao' ? 'high' : item.level === 'Trung bình' ? 'medium' : 'low'}">
+          <header>
+            <div><b>${item.id}</b><strong>${item.location}</strong></div>
+            <span>${item.status}</span>
+          </header>
+          <div class="pccc-history-item__grid">
+            <p><em>Thời gian</em><b>${item.time}</b></p>
+            <p><em>Mức độ</em><b>${item.level}</b></p>
+            <p><em>Nguồn phát hiện</em><b>${item.source}</b></p>
+            <p><em>Thời lượng</em><b>${item.duration}</b></p>
+          </div>
+          <div class="pccc-history-item__detail">
+            <span><b>Nguyên nhân</b><em>${item.cause}</em></span>
+            <span><b>Xử lý</b><em>${item.response}</em></span>
+          </div>
+        </article>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function pcccDispatchModal({ auto = false } = {}) {
+  return `<div class="smartcity-dispatch-modal pccc-dispatch-modal" data-pccc-dispatch-modal>
+    <div class="smartcity-dispatch-modal__panel" role="dialog" aria-modal="true" aria-label="Gọi Y tế / Cứu hỏa">
+      <button type="button" class="smartcity-modal__close" data-pccc-modal-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="smartcity-modal__head">
+        <span class="smartcity-dispatch-icon"><i class="ti ti-phone-call"></i></span>
+        <div><small>VOC EMERGENCY DISPATCH</small><h3>Gọi Y tế / Cứu hỏa</h3></div>
+      </div>
+      <strong class="smartcity-dispatch-label">Ưu tiên 1 · Chọn tổng đài gọi ngay</strong>
+      <div class="smartcity-dispatch-options">
+        <button type="button" data-pccc-dispatch-option="115"><i class="ti ti-first-aid-kit"></i><span>Y tế khẩn cấp</span><b>115 · VOC-11</b></button>
+        <button type="button" class="smartcity-dispatch-option--active" data-pccc-dispatch-option="114"><i class="ti ti-flame"></i><span>Cứu hỏa / sơ tán</span><b>114 · VOC-12</b></button>
+      </div>
+      <div class="smartcity-dispatch-ready" data-pccc-dispatch-call>
+        <i class="ti ti-phone-call"></i>
+        <span><em>Sẵn sàng gọi</em><strong data-pccc-dispatch-line>114 · VOC-12</strong><b data-pccc-dispatch-type>Cứu hỏa / sơ tán</b></span>
+        <small>CHỜ GỌI</small>
+      </div>
+      <label class="smartcity-dispatch-note">
+        <span>Vấn đề cần hỗ trợ</span>
+        <textarea data-pccc-dispatch-note placeholder="Ví dụ: Khu TMDV có khói, cần hỗ trợ cứu hỏa và sơ tán.">${auto ? 'Auto PCCC: đã cắt điện, đã hút khói khu nguy cơ, yêu cầu cứu hỏa / sơ tán xác nhận tiếp nhận.' : ''}</textarea>
+      </label>
+      <div class="smartcity-dispatch-record"><b>Tùy chọn 2</b><button type="button"><i class="ti ti-microphone"></i>Ghi âm mô tả</button><span>Chưa ghi âm</span></div>
+      <div class="smartcity-modal__status"><i class="ti ti-phone-call"></i><span data-pccc-dispatch-status>${auto ? 'Đã chọn 114 · VOC-12 từ Auto PCCC. Sẵn sàng gọi cứu hỏa / sơ tán.' : 'Đã chọn 114 · VOC-12. Bấm icon điện thoại để gọi. Ghi âm là tùy chọn nếu cần mô tả thêm.'}</span></div>
+      <button type="button" class="smartcity-dispatch-submit" data-pccc-dispatch-submit><i class="ti ti-send"></i>Kết thúc & gửi yêu cầu</button>
+    </div>
+  </div>`;
+}
+
+function pcccPowerModal({ auto = false } = {}) {
+  const zoneItems = pcccPowerZones.map((name) => `<button type="button" class="smartcity-power-zone smartcity-power-zone--on" data-pccc-power-zone="${name}">
+    <i></i><b>${name}</b>
+  </button>`).join('');
+  return `<div class="smartcity-power-modal pccc-power-modal" data-pccc-power-modal>
+    <div class="smartcity-power-modal__panel" role="dialog" aria-modal="true" aria-label="Cắt điện toàn thành phố">
+      <button type="button" class="smartcity-modal__close" data-pccc-modal-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="smartcity-modal__head smartcity-power-modal__head">
+        <span class="smartcity-power-button"><i class="ti ti-power"></i></span>
+        <div><small>POWER CONTROL</small><h3>Cắt điện toàn thành phố</h3></div>
+      </div>
+      <p>Bạn có chắc chắn muốn cắt điện? Điều này sẽ cắt điện toàn thành phố, chia theo từng khu để giữ nguồn ưu tiên.</p>
+      <div class="smartcity-power-zones">${zoneItems}</div>
+      <div class="smartcity-modal__status"><i class="ti ti-bolt"></i><span data-pccc-power-status>${auto ? 'Đang cắt điện toàn thành phố...' : 'Chờ xác nhận thao tác nguồn.'}</span></div>
+    </div>
+  </div>`;
+}
+
+function pcccSmokeModal() {
+  return `<div class="smartcity-smoke-modal pccc-smoke-modal" data-pccc-smoke-modal>
+    <div class="smartcity-smoke-modal__panel" role="dialog" aria-modal="true" aria-label="Hút khói khu nguy cơ">
+      <button type="button" class="smartcity-modal__close" data-pccc-modal-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="smartcity-modal__head">
+        <span class="smartcity-modal__icon"><i class="ti ti-wind"></i></span>
+        <div><small>SMOKE EXTRACT</small><h3>Hút khói khu nguy cơ</h3></div>
+      </div>
+      <div class="smartcity-smoke-gauge">
+        <svg viewBox="0 0 140 140" aria-hidden="true">
+          <circle cx="70" cy="70" r="52"></circle>
+          <circle data-pccc-smoke-ring cx="70" cy="70" r="52"></circle>
+        </svg>
+        <strong><span data-pccc-smoke-pct>0</span>%</strong>
+      </div>
+      <p data-pccc-smoke-status>Đang khởi động quạt hút khói và mở tuyến thoát khí.</p>
+      <div class="smartcity-modal__steps">
+        <span><b>01</b>Tầng 12 hút khói</span><span><b>02</b>Áp âm hành lang</span><span><b>03</b>Theo dõi cảm biến</span>
+      </div>
+    </div>
+  </div>`;
+}
+
 function environmentRadar() {
-  const axes = [
-    { label: 'Air', value: 88 },
-    { label: 'FOP', value: 94 },
-    { label: 'Noise', value: 82 },
-    { label: 'Water', value: 96 },
-    { label: 'Waste', value: 86 },
+  const bars = [
+    { label: 'Nhiệt', value: 82 },
+    { label: 'Khói', value: 64 },
+    { label: 'Gas', value: 38 },
+    { label: 'Điện', value: 52 },
   ];
-  const points = axes.map((axis, index) => {
-    const angle = (-90 + index * (360 / axes.length)) * Math.PI / 180;
-    const r = axis.value * 0.36;
-    return `${50 + Math.cos(angle) * r},${50 + Math.sin(angle) * r}`;
-  }).join(' ');
-  return `<section class="hud-block sc-diagram" data-diagram-family="radar">
-    ${hudHead('Compliance VOC/FIFA')}
-    <div class="sc-radar">
+  return `<section class="hud-block event-fire-trend event-risk--fire pccc-fire-card" data-diagram-family="pccc-fire">
+    ${hudHead('Phòng cháy chữa cháy')}
+    <div class="event-fire-bars">${bars.map((bar) =>
+    `<div class="event-fire-bar event-fire-bar--${bar.value > 70 ? 'hot' : bar.value > 45 ? 'warn' : 'ok'}">
+      <span>${bar.label}</span><div class="event-fire-bar__track"><i style="height:${bar.value}%"></i></div><b>${bar.value}%</b>
+    </div>`).join('')}</div>
+    <div class="event-fire-auto">
+      <button type="button" class="event-fire-auto__button" data-pccc-open="auto" aria-label="Kích hoạt Auto PCCC">
+        <i class="ti ti-shield-bolt"></i>
+        <span>Auto PCCC</span>
+      </button>
+      <p data-pccc-card-status>2 tòa nhà có nguy cơ cháy nổ</p>
+    </div>
+    <div class="event-risk__actions pccc-fire-controls">
+      <button type="button" class="event-risk__btn" data-pccc-open="alarm">
+        <i class="ti ti-flame"></i><span>Báo cháy</span>
+      </button>
+      <button type="button" class="event-risk__btn" data-pccc-open="smoke">
+        <i class="ti ti-wind"></i><span>Hút khói</span>
+      </button>
+      <button type="button" class="event-risk__btn" data-pccc-open="power">
+        <i class="ti ti-power"></i><span>Cắt điện</span>
+      </button>
+    </div>
+  </section>`;
+}
+
+function pcccFireRiskNetwork() {
+  const nodes = [
+    { label: 'S1', value: '82', tone: 'hot' },
+    { label: 'S2', value: '76', tone: 'hot' },
+    { label: 'B1', value: '54', tone: 'watch' },
+    { label: 'TMDV', value: '48', tone: 'watch' },
+    { label: 'Hầm', value: '43', tone: 'watch' },
+    { label: 'Kho', value: '38', tone: 'idle' },
+  ].map((node, index, arr) => {
+    const angle = (-90 + index * (360 / arr.length)) * Math.PI / 180;
+    return { ...node, x: 50 + Math.cos(angle) * 36, y: 50 + Math.sin(angle) * 31 };
+  });
+  return `<section class="hud-block sc-diagram pccc-risk-network" data-diagram-family="pccc-risk-network">
+    ${hudHead('Nguy cơ cháy nổ')}
+    <div class="pccc-risk-network__map">
       <svg viewBox="0 0 100 100" aria-hidden="true">
-        <polygon class="sc-radar__ring" points="50,14 84,39 71,80 29,80 16,39"/>
-        <polygon class="sc-radar__ring sc-radar__ring--inner" points="50,27 70,42 62,66 38,66 30,42"/>
-        ${axes.map((axis, index) => {
-    const angle = (-90 + index * (360 / axes.length)) * Math.PI / 180;
-    const x = 50 + Math.cos(angle) * 39;
-    const y = 50 + Math.sin(angle) * 39;
-    return `<line class="sc-radar__axis" x1="50" y1="50" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`;
-  }).join('')}
-        <polygon class="sc-radar__shape" points="${points}"/>
+        <circle class="pccc-risk-network__halo" cx="50" cy="50" r="19"/>
+        <circle class="pccc-risk-network__hub" cx="50" cy="50" r="7"/>
+        ${nodes.map((n) => `<line class="pccc-risk-network__line pccc-risk-network__line--${n.tone}" x1="50" y1="50" x2="${n.x.toFixed(1)}" y2="${n.y.toFixed(1)}"/>`).join('')}
+        ${nodes.map((n) => `<circle class="pccc-risk-network__node pccc-risk-network__node--${n.tone}" cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="5.4"/>`).join('')}
       </svg>
-      <div class="sc-radar__legend">${axes.map((axis) => `<span><b>${axis.value}</b><em>${axis.label}</em></span>`).join('')}</div>
+      <div class="pccc-risk-network__legend">
+        ${nodes.slice(0, 3).map((n) => `<span><b>${n.label}</b><em>${n.value}%</em></span>`).join('')}
+      </div>
+    </div>
+    <div class="event-risk__actions pccc-fire-actions pccc-risk-network__actions">
+      <button type="button" class="event-risk__btn" data-pccc-open="risk">
+        <i class="ti ti-building"></i><span>Xem tòa nhà nguy cơ</span>
+      </button>
+      <button type="button" class="event-risk__btn" data-pccc-open="history">
+        <i class="ti ti-history"></i><span>Lịch sử hỏa hoạn</span>
+      </button>
     </div>
   </section>`;
 }
 
 function environmentLoadMatrix() {
-  const cols = [
-    { label: 'PM', value: 3 },
-    { label: 'CO2', value: 2 },
-    { label: 'dB', value: 3 },
-    { label: 'Temp', value: 4 },
-    { label: 'H2O', value: 2 },
-    { label: 'VOC', value: 4 },
-  ];
-  return `<section class="hud-block sc-diagram" data-diagram-family="load-matrix">
-    ${hudHead('Ngưỡng theo ca vận hành')}
-    <div class="sc-load-matrix">
+  const cols = infrastructureSlaItems;
+  return `<section class="hud-block sc-diagram infra-sla-card" data-diagram-family="load-matrix">
+    ${hudHead('SLA xử lý theo ca')}
+    <p class="infra-sla-benefit">Biết nhóm nào sắp trễ SLA để đổi người ngay trong ca, trước khi phát sinh ticket quá hạn.</p>
+    <div class="infra-sla-bars">
       ${cols.map((col) => `<div class="sc-load-col">
-        ${Array.from({ length: 5 }, (_, i) => {
-    const on = i >= 5 - col.value;
-    const tone = !on ? 'idle' : col.value >= 4 ? 'warn' : 'ok';
-    return `<i class="sc-load-cell sc-load-cell--${tone}"></i>`;
-  }).join('')}
-        <span>${col.label}</span>
+        <b>${col.value}%</b>
+        <i style="height:${col.visual}%"></i>
+        <span>${col.display}</span>
       </div>`).join('')}
+    </div>
+    <div class="infra-sla-actions">
+      <button type="button" data-infra-sla-open="risk"><i class="ti ti-chart-dots"></i><span>Xem điểm nghẽn</span></button>
+      <button type="button" data-infra-sla-open="rebalance"><i class="ti ti-users-group"></i><span>Gợi ý cân ca</span></button>
     </div>
   </section>`;
 }
@@ -593,33 +1309,156 @@ function reportSensorChart() {
   </section>`;
 }
 
+function constructionBuildingsPanel() {
+  const chartWidth = 250;
+  const chartStart = 10;
+  const chartEnd = chartWidth - 10;
+  const chartSpan = chartEnd - chartStart;
+  const points = constructionSites.map((site, index) => {
+    const x = chartStart + index * (chartSpan / (constructionSites.length - 1));
+    const y = 94 - site.progress * 0.58;
+    return {
+      ...site,
+      x: Number(x.toFixed(1)),
+      labelX: Number(Math.min(Math.max(x, chartStart + 8), chartEnd - 8).toFixed(1)),
+      y: Number(y.toFixed(1)),
+    };
+  });
+  const polyline = points.map((point) => `${point.x},${point.y}`).join(' ');
+  const area = `${points[0].x},82 ${polyline} ${points[points.length - 1].x},82`;
+  return `<section class="hud-block sc-diagram construction-card" data-diagram-family="construction-buildings">
+    ${hudHead('Tòa nhà đang xây dựng')}
+    <div class="construction-chart">
+      <svg viewBox="0 0 ${chartWidth} 100" aria-hidden="true">
+        <path class="construction-chart__grid" d="M${chartStart} 26H${chartEnd}M${chartStart} 44H${chartEnd}M${chartStart} 62H${chartEnd}M${chartStart} 82H${chartEnd}"/>
+        <polygon class="construction-chart__area" points="${area}"/>
+        <polyline class="construction-chart__line" points="${polyline}"/>
+        ${points.map((point) => `<g class="construction-chart__point">
+          <text class="construction-chart__pct" x="${point.labelX}" y="${Math.max(point.y - 8, 12)}">${point.progress}%</text>
+          <circle cx="${point.x}" cy="${point.y}" r="3.8"/>
+          <text class="construction-chart__label" x="${point.labelX}" y="94">${point.id}</text>
+        </g>`).join('')}
+      </svg>
+    </div>
+    <div class="construction-sites">
+      ${constructionSites.map((site) => `<button type="button" data-construction-open="progress" data-construction-site="${site.id}">
+        <b>${site.id}</b><span>${site.status}</span><em>${site.progress}%</em>
+      </button>`).join('')}
+    </div>
+    <div class="construction-actions">
+      <button type="button" data-construction-open="progress"><i class="ti ti-chart-line"></i><span>Chi tiết tiến độ</span></button>
+      <button type="button" data-construction-open="conflict"><i class="ti ti-barrier-block"></i><span>Xử lý ảnh hưởng</span></button>
+    </div>
+  </section>`;
+}
+
+const infrastructureAlertAxes = [
+  { label: 'Nước', value: 88 },
+  { label: 'Bụi', value: 76 },
+  { label: 'EXIT', value: 92 },
+  { label: 'Điện', value: 58 },
+  { label: 'Thang', value: 63 },
+  { label: 'Cam', value: 46 },
+];
+
+const infrastructureAlertItems = [
+  { id: 'drain', tag: 'Thoát nước', title: 'B2 có nguy cơ đọng nước sau mưa', level: 'Cao', owner: 'Đội nước', eta: '12 phút', action: 'Mở tuyến bơm phụ và kiểm tra van B2-03.' },
+  { id: 'dust', tag: 'Công trình', title: 'Bụi S6B vượt ngưỡng cư dân', level: 'Vừa', owner: 'Giám sát xây dựng', eta: '18 phút', action: 'Yêu cầu tưới giảm bụi và bổ sung lưới chắn.' },
+  { id: 'exit', tag: 'Lối EXIT', title: 'EXIT D bị thu hẹp do vật tư', level: 'Cao', owner: 'An toàn hiện trường', eta: '8 phút', action: 'Dọn vật tư khỏi hành lang và mở lại lối thoát.' },
+];
+
+function renderInfrastructureAlertModal(mode = 'routes') {
+  const isCrew = mode === 'crew';
+  const isImpact = mode === 'impact';
+  return `<div class="infra-alert-modal" data-infra-alert-modal>
+    <div class="infra-alert-modal__panel" role="dialog" aria-modal="true" aria-label="Cảnh báo hạ tầng">
+      <button type="button" class="infra-alert-modal__close" data-infra-alert-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="infra-alert-modal__head">
+        <small>Điều phối cảnh báo</small>
+        <h3>${isCrew ? 'Gửi đội hiện trường' : isImpact ? 'Khu vực bị ảnh hưởng' : 'Tuyến xử lý ưu tiên'}</h3>
+        <p>${isCrew ? 'Gán đội phụ trách theo SLA gần nhất để tránh cảnh báo lan sang cư dân.' : isImpact ? 'Xem khu vực có nguy cơ ảnh hưởng vận hành, cư dân và lối thoát.' : 'Ưu tiên các tuyến có điểm rủi ro cao trên radar, xử lý trước B2 và EXIT.'}</p>
+      </header>
+      <div class="infra-alert-modal__grid">
+        ${infrastructureAlertItems.map((item) => `<button type="button" data-infra-alert-item="${item.id}">
+          <b>${item.tag}</b><strong>${item.level}</strong><span>${item.title}</span><em>${isCrew ? item.owner : item.eta}</em>
+        </button>`).join('')}
+      </div>
+      <section class="infra-alert-modal__route">
+        <h4>${isImpact ? 'Ảnh hưởng cần khoanh vùng' : 'Hành động đề xuất'}</h4>
+        ${infrastructureAlertItems.map((item) => `<span><b>${item.tag}</b><em>${item.action}</em></span>`).join('')}
+      </section>
+      <footer class="infra-alert-modal__foot">
+        <span data-infra-alert-status>Chọn một cảnh báo để ghim vào ca xử lý.</span>
+        <button type="button" data-infra-alert-apply>${isCrew ? 'Gửi đội phụ trách' : 'Ghim tuyến xử lý'}</button>
+      </footer>
+    </div>
+  </div>`;
+}
+
+function showInfrastructureAlertModal(mode) {
+  document.querySelector('[data-infra-alert-modal]')?.remove();
+  document.body.insertAdjacentHTML('beforeend', renderInfrastructureAlertModal(mode));
+}
+
+function infrastructureAlertsPanel() {
+  const points = infrastructureAlertAxes.map((axis, index, arr) => {
+    const angle = (-90 + index * (360 / arr.length)) * Math.PI / 180;
+    const radius = axis.value * 0.38;
+    return {
+      ...axis,
+      x: Number((50 + Math.cos(angle) * radius).toFixed(1)),
+      y: Number((50 + Math.sin(angle) * radius).toFixed(1)),
+      lx: Number((50 + Math.cos(angle) * 45).toFixed(1)),
+      ly: Number((50 + Math.sin(angle) * 45).toFixed(1)),
+    };
+  });
+  const shape = points.map((point) => `${point.x},${point.y}`).join(' ');
+  const outer = infrastructureAlertAxes.map((_, index, arr) => {
+    const angle = (-90 + index * (360 / arr.length)) * Math.PI / 180;
+    return `${(50 + Math.cos(angle) * 39).toFixed(1)},${(50 + Math.sin(angle) * 39).toFixed(1)}`;
+  }).join(' ');
+  const inner = infrastructureAlertAxes.map((_, index, arr) => {
+    const angle = (-90 + index * (360 / arr.length)) * Math.PI / 180;
+    return `${(50 + Math.cos(angle) * 25).toFixed(1)},${(50 + Math.sin(angle) * 25).toFixed(1)}`;
+  }).join(' ');
+  return `<section class="hud-block sc-diagram infra-alert-card" data-diagram-family="infra-alert-radar">
+    ${hudHead('Cảnh báo hạ tầng')}
+    <div class="infra-alert-radar">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <polygon class="infra-alert-radar__ring" points="${outer}"/>
+        <polygon class="infra-alert-radar__ring infra-alert-radar__ring--inner" points="${inner}"/>
+        ${points.map((point) => `<line class="infra-alert-radar__axis" x1="50" y1="50" x2="${point.lx}" y2="${point.ly}"/>`).join('')}
+        <polygon class="infra-alert-radar__shadow" points="${shape}"/>
+        <polygon class="infra-alert-radar__shape" points="${shape}"/>
+        ${points.map((point) => `<text class="infra-alert-radar__label" x="${point.lx}" y="${point.ly}">${point.label}</text>`).join('')}
+      </svg>
+    </div>
+    <div class="infra-alert-list">
+      ${infrastructureAlertItems.map((item) => `<button type="button" data-infra-alert-open="routes" data-infra-alert-item="${item.id}">
+        <b>${item.tag}</b><span>${item.title}</span><em>${item.eta}</em>
+      </button>`).join('')}
+    </div>
+    <div class="infra-alert-actions">
+      <button type="button" data-infra-alert-open="routes"><i class="ti ti-route"></i><span>Mở tuyến xử lý</span></button>
+      <button type="button" data-infra-alert-open="crew"><i class="ti ti-users-group"></i><span>Gửi đội hiện trường</span></button>
+      <button type="button" data-infra-alert-open="impact"><i class="ti ti-map-pin"></i><span>Khu ảnh hưởng</span></button>
+    </div>
+  </section>`;
+}
+
 const pageRenderers = {
   environment: {
     left: () => [
-      heroMetric({
-        title: 'Hạ tầng đô thị',
-        icon: 'ti-leaf',
-        label: 'Chỉ số comfort',
-        value: '92/100',
-        sub: 'Theo dõi AQI, tiếng ồn, nhiệt độ FOP và chất lượng nước khu công viên.',
-      }),
-      environmentThermalMap(),
       environmentNetwork(),
+      environmentThermalMap(),
+      infrastructureHealthSnapshot(),
       environmentLoadMatrix(),
     ].join(''),
     right: () => [
+      pcccFireRiskNetwork(),
       environmentRadar(),
-      standardChecklist('Chuẩn vận hành hạ tầng', [
-        { label: 'PM2.5 dưới ngưỡng', value: '18 µg', icon: 'ti-mist' },
-        { label: 'FOP 18-26°C', value: 'OK', icon: 'ti-temperature' },
-        { label: 'Noise < 85 dB', value: '54 dB', icon: 'ti-volume' },
-        { label: 'Nước pH 6.5-8.5', value: '7.2', icon: 'ti-droplet' },
-      ]),
-      statusAlerts('Cảnh báo hạ tầng', [
-        { tag: 'VOC', title: 'Chỉ số VOC khu Fan zone tăng nhẹ', time: '6 phút', tone: AMBER },
-        { tag: 'FOP', title: 'Nhiệt độ sân thi đấu trong dải FIFA', time: '12 phút', tone: GREEN },
-        { tag: 'Lake', title: 'Hồ công viên đạt pH 7.2, không cần xử lý', time: '21 phút', tone: BLUE },
-      ]),
+      constructionBuildingsPanel(),
+      infrastructureAlertsPanel(),
     ].join(''),
   },
   utilities: {

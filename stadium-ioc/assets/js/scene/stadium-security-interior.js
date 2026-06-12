@@ -41,7 +41,7 @@ function monitorLabelTex(text) {
   ctx.fillStyle = '#0a1810';
   ctx.fillRect(0, 0, 256, 48);
   ctx.fillStyle = '#97c459';
-  ctx.font = 'bold 22px sans-serif';
+  ctx.font = '700 22px Roboto, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(text, 128, 32);
   const tex = new THREE.CanvasTexture(c);

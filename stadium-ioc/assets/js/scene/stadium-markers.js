@@ -16,7 +16,7 @@ function makeLabel(text, color) {
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.fillStyle = '#e8f4ff';
-  ctx.font = 'bold 14px Arial';
+  ctx.font = '700 14px Roboto, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, 64, 20);

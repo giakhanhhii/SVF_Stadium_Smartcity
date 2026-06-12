@@ -1,5 +1,5 @@
 /** Font Chart.js — khớp typography.css */
-export const CHART_FONT_FAMILY = '"Be Vietnam Pro", "Noto Sans", "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif';
+export const CHART_FONT_FAMILY = 'Roboto, "Segoe UI", Arial, sans-serif';
 
 if (globalThis.Chart?.defaults?.font) {
   globalThis.Chart.defaults.font.family = CHART_FONT_FAMILY;

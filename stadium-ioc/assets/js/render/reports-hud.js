@@ -193,7 +193,7 @@ function reportSummaryViz(reportCases = []) {
 
 function reportTimeline(items = []) {
   return `<div class="report-timeline">${items.map((item) => `
-    <button type="button" class="report-timeline__node report-timeline__node--${reportTone(item)}" title="${item.title}">
+    <button type="button" class="report-timeline__node report-timeline__node--${reportTone(item)}" title="${item.title}" data-report-history-open aria-label="Xem lịch sử báo cáo ${item.id}">
       <i></i><strong>${item.time}</strong><span>${item.id}</span><b>${item.status}</b>
     </button>
   `).join('')}</div>`;

@@ -48,7 +48,7 @@ function labelTexture(text, color) {
   ctx.lineWidth = 4;
   ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
   ctx.fillStyle = `#${new THREE.Color(color).getHexString()}`;
-  ctx.font = 'bold 30px sans-serif';
+  ctx.font = '700 30px Roboto, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, canvas.width / 2, canvas.height / 2);

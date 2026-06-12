@@ -5,6 +5,8 @@ playwright-report/
 playwright/.cache/
 .cursor/
 .tools/
+UnityMcpTest/
+UnityMcpLogs/
 .DS_Store
 Thumbs.db
 *.log

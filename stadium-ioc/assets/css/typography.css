@@ -3,7 +3,7 @@
  * Load sau security-command.css để ghi đè HUD/sidebar.
  */
 :root {
-  --font-family-ui: "Be Vietnam Pro", "Noto Sans", "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif;
+  --font-family-ui: "Roboto", "Segoe UI", Arial, sans-serif;
   --font-size-caption: 9px;
   --font-size-label: 10px;
   --font-size-body-sm: 11px;
@@ -12,12 +12,17 @@
   --font-size-metric: 18px;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
-  --font-weight-semibold: 600;
+  --font-weight-semibold: 500;
   --font-weight-bold: 700;
   --line-height-ui: 1.35;
 }
 
+html,
 body,
+body button,
+body input,
+body textarea,
+body select,
 .prototype-shell,
 .prototype-shell button,
 .prototype-shell input,
@@ -35,12 +40,18 @@ body,
 .svc-action-modal button {
   font-family: var(--font-family-ui) !important;
   font-synthesis: none;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 [role="dialog"],
 [role="dialog"] * {
   font-family: var(--font-family-ui) !important;
   font-synthesis: none;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 .prototype-shell .ti,
@@ -51,6 +62,27 @@ body,
 .svc-action-modal .ti,
 [role="dialog"] .ti {
   font-family: "tabler-icons" !important;
+}
+
+/* Glow trên glyph nhỏ làm Roboto đậm bị nhòe trên nền HUD tối. */
+.prototype-shell :where(
+  h1, h2, h3, h4, h5, h6,
+  p, span, strong, b, em, small, label,
+  button, input, textarea, select,
+  td, th, text
+),
+[role="dialog"] :where(
+  h1, h2, h3, h4, h5, h6,
+  p, span, strong, b, em, small, label,
+  button, input, textarea, select,
+  td, th, text
+) {
+  text-shadow: none !important;
+}
+
+.prototype-shell :where(b, strong),
+[role="dialog"] :where(b, strong) {
+  font-weight: 700 !important;
 }
 
 .text-secondary {
@@ -341,4 +373,30 @@ body,
   font-size: 7.5px;
   white-space: nowrap !important;
   overflow-wrap: normal;
+}
+
+/*
+ * Roboto ở cỡ HUD nhỏ cần dùng đúng các weight đã tải.
+ * Các rule cũ 800/900 làm chữ trắng đóng nét và răng cưa trên Windows.
+ */
+#page-overview :is(
+  .overview-venue-total__main span,
+  .overview-venue-badges b,
+  .overview-venue-total__ingress-main em,
+  .overview-node-map__metric b,
+  .overview-metric-diagram__node b,
+  .overview-service-flow__row strong
+) {
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+#page-overview :is(
+  .overview-venue-badges em,
+  .overview-node-map__metric em,
+  .overview-metric-diagram__node em,
+  .overview-service-flow__row span
+) {
+  font-weight: 700;
+  letter-spacing: 0;
 }

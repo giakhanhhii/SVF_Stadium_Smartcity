@@ -678,7 +678,7 @@ body.sidebar-resizing::after {
   gap: 8px;
   color: #d8ecff;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .page-view--stadium-cmd .security-traffic-route__head strong {
@@ -1249,7 +1249,7 @@ body.sidebar-resizing::after {
   color: #92c2df;
   font-size: 9px;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 #page-security.security-exterior-mode .traffic24-routes {
@@ -1266,7 +1266,7 @@ body.sidebar-resizing::after {
   min-width: 0;
   color: #d8ecff;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 #page-security.security-exterior-mode .traffic24-route b,
@@ -1320,7 +1320,7 @@ body.sidebar-resizing::after {
   background: rgba(0, 74, 112, 0.16);
   color: #9dc8df;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.15;
   text-align: center;
 }
@@ -1366,7 +1366,7 @@ body.sidebar-resizing::after {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   color: #6f9fbd;
   font-size: 8px;
-  font-weight: 800;
+  font-weight: 700;
   text-align: center;
 }
 
@@ -1383,7 +1383,7 @@ body.sidebar-resizing::after {
   padding: 8px 6px;
   overflow-wrap: anywhere;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.15;
   text-align: center;
 }
@@ -1987,7 +1987,7 @@ body.sidebar-resizing::after {
   margin: 12px 0 7px;
   color: #18d8f5;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .svc-emergency__line {
@@ -2098,7 +2098,7 @@ body.sidebar-resizing::after {
   display: block;
   color: #8fdcc8;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .svc-emergency__call-status strong {
@@ -2116,7 +2116,7 @@ body.sidebar-resizing::after {
   color: #5ee0b0;
   font-size: 9px;
   font-style: normal;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .svc-emergency__note {

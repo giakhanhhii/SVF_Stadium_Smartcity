@@ -31,10 +31,10 @@ export const smartcitySceneData = {
   signalCycle: trafficSceneData.signalCycle,
   cameraPresets: {
     overview: { pos: [24, 26, 34], target: [0, 3, 0], fov: 42, hint: 'Tổng quan thành phố' },
-    traffic: { pos: [18, 16, 18], target: [0, 1.2, 0], fov: 38, hint: 'Theo dõi giao thông' },
-    security: { pos: [10, 18, 16], target: [4, 8, -3], fov: 36, hint: 'Camera an ninh và đội xử lý' },
-  environment: { pos: [-18, 15, 16], target: [-7, 2, 5], fov: 40, hint: 'Cảm biến hạ tầng' },
-  utilities: { pos: [18, 14, -18], target: [8, 2, -8], fov: 38, hint: 'Dịch vụ cư dân Vin' },
+    traffic: { pos: [0, 42, 18], target: [0, 0.8, 0], fov: 43, hint: 'Theo dõi giao thông tại vòng xuyến' },
+    security: { pos: [0, 52, 0.01], target: [0, 0, 0], fov: 55, hint: 'Camera an ninh và đội xử lý' },
+    environment: { pos: [-30, 26, 48], target: [-10, 3, 10], fov: 46, hint: 'Toàn cảnh hạ tầng và công viên' },
+    utilities: { pos: [-28, 20, 48], target: [-12, 3, 18], fov: 40, hint: 'Dịch vụ cư dân Vin' },
     reports: { pos: [0, 34, 38], target: [0, 2, 0], fov: 48, hint: 'Báo cáo tổng hợp' },
   },
   roads: [

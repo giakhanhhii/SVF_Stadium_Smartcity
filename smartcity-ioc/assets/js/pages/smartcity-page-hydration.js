@@ -1,11 +1,3 @@
-import { renderDomainBanner, renderDomainKpiRow } from '../../../../shared-ioc/assets/js/render/domain.js';
-import { renderAlertList, renderSeverityRow } from '../../../../shared-ioc/assets/js/render/alerts.js';
-import { renderChartSection } from '../../../../shared-ioc/assets/js/render/chart-section.js';
-import { renderTeamList, renderStationList } from '../../../../shared-ioc/assets/js/render/team-station.js';
-import {
-  renderVitals, renderKpiGrid, renderModules, renderMiniStats,
-  renderReportTable, renderReportCategories,
-} from '../../../../shared-ioc/assets/js/render/shared-overview-render.js';
 import { renderTrafficLeftSidebar, bindTrafficCameraModal } from '../render/traffic-panels-left.js';
 import {
   renderTrafficRightSidebar,
@@ -27,6 +19,10 @@ import {
   renderSmartcityDomainLeft,
   renderSmartcityDomainRight,
 } from '../render/smartcity-domain-command-panels.js';
+import {
+  renderSmartcityOverviewLeft,
+  renderSmartcityOverviewRight,
+} from '../render/smartcity-overview-hud-render.js';
 import { overviewData } from '../data/smartcity-overview-data.js';
 import { trafficData } from '../data/traffic.js';
 import { securityData } from '../data/smartcity-security-data.js';
@@ -40,9 +36,8 @@ export function hydratePage(pageId) {
 
   const mounts = {
     overview: () => {
-      root.querySelector('[data-mount="vitals"]').innerHTML = renderVitals(overviewData.vitals);
-      root.querySelector('[data-mount="kpis"]').innerHTML = renderKpiGrid(overviewData.kpis);
-      root.querySelector('[data-mount="modules"]').innerHTML = renderModules(overviewData.modules);
+      root.querySelector('[data-mount="overview-left"]').innerHTML = renderSmartcityOverviewLeft(overviewData);
+      root.querySelector('[data-mount="overview-right"]').innerHTML = renderSmartcityOverviewRight(overviewData);
     },
     traffic: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderTrafficLeftSidebar(trafficData.left);

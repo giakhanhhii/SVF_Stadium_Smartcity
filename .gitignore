@@ -22,3 +22,7 @@ xlsx-extract-*.txt
 # Generated visual QA artifacts
 roof-*-check.png
 tests/screenshots/*.png
+
+# Generated document artifacts / local builders
+docs/
+scripts/build_stadium_brd_srs_docx.py

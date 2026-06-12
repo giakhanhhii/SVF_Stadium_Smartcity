@@ -1,25 +1,98 @@
 export const overviewData = {
-  vitals: [
-    { label: 'An toàn công cộng', value: '92', valueColor: '#1D9E75', status: '● Ổn định', statusColor: '#1D9E75' },
-    { label: 'Giao thông', value: '78', valueColor: '#185FA5', status: '● Hơi tắc', statusColor: '#854F0B' },
-    { label: 'Hạ tầng', value: '85', valueColor: '#1D9E75', status: '● Khá tốt', statusColor: '#1D9E75' },
-    { label: 'Dịch vụ', value: '71', valueColor: '#BA7517', status: '● 3 cảnh báo', statusColor: '#854F0B' },
-    { label: 'Dịch vụ cư dân', value: '88', valueColor: '#1D9E75', status: '● SLA 94%', statusColor: '#1D9E75' },
-    { label: 'Sự kiện đang xử lý', value: '7', valueColor: '#A32D2D', status: '2 ưu tiên cao', statusColor: '#A32D2D' },
-  ],
-  kpis: [
-    { icon: 'ti-users', label: 'Dân cư đang hoạt động', value: '42.318', delta: '▲ 2.4% so với hôm qua', deltaColor: 'var(--color-text-success)', accent: '#185FA5' },
-    { icon: 'ti-car', label: 'Lưu lượng giao thông', value: '1.247<span style="font-size:11px;color:var(--color-text-secondary);font-weight:400"> xe/h</span>', delta: '● Mức bình thường', deltaColor: 'var(--color-text-warning)', accent: '#1D9E75' },
-    { icon: 'ti-leaf', label: 'Chỉ số AQI', value: '68<span style="font-size:11px;color:var(--color-text-secondary);font-weight:400"> — Trung bình</span>', delta: '▼ 5 điểm', deltaColor: 'var(--color-text-success)', accent: '#BA7517' },
-    { icon: 'ti-alert-triangle', label: 'Cảnh báo đang mở', value: '7', delta: '2 ưu tiên cao', deltaColor: 'var(--color-text-danger)', accent: '#A32D2D' },
-  ],
-  modules: [
-    { nav: 'traffic', icon: 'ti-traffic-lights', iconBg: '#E6F1FB', iconColor: '#185FA5', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Giao thông', meta: '128 camera • 64 đèn tín hiệu' },
-    { nav: 'security', icon: 'ti-shield-check', iconBg: '#FCEBEB', iconColor: '#A32D2D', badge: 'ONLINE', badgeClass: 'badge-online', name: 'An ninh — Cứu hộ', meta: '96 camera AI • 12 đội ứng phó' },
-    { nav: 'environment', icon: 'ti-building-estate', iconBg: '#E1F5EE', iconColor: '#0F6E56', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Hạ tầng', meta: 'Tòa nhà • PCCC • Công trường • Cảm biến' },
-    { nav: 'utilities', icon: 'ti-bolt', iconBg: '#FAEEDA', iconColor: '#854F0B', badge: 'CẢNH BÁO', badgeClass: 'badge-warn', name: 'Năng lượng — Chiếu sáng', meta: '3.840 đèn LED • 18 trạm điện' },
-    { nav: 'utilities', icon: 'ti-droplet', iconBg: '#EEEDFE', iconColor: '#534AB7', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Cấp thoát nước', meta: '24 trạm bơm • 156 cảm biến' },
-    { nav: 'utilities', icon: 'ti-headset', iconBg: '#FBEAF0', iconColor: '#993556', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Dịch vụ cư dân', meta: 'Phản ánh • Tổng đài • Dịch vụ' },
-    { href: '../stadium-ioc/stadium-index.html', icon: 'ti-ball-football', iconBg: '#E1F5EE', iconColor: '#0F6E56', badge: 'ONLINE', badgeClass: 'badge-online', name: 'Sân vận động', meta: 'Trung tâm điều hành sự kiện • 48 camera • 40.000 chỗ', linkText: 'Chuyển sang IOC Sân vận động →', borderStyle: 'border-color:#0F6E56' },
-  ],
+  city: {
+    activeResidents: '42.318',
+    capacity: '60.000',
+    capacityLabel: 'Cư dân hiện diện',
+    flowNow: '1.247',
+    flowLabel: 'Xe / giờ',
+    groups: [
+      { label: 'Cư dân', value: 71, color: '#00aee8' },
+      { label: 'Khách', value: 12, color: '#6ec8f2' },
+      { label: 'Nhân sự', value: 9, color: '#278fd0' },
+      { label: 'Dịch vụ', value: 8, color: '#0b63a7' },
+    ],
+    badges: [
+      { value: '71%', label: 'Cư trú' },
+      { value: '128', label: 'Camera' },
+      { value: '7', label: 'Cảnh báo' },
+    ],
+    flow: {
+      labels: ['16h', '17h', '18h', '19h', '20h', 'Hiện'],
+      values: [920, 1040, 1110, 1180, 1210, 1247],
+    },
+  },
+  traffic: {
+    routes: [
+      { label: 'A4', value: '78%', tone: 'hot', nav: 'traffic' },
+      { label: 'B2', value: '64%', tone: 'mid', nav: 'traffic' },
+      { label: 'C1', value: 'OK', tone: 'ok', nav: 'traffic' },
+    ],
+    kpis: [
+      { value: '128', label: 'Camera' },
+      { value: '64', label: 'Đèn tín hiệu' },
+      { value: '12p', label: 'Chu kỳ xanh' },
+    ],
+  },
+  security: {
+    radar: {
+      labels: ['AI', 'Cổng', 'PCCC', 'Đội', 'SLA'],
+      values: [0.92, 0.86, 0.78, 0.88, 0.94],
+    },
+    metrics: [
+      { label: 'Camera AI', value: 96, meta: '96/96' },
+      { label: 'Cứu hộ', value: 12, meta: '12 đội' },
+      { label: 'SLA', value: 94, meta: '94%' },
+    ],
+    kpis: [
+      { value: '96', label: 'Camera' },
+      { value: '2', label: 'Ưu tiên' },
+      { value: '<4p', label: 'Phản ứng' },
+    ],
+  },
+  environment: {
+    trend: {
+      labels: ['S1', 'S2', 'S3', 'S4'],
+      values: [82, 88, 85, 91],
+    },
+    metrics: [
+      { label: 'Tòa nhà', value: 24, meta: '24' },
+      { label: 'PCCC', value: 96, meta: '96%' },
+      { label: 'Tác vụ', value: 12, meta: '12' },
+    ],
+    kpis: [
+      { value: '24', label: 'Tòa nhà' },
+      { value: '96%', label: 'PCCC' },
+      { value: '12', label: 'Tác vụ' },
+    ],
+  },
+  utilities: {
+    trend: {
+      labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+      values: [52, 61, 73, 79, 88, 67],
+    },
+    metrics: [
+      { label: 'App cư dân', value: 99, meta: '99.2%' },
+      { label: 'WaterPark', value: 86, meta: '64k' },
+      { label: 'Phản ánh', value: 74, meta: '146' },
+    ],
+    kpis: [
+      { value: '99.2%', label: 'QR vé' },
+      { value: '64k', label: 'Lượt dùng' },
+      { value: '146', label: 'Phản ánh' },
+    ],
+  },
+  reports: {
+    nodes: [
+      { x: 50, y: 16, tone: 'live', label: '28', value: '28', name: 'Tổng gửi', nav: 'reports' },
+      { x: 78, y: 34, tone: 'ok', label: '21', value: '21', name: 'Đã đóng', nav: 'reports' },
+      { x: 70, y: 74, tone: 'warn', label: '6', value: '6', name: 'Theo dõi', nav: 'reports' },
+      { x: 30, y: 74, tone: 'ok', label: '75', value: '75%', name: 'Hoàn tất', nav: 'reports' },
+      { x: 22, y: 34, tone: 'warn', label: '2', value: '2', name: 'Ưu tiên', nav: 'reports' },
+    ],
+    kpis: [
+      { value: '28', label: 'Tổng gửi' },
+      { value: '21', label: 'Đã đóng' },
+      { value: '2', label: 'Ưu tiên' },
+    ],
+  },
 };

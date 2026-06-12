@@ -5,7 +5,7 @@ import { smartcitySceneData } from '../data/smartcity-scene-data.js';
 import { trafficSceneData } from '../data/traffic-scene.js';
 import { createBuildingMaterials, disposeSceneEnvironment } from './scene-building-materials.js';
 import { setupLighting } from './scene-lighting.js';
-import { applyCameraPreset, setSceneHint, showSceneLoading, tweenCamera } from './smartcity-camera.js';
+import { applyCameraPreset, isCameraTweening, setSceneHint, showSceneLoading, tweenCamera } from './smartcity-camera.js';
 
 let activeScene = null;
 let rendererEl = null;
@@ -2343,7 +2343,7 @@ function createScene(container, pageId) {
     const delta = Math.min(0.05, clock.getDelta());
     updateAnimations(clock, delta);
     updateGroupMaterials(delta);
-    controls.update();
+    if (!isCameraTweening(controls)) controls.update();
     renderer.render(scene, camera);
   }
   animate();

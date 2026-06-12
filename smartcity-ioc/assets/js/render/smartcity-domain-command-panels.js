@@ -41,22 +41,22 @@ function standardChecklist(title, items) {
 
 function utilityResidentHero() {
   const points = [
-    { label: 'S5A', value: 88, x: 8, y: 24 },
-    { label: 'S6B', value: 64, x: 42, y: 38 },
-    { label: 'S7C', value: 76, x: 70, y: 32 },
-    { label: 'S8D', value: 96, x: 96, y: 18 },
+    { label: 'S5A', value: 88, x: 16, y: 24 },
+    { label: 'S6B', value: 64, x: 62, y: 38 },
+    { label: 'S7C', value: 76, x: 104, y: 32 },
+    { label: 'S8D', value: 96, x: 136, y: 18 },
   ];
   const line = points.map((point) => `${point.x},${point.y}`).join(' ');
   const area = `${points[0].x},64 ${line} ${points[points.length - 1].x},64`;
   return `<section class="hud-block smartcity-hud-accent sc-diagram vin-service-hero" data-diagram-family="vin-service-hero">
     ${hudHead('Dịch vụ cư dân Vin')}
     <div class="vin-service-hero__line">
-      <svg viewBox="0 0 104 76" preserveAspectRatio="none" aria-hidden="true">
+      <svg viewBox="0 0 152 76" aria-hidden="true">
         <defs><linearGradient id="vinResidentArea" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.38"/>
           <stop offset="100%" stop-color="#185fa5" stop-opacity="0.16"/>
         </linearGradient></defs>
-        <path class="vin-service-hero__gridline" d="M8 18H96M8 42H96M8 64H96"/>
+        <path class="vin-service-hero__gridline" d="M16 18H136M16 42H136M16 64H136"/>
         <polygon class="vin-service-hero__area" points="${area}"/>
         <polyline class="vin-service-hero__polyline" points="${line}"/>
         ${points.map((point) => `<g class="vin-service-hero__point">
@@ -68,7 +68,7 @@ function utilityResidentHero() {
     </div>
     <div class="vin-service-hero__actions">
       <button type="button" data-vin-service-open="fee"><i class="ti ti-home-dollar"></i><span>Phí</span></button>
-      <button type="button" data-vin-service-open="waterpark"><i class="ti ti-swimming"></i><span>WaterPark</span></button>
+      <button type="button" data-vin-service-open="waterpark"><i class="ti ti-swimming"></i><span>Waterpark</span></button>
       <button type="button" data-vin-service-open="vinbus"><i class="ti ti-bus"></i><span>VinBus</span></button>
     </div>
   </section>`;
@@ -1134,11 +1134,11 @@ function environmentLoadMatrix() {
 function utilityNodeMap() {
   const nodes = [
     { id: 'fee', label: 'Phí dịch vụ', value: '900k', icon: 'ti-home-dollar', tone: 'power' },
-    { id: 'waterpark', label: 'WaterPark VinWonders', value: '64k', icon: 'ti-swimming', tone: 'water' },
-    { id: 'safari', label: 'Safari VinWonders', value: '21k', icon: 'ti-paw', tone: 'water' },
+    { id: 'waterpark', label: 'Waterpark', value: '64k', icon: 'ti-swimming', tone: 'water' },
+    { id: 'safari', label: 'Safari', value: '21k', icon: 'ti-paw', tone: 'water' },
     { id: 'grandworld', label: 'Grand World', value: '46k', icon: 'ti-building-carousel', tone: 'media' },
     { id: 'vinbus', label: 'VinBus nội khu', value: '128k', icon: 'ti-bus', tone: 'power' },
-    { id: 'vinmec', label: 'Vinmec cư dân', value: '7.8k', icon: 'ti-first-aid-kit', tone: 'water' },
+    { id: 'vinmec', label: 'Vinmec', value: '7.8k', icon: 'ti-first-aid-kit', tone: 'water' },
   ].map((node, index, arr) => {
     const angle = (-90 + index * (360 / arr.length)) * Math.PI / 180;
     return { ...node, x: 50 + Math.cos(angle) * 37, y: 50 + Math.sin(angle) * 32 };
@@ -1162,6 +1162,14 @@ function utilityNodeMap() {
 }
 
 const vinServiceModalData = {
+  usage: {
+    tag: 'Lượt sử dụng 6 tháng',
+    icon: 'ti-chart-line',
+    title: 'Chi tiết lượt sử dụng dịch vụ Vin',
+    summary: 'Tổng hợp mức sử dụng các dịch vụ cư dân trong 6 tháng gần nhất, gồm WaterPark, VinBus nội khu, Grand World, Vinmec và thao tác qua app cư dân.',
+    stats: [['Đỉnh sử dụng', 'T5 · 88%'], ['Lượt dịch vụ', '64k'], ['Phản ánh', '146']],
+    steps: ['So sánh nhu cầu theo tháng để phát hiện mùa cao điểm', 'Tách nhóm dịch vụ đông: WaterPark, VinBus, Grand World', 'Mở điều phối khi tỷ lệ sử dụng vượt 84% hoặc phản ánh tăng'],
+  },
   fee: {
     tag: 'Phí dịch vụ',
     icon: 'ti-home-dollar',
@@ -1301,20 +1309,36 @@ function utilityFlow() {
 
 function utilityLoadTowers() {
   const bars = [
-    { label: 'T1', value: 52 },
-    { label: 'T2', value: 61 },
-    { label: 'T3', value: 73 },
-    { label: 'T4', value: 79 },
-    { label: 'T5', value: 88 },
-    { label: 'T6', value: 67 },
+    { label: 'T1', value: 52, note: 'App' },
+    { label: 'T2', value: 61, note: 'VinBus' },
+    { label: 'T3', value: 73, note: 'Water' },
+    { label: 'T4', value: 79, note: 'G.World' },
+    { label: 'T5', value: 88, note: 'Cao điểm' },
+    { label: 'T6', value: 67, note: 'Ổn định' },
+  ];
+  const services = [
+    ['WaterPark', '64k'],
+    ['VinBus', '128k'],
+    ['Grand World', '46k'],
+    ['App cư dân', '99.2%'],
   ];
   return `<section class="hud-block sc-diagram" data-diagram-family="queue-bars">
     ${hudHead('Lượt sử dụng 6 tháng')}
+    <div class="vin-usage-summary">
+      <span>Chỉ số tổng hợp từ các dịch vụ cư dân</span>
+      <strong>T5 cao nhất</strong>
+    </div>
     <div class="sc-queue-bars">
       ${bars.map((bar) => `<span class="sc-queue-bar sc-queue-bar--${bar.value >= 84 ? 'warn' : 'ok'}">
-        <em>${bar.label}</em><i style="height:${bar.value}%"></i><b>${bar.value}%</b>
+        <em>${bar.label}</em><i style="height:${bar.value}%"></i><b>${bar.value}%</b><small>${bar.note}</small>
       </span>`).join('')}
     </div>
+    <div class="vin-usage-legend">
+      ${services.map(([label, value]) => `<span><b>${label}</b><em>${value}</em></span>`).join('')}
+    </div>
+    <button type="button" class="vin-usage-open" data-vin-service-open="usage">
+      <i class="ti ti-chart-line"></i><span>Xem chi tiết lượt dùng</span>
+    </button>
   </section>`;
 }
 

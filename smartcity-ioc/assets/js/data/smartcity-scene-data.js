@@ -34,7 +34,7 @@ export const smartcitySceneData = {
     traffic: { pos: [18, 16, 18], target: [0, 1.2, 0], fov: 38, hint: 'Theo dõi giao thông' },
     security: { pos: [10, 18, 16], target: [4, 8, -3], fov: 36, hint: 'Camera an ninh và đội xử lý' },
   environment: { pos: [-18, 15, 16], target: [-7, 2, 5], fov: 40, hint: 'Cảm biến hạ tầng' },
-  utilities: { pos: [18, 14, -18], target: [8, 2, -8], fov: 38, hint: 'Hạ tầng dịch vụ' },
+  utilities: { pos: [18, 14, -18], target: [8, 2, -8], fov: 38, hint: 'Dịch vụ cư dân Vin' },
     reports: { pos: [0, 34, 38], target: [0, 2, 0], fov: 48, hint: 'Báo cáo tổng hợp' },
   },
   roads: [

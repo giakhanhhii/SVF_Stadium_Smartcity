@@ -23,6 +23,7 @@ import {
 } from '../render/security-panels-right.js';
 import {
   bindInfrastructureOpsModal,
+  bindVinServiceModal,
   renderSmartcityDomainLeft,
   renderSmartcityDomainRight,
 } from '../render/smartcity-domain-command-panels.js';
@@ -59,6 +60,7 @@ export function hydratePage(pageId) {
     utilities: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('utilities');
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('utilities');
+      bindVinServiceModal();
     },
     reports: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('reports');

@@ -2659,10 +2659,10 @@
   justify-content: center;
   gap: 7px;
   margin-top: 10px;
-  border: 1px solid rgba(0, 212, 255, 0.32);
+  border: 1px solid rgba(0, 212, 255, 0.36);
   border-radius: 5px;
-  background: linear-gradient(90deg, rgba(22, 143, 255, 0.46), rgba(0, 212, 255, 0.28));
-  color: #e8f8ff;
+  background: rgba(0, 82, 128, 0.48);
+  color: #d8f8ff;
   cursor: pointer;
   font-size: 10px;
   font-weight: 900;
@@ -2675,8 +2675,8 @@
 }
 
 .infra-health-viz__action:hover {
-  border-color: rgba(0, 212, 255, 0.58);
-  background: linear-gradient(90deg, rgba(22, 143, 255, 0.62), rgba(0, 212, 255, 0.36));
+  border-color: rgba(0, 212, 255, 0.52);
+  background: rgba(0, 96, 144, 0.58);
 }
 
 .infra-status-donut {
@@ -8886,6 +8886,10 @@
   padding: 14px 16px;
   border-color: rgba(0, 212, 255, 0.28);
   background: rgba(2, 20, 38, 0.72);
+}
+
+.traffic-accident-list-modal .traffic-accident-case[hidden] {
+  display: none;
 }
 
 .traffic-accident-list-modal .traffic-accident-case b {

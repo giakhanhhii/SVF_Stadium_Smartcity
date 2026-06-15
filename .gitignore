@@ -7,6 +7,8 @@ playwright/.cache/
 .tools/
 UnityMcpTest/
 UnityMcpLogs/
+UnityMcpCoplayTest/
+UnityCoplayLogs/
 .DS_Store
 Thumbs.db
 *.log

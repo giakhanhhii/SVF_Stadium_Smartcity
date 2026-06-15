@@ -241,13 +241,17 @@ function kpiStrip(items) {
 }
 
 function domainCard(card) {
+  const action = card.action === false
+    ? ''
+    : `<button type="button" class="smart-overview-domain__open" ${card.action === 'redlight' ? 'data-redlight-open' : `data-nav="${card.nav}"`}>
+      <i class="ti ${card.actionIcon || card.icon}"></i><span>${card.actionLabel || `Mở ${card.shortTitle}`}</span>
+    </button>`;
+
   return `<section class="hud-block smart-overview-domain smart-overview-domain--${card.id}">
     ${hudHead(card.title)}
     <div class="smart-overview-domain__body">${card.chart}</div>
     ${card.kpis ? kpiStrip(card.kpis) : ''}
-    <button type="button" class="smart-overview-domain__open" data-nav="${card.nav}">
-      <i class="ti ${card.icon}"></i><span>Mở ${card.shortTitle}</span>
-    </button>
+    ${action}
   </section>`;
 }
 
@@ -260,6 +264,7 @@ export function renderSmartcityOverviewLeft(d) {
       title: 'Tổng quan vận hành',
       shortTitle: 'tổng quan',
       chart: cityOverviewChart(d.city),
+      action: false,
     },
     {
       id: 'traffic',
@@ -269,6 +274,9 @@ export function renderSmartcityOverviewLeft(d) {
       shortTitle: 'giao thông',
       chart: routeDiagram(d.traffic.routes),
       kpis: d.traffic.kpis,
+      action: 'redlight',
+      actionIcon: 'ti-traffic-lights-off',
+      actionLabel: 'Xử lý vượt đèn đỏ',
     },
     {
       id: 'security',

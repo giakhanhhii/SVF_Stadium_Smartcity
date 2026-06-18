@@ -12,7 +12,7 @@ function addLabel(scene, text, x, y, z) {
   ctx.roundRect(6, 6, 116, 34, 6);
   ctx.fill();
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 20px Arial, sans-serif';
+  ctx.font = '700 20px Roboto, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, 64, 23);

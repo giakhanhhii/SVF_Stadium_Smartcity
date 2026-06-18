@@ -5909,7 +5909,33 @@
   display: grid;
   gap: 8px;
   overflow-y: auto;
-  padding-right: 4px;
+  padding-left: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 236, 255, 0.42) transparent;
+  direction: rtl;
+}
+
+.report-history-modal__list > * {
+  direction: ltr;
+}
+
+.report-history-modal__list::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.report-history-modal__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.report-history-modal__list::-webkit-scrollbar-thumb {
+  border: 0;
+  border-radius: 999px;
+  background: rgba(216, 236, 255, 0.34);
+}
+
+.report-history-modal__list::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .report-history-modal__tabs {

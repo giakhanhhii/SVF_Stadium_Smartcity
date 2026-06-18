@@ -29,7 +29,7 @@ function statusAlerts(title, items) {
 }
 
 function standardChecklist(title, items) {
-  return `<section class="hud-block sc-diagram" data-diagram-family="fifa-checklist">
+  return `<section class="hud-block sc-diagram" data-diagram-family="smart-report-checklist">
     ${hudHead(title)}
     <div class="sc-checklist">
       ${items.map((item) => `<span class="sc-check sc-check--${item.tone || 'ok'}">
@@ -539,7 +539,8 @@ function triggerPcccDispatchCall(modal) {
 
 async function startPcccAutoChain(button) {
   if (!button || button.dataset.running === 'true') return;
-  const status = document.querySelector('[data-pccc-card-status]');
+  const status = button.closest('.event-fire-auto')?.querySelector('[data-pccc-card-status]')
+    || document.querySelector('[data-pccc-card-status]');
   button.dataset.running = 'true';
   button.classList.add('event-fire-auto__button--running');
   if (status) status.textContent = '01 · Đang cắt điện toàn thành phố';
@@ -1440,23 +1441,192 @@ function utilityVinStandard() {
 
 function reportSummary() {
   return `<section class="hud-block sc-diagram" data-diagram-family="report-summary">
-    ${hudHead('Báo cáo VOC Matchday')}
+    ${hudHead('Báo cáo vận hành')}
     <div class="sc-report-summary">
-      <div class="sc-report-summary__ring" style="--pct:42"><strong>42%</strong><span>case</span></div>
+      <div class="sc-report-summary__ring" style="--pct:92"><strong>92%</strong><span>SLA đô thị</span></div>
       <div class="sc-report-summary__chips">
-        <span><b>37</b><em>Đã đóng</em></span>
-        <span class="sc-report-summary__warn"><b>5</b><em>Theo dõi FIFA</em></span>
+        <span><b>42.318</b><em>Cư dân hiện diện</em></span>
+        <span><b>96%</b><em>PCCC sẵn sàng</em></span>
+        <span><b>128</b><em>Camera online</em></span>
+        <span class="sc-report-summary__warn"><b>85%</b><em>Hạ tầng ổn định</em></span>
       </div>
     </div>
   </section>`;
 }
 
+const smartReportCases = [
+  {
+    id: 'SC-016-2026',
+    time: '17:44',
+    title: 'Auto PCCC đã kích hoạt',
+    summary: 'Dashboard đã cắt điện tầng nguy cơ, hút khói và gửi đội PCCC kiểm tra tủ điện C4.',
+    owner: 'Phụ trách PCCC',
+    status: 'Chưa giải quyết',
+    phase: 'open',
+    tone: 'danger',
+    attempts: 1,
+    action: 'Khóa tải & điều đội PCCC',
+    route: ['Auto PCCC', 'Tủ điện C4', 'Đội PCCC'],
+    metrics: [['Rủi ro', 'Cao'], ['ETA', '4 ph'], ['Ảnh hưởng', '2 tòa']],
+    steps: ['Cắt điện tầng nguy cơ', 'Bật hút khói và mở lối thoát hiểm', 'Giao đội PCCC xác nhận hiện trường'],
+  },
+  {
+    id: 'SC-015-2026',
+    time: '17:28',
+    title: 'Mở tuyến xử lý hạ tầng',
+    summary: 'Người vận hành mở tuyến xử lý cho cảm biến áp suất bất thường tại trạm bơm nước.',
+    owner: 'Đội hạ tầng',
+    status: 'Đang giải quyết',
+    phase: 'processing',
+    tone: 'warn',
+    attempts: 2,
+    action: 'Gửi đội hiện trường',
+    route: ['IOC', 'Trạm bơm', 'Kỹ thuật'],
+    metrics: [['Áp suất', 'Cao'], ['SLA', '12 ph'], ['Đội', '2 người']],
+    steps: ['Khóa van theo cảnh báo BMS', 'Gửi đội hiện trường đến trạm bơm', 'Cập nhật SLA sau khi ổn định'],
+  },
+  {
+    id: 'SC-014-2026',
+    time: '16:55',
+    title: 'Đảo luồng giao thông A4',
+    summary: 'Dashboard giao thông đã kích hoạt kịch bản đảo luồng và điều chỉnh chu kỳ đèn khu A4/B2.',
+    owner: 'Trực giao thông',
+    status: 'Đang giải quyết',
+    phase: 'processing',
+    tone: 'warn',
+    attempts: 1,
+    action: 'Kích hoạt phương án đèn',
+    route: ['Camera AI', 'Nút A4', 'Đèn B2'],
+    metrics: [['Tải', '78%'], ['Chu kỳ', '12p'], ['Camera', '128']],
+    steps: ['Gửi lệnh ưu tiên đèn xanh', 'Bật PA hướng dẫn luồng xe', 'Theo dõi camera AI trong 15 phút'],
+  },
+  {
+    id: 'SC-013-2026',
+    time: '15:40',
+    title: 'Dịch vụ VinBus vượt ngưỡng',
+    summary: 'Người vận hành mở chi tiết lượt dùng và điều phối VinBus do lượt sử dụng đạt 128k.',
+    owner: 'Điều phối dịch vụ',
+    status: 'Chưa giải quyết',
+    phase: 'open',
+    tone: 'danger',
+    attempts: 1,
+    action: 'Mở điều phối VinBus',
+    route: ['Dịch vụ Vin', 'VinBus', 'App cư dân'],
+    metrics: [['Lượt dùng', '128k'], ['QR', '99.2%'], ['Phản ánh', '146']],
+    steps: ['Tách nhóm tuyến quá tải', 'Gửi điều phối xe tăng cường', 'Cập nhật thông báo qua app cư dân'],
+  },
+  {
+    id: 'SC-012-2026',
+    time: '14:10',
+    title: 'Checklist báo cáo điều hành đã đóng',
+    summary: 'Bảng báo cáo đã tổng hợp KPI hạ tầng, SLA và luồng gửi cấp trên trong ca vận hành.',
+    owner: 'Trung tam IOC',
+    status: 'Đã giải quyết',
+    phase: 'resolved',
+    tone: 'ok',
+    attempts: 1,
+    action: 'Xem biên bản',
+    route: ['KPI', 'Checklist', 'Gửi QLĐT'],
+    metrics: [['SLA', '94%'], ['Case', '42'], ['Gửi', '20:30']],
+    steps: ['Đối chiếu KPI vận hành', 'Khép vòng case cần theo dõi', 'Lưu báo cáo vào dashboard'],
+  },
+  {
+    id: 'SC-011-2026',
+    time: '13:35',
+    title: 'Camera AI an ninh đã xử lý cảnh báo',
+    summary: 'Cảnh báo từ camera AI được gắn đội phản ứng và điểm nóng đã xác nhận an toàn.',
+    owner: 'Trực an ninh',
+    status: 'Đã giải quyết',
+    phase: 'resolved',
+    tone: 'ok',
+    attempts: 1,
+    action: 'Mở lại camera',
+    route: ['Camera AI', 'Đội #03', 'IOC'],
+    metrics: [['Camera', '96/96'], ['ETA', '6 ph'], ['SLA', 'Đúng']],
+    steps: ['Xác minh lại vùng cảnh báo', 'Gắn đội phản ứng', 'Đóng cảnh báo sau khi an toàn'],
+  },
+];
+
+function smartReportPhase(item) {
+  return item.phase || 'open';
+}
+
+function smartReportCaseList(items = smartReportCases, filter = 'all') {
+  const filtered = items.filter((item) => filter === 'all' || smartReportPhase(item) === filter);
+  if (!filtered.length) return '<div class="smart-report-history-modal__empty">Không có báo cáo trong nhóm này.</div>';
+  return filtered.map((item) => {
+    const isResolved = smartReportPhase(item) === 'resolved';
+    const action = isResolved
+      ? '<span class="smart-report-case__closed"><i class="ti ti-check"></i>Đã đóng</span>'
+      : `<button type="button" class="smart-report-case__resolve" data-smart-report-resolve="${item.id}">
+          <i class="ti ti-tool"></i><span>Kích hoạt</span>
+        </button>`;
+    const escalate = !isResolved && item.attempts >= 2
+      ? `<button type="button" class="smart-report-case__escalate" data-smart-report-escalate="${item.id}">
+          <i class="ti ti-message-report"></i><span>Đẩy điều phối</span>
+        </button>`
+      : '';
+    return `<article class="smart-report-case smart-report-case--${item.tone}" data-smart-report-case="${item.id}">
+      <div class="smart-report-case__main">
+        <small>${item.id} · ${item.time}</small>
+        <strong>${item.title}</strong>
+        <p>${item.summary}</p>
+      </div>
+      <div class="smart-report-case__meta">
+        <span>Lần ${item.attempts}</span>
+        <span>${item.owner}</span>
+        <b>${item.status}</b>
+      </div>
+      <div class="smart-report-case__actions">${action}${escalate}</div>
+      <div class="smart-report-case__status" data-smart-report-case-status hidden></div>
+    </article>`;
+  }).join('');
+}
+
+function smartReportHistoryModal() {
+  const allCount = smartReportCases.length;
+  const openCount = smartReportCases.filter((item) => smartReportPhase(item) === 'open').length;
+  const processingCount = smartReportCases.filter((item) => smartReportPhase(item) === 'processing').length;
+  const resolvedCount = smartReportCases.filter((item) => smartReportPhase(item) === 'resolved').length;
+  const payload = encodeURIComponent(JSON.stringify(smartReportCases));
+  return `<div class="smart-report-history-modal" data-smart-report-history-modal hidden>
+    <div class="smart-report-history-modal__panel" role="dialog" aria-modal="true" aria-label="Lịch sử báo cáo Smart City">
+      <button type="button" class="smart-report-history-modal__close" data-smart-report-history-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <h3>Lịch sử báo cáo Smart City</h3>
+      <p>Theo dõi các báo cáo đã gửi và những thao tác đã kích hoạt trên dashboard: PCCC, hạ tầng, giao thông, dịch vụ Vin, an ninh và KPI.</p>
+      <div class="smart-report-history-modal__tabs" data-smart-report-history-tabs>
+        <button type="button" class="hud-tab hud-tab--active" data-smart-report-history-tab="all">Tất cả <b>${allCount}</b></button>
+        <button type="button" class="hud-tab" data-smart-report-history-tab="open">Chưa giải quyết <b>${openCount}</b></button>
+        <button type="button" class="hud-tab" data-smart-report-history-tab="processing">Đang giải quyết <b>${processingCount}</b></button>
+        <button type="button" class="hud-tab" data-smart-report-history-tab="resolved">Đã giải quyết <b>${resolvedCount}</b></button>
+      </div>
+      <div class="smart-report-history-modal__list" data-smart-report-history-panel data-smart-report-cases="${payload}">${smartReportCaseList(smartReportCases, 'all')}</div>
+    </div>
+  </div>
+  <div class="smart-report-action-modal" data-smart-report-action-modal hidden>
+    <div class="smart-report-action-modal__panel" role="dialog" aria-modal="true" aria-label="Kích hoạt thao tác Smart City">
+      <button type="button" class="smart-report-history-modal__close" data-smart-report-action-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="smart-report-action-modal__head">
+        <span><i class="ti ti-broadcast"></i></span>
+        <div><small data-smart-report-action-tag>Luồng thao tác</small><h3 data-smart-report-action-title>Kích hoạt dashboard</h3><p data-smart-report-action-summary></p></div>
+      </header>
+      <div class="smart-report-action-modal__route" data-smart-report-action-route></div>
+      <div class="smart-report-action-modal__metrics" data-smart-report-action-metrics></div>
+      <div class="smart-report-action-modal__steps" data-smart-report-action-steps></div>
+      <div class="smart-report-action-modal__status" data-smart-report-action-status>Chưa kích hoạt thao tác.</div>
+      <button type="button" class="smart-report-action-modal__primary" data-smart-report-action-confirm>
+        <i class="ti ti-send"></i><span data-smart-report-action-primary>Xác nhận</span>
+      </button>
+    </div>
+  </div>`;
+}
+
 function reportTimeline() {
   const items = [
-    { time: '16:00', id: 'VOC-01', status: 'Checklist', tone: 'ok' },
-    { time: '17:20', id: 'ENV-04', status: 'AQI OK', tone: 'ok' },
-    { time: '18:05', id: 'UTIL-07', status: 'Lux warn', tone: 'warn' },
-    { time: '19:30', id: 'FIFA-12', status: 'SLA', tone: 'ok' },
+    { time: '16:00', id: 'Tổng quan', status: '42.318 cư dân', tone: 'ok' },
+    { time: '17:20', id: 'Giao thông', status: 'A4 tải 78%', tone: 'warn' },
+    { time: '18:05', id: 'PCCC', status: '2 tòa nguy cơ', tone: 'warn' },
+    { time: '19:30', id: 'Dịch vụ', status: 'VinBus 128k', tone: 'ok' },
   ];
   return `<section class="hud-block sc-diagram" data-diagram-family="timeline">
     ${hudHead('Timeline báo cáo')}
@@ -1465,38 +1635,122 @@ function reportTimeline() {
         <i></i><strong>${item.time}</strong><span>${item.id}</span><b>${item.status}</b>
       </button>`).join('')}
     </div>
+    <button type="button" class="smart-report-history__open" data-smart-report-history-open>
+      <i class="ti ti-history"></i><span>Xem lịch sử</span>
+    </button>
+    ${smartReportHistoryModal()}
   </section>`;
 }
 
-function reportResolution() {
-  const items = [
-    { label: 'L1', value: 97 },
-    { label: 'L2', value: 91 },
-    { label: 'L3', value: 86 },
+const trafficViolationDetails = {
+  year: [
+    ['2026', '3.842 lỗi', 'Vượt tốc độ, dừng đỗ sai quy định', 'Tăng 6% so với 2025'],
+    ['2025', '3.624 lỗi', 'Vượt đèn đỏ, đi sai làn', 'Đã xử lý 94%'],
+    ['2024', '3.180 lỗi', 'Không nhường người đi bộ', 'Đã xử lý 91%'],
+  ],
+  month: [
+    ['Tháng 03', '88%', 'Cổng S5A', '146 lỗi vượt tốc độ'],
+    ['Tháng 04', '64%', 'Vành đai S6B', '92 lỗi dừng đỗ sai'],
+    ['Tháng 05', '76%', 'Nút giao S7C', '118 lỗi vượt đèn đỏ'],
+    ['Tháng 06', '96%', 'Trục S8D', '174 lỗi đi sai làn'],
+  ],
+  week: [
+    ['Tuần 23', '42 lỗi', 'Camera AI xác nhận 38 hồ sơ', 'SLA 91%'],
+    ['Tuần 24', '56 lỗi', 'Tập trung khung 17:00-19:00', 'SLA 94%'],
+    ['Tuần 25', '48 lỗi', '12 lỗi vượt đèn đỏ', 'SLA 89%'],
+    ['Tuần 26', '63 lỗi', 'Điểm nóng S8D', 'SLA 96%'],
+  ],
+  day: [
+    ['07:35', 'S5A', 'Vượt tốc độ', 'Đã gửi cảnh báo'],
+    ['09:12', 'S6B', 'Dừng đỗ sai quy định', 'Chờ xác minh'],
+    ['17:44', 'S7C', 'Vượt đèn đỏ', 'Đã tạo hồ sơ'],
+    ['18:20', 'S8D', 'Đi sai làn', 'Đang điều phối'],
+  ],
+};
+
+function trafficViolationDetailRows(period = 'month') {
+  const rows = trafficViolationDetails[period] || trafficViolationDetails.month;
+  return rows.map((row) => `<article class="traffic-violation-detail-row">
+    <b>${row[0]}</b><strong>${row[1]}</strong><span>${row[2]}</span><em>${row[3]}</em>
+  </article>`).join('');
+}
+
+function trafficViolationDetailModal() {
+  const tabs = [
+    ['year', 'Theo năm'],
+    ['month', 'Theo tháng'],
+    ['week', 'Theo tuần'],
+    ['day', 'Theo ngày'],
   ];
-  return `<section class="hud-block sc-diagram" data-diagram-family="resolution-rings">
-    ${hudHead('Tỉ lệ khép vòng')}
-    <div class="sc-resolution-rings">
-      ${items.map((item) => `<div class="sc-resolution-ring" style="--pct:${item.value}">
-        <svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="30"></circle><circle cx="40" cy="40" r="30"></circle></svg>
-        <strong>${item.value}%</strong><span>${item.label}</span>
-      </div>`).join('')}
+  return `<div class="traffic-violation-detail-modal" data-traffic-violation-modal hidden>
+    <div class="traffic-violation-detail-modal__panel" role="dialog" aria-modal="true" aria-label="Chi tiết vi phạm giao thông">
+      <button type="button" class="traffic-violation-detail-modal__close" data-traffic-violation-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="traffic-violation-detail-modal__head">
+        <small>Smart Traffic Analytics</small>
+        <h3>Chi tiết vi phạm giao thông</h3>
+        <p>Theo dõi tỉ lệ vi phạm theo thời gian, điểm nóng và trạng thái xử lý hồ sơ từ camera AI.</p>
+      </header>
+      <section class="traffic-violation-detail-modal__kpis">
+        <span><b>96%</b><em>Đỉnh tháng 06</em></span>
+        <span><b>528</b><em>Hồ sơ 4 tháng</em></span>
+        <span><b>94%</b><em>SLA xử lý</em></span>
+      </section>
+      <nav class="traffic-violation-detail-modal__tabs">
+        ${tabs.map(([id, label]) => `<button type="button" class="${id === 'month' ? 'is-active' : ''}" data-traffic-violation-tab="${id}">${label}</button>`).join('')}
+      </nav>
+      <section class="traffic-violation-detail-modal__list" data-traffic-violation-list>
+        ${trafficViolationDetailRows('month')}
+      </section>
     </div>
+  </div>`;
+}
+
+function reportResolution() {
+  const points = [
+    { label: 'Tháng 03', value: 88, x: 16, y: 24 },
+    { label: 'Tháng 04', value: 64, x: 62, y: 39 },
+    { label: 'Tháng 05', value: 76, x: 104, y: 32 },
+    { label: 'Tháng 06', value: 96, x: 136, y: 17 },
+  ];
+  const line = points.map((point) => `${point.x},${point.y}`).join(' ');
+  const area = `${points[0].x},66 ${line} ${points[points.length - 1].x},66`;
+  return `<section class="hud-block sc-diagram" data-diagram-family="traffic-violation-rate">
+    ${hudHead('Tỉ lệ vi phạm giao thông')}
+    <div class="sc-traffic-violation-rate">
+      <svg viewBox="0 0 152 78" aria-hidden="true">
+        <defs><linearGradient id="trafficViolationRateArea" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.34"/>
+          <stop offset="100%" stop-color="#185fa5" stop-opacity="0.13"/>
+        </linearGradient></defs>
+        <path class="sc-traffic-violation-rate__grid" d="M16 18H136M16 42H136M16 66H136"/>
+        <polygon class="sc-traffic-violation-rate__area" points="${area}"/>
+        <polyline class="sc-traffic-violation-rate__line" points="${line}"/>
+        ${points.map((point) => `<g class="sc-traffic-violation-rate__point">
+          <text class="sc-traffic-violation-rate__pct" x="${point.x}" y="${Math.max(10, point.y - 9)}">${point.value}%</text>
+          <circle cx="${point.x}" cy="${point.y}" r="3.6"/>
+          <text class="sc-traffic-violation-rate__label" x="${point.x}" y="76">${point.label}</text>
+        </g>`).join('')}
+      </svg>
+    </div>
+    <button type="button" class="traffic-violation-detail-open" data-traffic-violation-open>
+      <i class="ti ti-list-details"></i><span>Xem chi tiết</span>
+    </button>
+    ${trafficViolationDetailModal()}
   </section>`;
 }
 
 function reportIncidentMatrix() {
   const items = [
-    { label: 'Hạ tầng', value: 18 },
-    { label: 'Dịch vụ', value: 24 },
-    { label: 'An ninh', value: 22 },
-    { label: 'Giao thông', value: 19 },
-    { label: 'FIFA', value: 17 },
+    { label: 'Camera AI', value: 94 },
+    { label: 'Tuần tra', value: 88 },
+    { label: 'Điểm nóng', value: 76 },
+    { label: 'Sự cố cư dân', value: 67 },
+    { label: 'SLA phản ứng', value: 91 },
   ];
   return `<section class="hud-block sc-diagram" data-diagram-family="incident-matrix">
-    ${hudHead('Ma trận tiêu chuẩn FIFA')}
+    ${hudHead('Ma trận cảnh báo an ninh')}
     <div class="sc-incident-matrix">
-      ${items.map((item, index) => `<span style="--pct:${item.value + 42}%">
+      ${items.map((item, index) => `<span style="--pct:${item.value}%">
         <em>${item.label}</em><i></i><b>${item.value}%</b>
       </span>`).join('')}
     </div>
@@ -1506,53 +1760,250 @@ function reportIncidentMatrix() {
 function reportOverviewMap() {
   const nodes = [0, 60, 120, 180, 240, 300].map((deg, index) => {
     const rad = (deg - 90) * Math.PI / 180;
-    return { x: 50 + Math.cos(rad) * 34, y: 50 + Math.sin(rad) * 34, tone: index === 2 ? 'warn' : 'ok' };
+    return { x: 50 + Math.cos(rad) * 34, y: 50 + Math.sin(rad) * 34, tone: [1, 4].includes(index) ? 'warn' : 'ok' };
   });
   return `<section class="hud-block sc-diagram" data-diagram-family="report-node-map">
-    ${hudHead('Nguồn dữ liệu báo cáo')}
-    <div class="sc-report-map">
+    ${hudHead('Tổng quan báo cáo')}
+    <div class="sc-report-map sc-report-map--overview">
       <svg viewBox="0 0 100 100" aria-hidden="true">
         <circle class="sc-report-map__ring" cx="50" cy="50" r="24"/>
         <circle class="sc-report-map__core" cx="50" cy="50" r="8"/>
         ${nodes.map((n) => `<line class="sc-report-map__line" x1="50" y1="50" x2="${n.x.toFixed(1)}" y2="${n.y.toFixed(1)}"/>`).join('')}
         ${nodes.map((n) => `<circle class="sc-report-map__node sc-report-map__node--${n.tone}" cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="5.5"/>`).join('')}
       </svg>
-      <div class="sc-report-map__side">
-        <span><b>6/6</b><em>Nguồn live</em></span>
-        <span><b>FIFA</b><em>Checklist</em></span>
+      <div class="sc-report-overview-kpis">
+        <span><b>18:30</b><em>Báo cáo mới</em></span>
+        <span><b>24</b><em>Đã tạo</em></span>
+        <span><b>7</b><em>Theo dõi</em></span>
+        <span><b>3</b><em>Ưu tiên</em></span>
       </div>
     </div>
   </section>`;
 }
 
-function reportSendFlow() {
+function smartcityReportSendCard() {
   const steps = [
-    ['VOC', 'Dữ liệu ca', 'ti-database'],
-    ['KPI', 'Chuẩn hóa', 'ti-chart-bar'],
-    ['FIFA', 'Checklist', 'ti-file-check'],
-    ['BTC', 'Gửi báo cáo', 'ti-send'],
+    ['IOC', 'Dữ liệu ca', 'ti-database'],
+    ['16', 'Báo cáo', 'ti-chart-bar'],
+    ['Xuất', 'Tổng hợp', 'ti-file-export'],
+    ['Cấp trên', 'Chờ gửi', 'ti-send'],
   ];
-  return `<section class="hud-block sc-diagram" data-diagram-family="send-flow">
-    ${hudHead('Luồng gửi báo cáo')}
-    <div class="sc-send-flow">
-      ${steps.map(([label, sub, icon], index) => `${index ? '<i class="sc-send-flow__line"></i>' : ''}
-        <span><i class="ti ${icon}"></i><b>${label}</b><em>${sub}</em></span>`).join('')}
+  return `<section class="hud-block sc-diagram smart-report-submit" data-diagram-family="smart-report-submit">
+    ${hudHead('Gửi báo cáo cấp trên')}
+    <div class="smart-report-submit__flow" aria-hidden="true">
+      ${steps.map(([label, sub, icon]) => `<span><i class="ti ${icon}"></i><b>${label}</b><em>${sub}</em></span>`).join('')}
+    </div>
+    <div class="smart-report-submit__summary">
+      <span><b>16</b><em>Báo cáo</em></span>
+      <span><b>13</b><em>Cần theo dõi</em></span>
+      <span><b>19%</b><em>Closed-loop</em></span>
+    </div>
+    <button type="button" class="smart-report-submit__btn" data-smart-report-send-open>
+      <i class="ti ti-send"></i><span>Gửi báo cáo</span>
+    </button>
+    <div class="smart-report-submit__status" data-smart-report-send-status>Chưa gửi báo cáo tổng hợp.</div>
+    <div class="smart-report-submit-modal" data-smart-report-send-modal hidden>
+      <div class="smart-report-submit-modal__panel" role="dialog" aria-modal="true" aria-label="Gửi báo cáo cấp trên">
+        <button type="button" class="smart-report-submit-modal__close" data-smart-report-send-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+        <div class="smart-report-submit-modal__head">
+          <span><i class="ti ti-file-export"></i></span>
+          <div>
+            <small>Báo cáo Smart City</small>
+            <h3>Gửi báo cáo cấp trên</h3>
+          </div>
+        </div>
+        <div class="smart-report-submit-modal__grid">
+          <label><span>Gửi tới</span>
+            <select data-smart-report-recipient>
+              <option>Ban giám đốc đô thị</option>
+              <option>Trung tâm điều hành cấp trên</option>
+              <option>Trưởng ban quản lý</option>
+              <option>Lãnh đạo vận hành Smart City</option>
+            </select>
+          </label>
+          <label><span>Hình thức gửi</span>
+            <select data-smart-report-delivery>
+              <option value="system">Gửi trực tiếp từ hệ thống</option>
+              <option value="file">Xuất file và gửi</option>
+            </select>
+          </label>
+          <label><span>Định dạng</span>
+            <select data-smart-report-format>
+              <option>PDF</option>
+              <option>Excel (.xlsx)</option>
+              <option>PowerPoint (.pptx)</option>
+              <option>Link dashboard</option>
+            </select>
+          </label>
+          <label><span>Mức ưu tiên</span>
+            <select data-smart-report-priority>
+              <option>Bình thường</option>
+              <option>Ưu tiên</option>
+              <option>Khẩn</option>
+            </select>
+          </label>
+        </div>
+        <div class="smart-report-submit-modal__summary">
+          <span><b>16</b><em>Báo cáo</em></span>
+          <span><b>13</b><em>Cần theo dõi</em></span>
+          <span><b>19%</b><em>Closed-loop</em></span>
+        </div>
+        <button type="button" class="smart-report-submit-modal__primary" data-smart-report-send-confirm>
+          <i class="ti ti-send"></i><span>Xác nhận gửi</span>
+        </button>
+      </div>
     </div>
   </section>`;
 }
 
+function smartcityManagementAdviceCard() {
+  const notes = [
+    ['ti-users-group', '01'],
+    ['ti-bolt', '02'],
+    ['ti-file-check', '03'],
+  ];
+  return `<section class="hud-block sc-diagram smart-report-advice" data-diagram-family="smart-report-advice">
+    ${hudHead('Gợi ý cho ban quản lý')}
+    <div class="smart-report-advice__nodes">
+      ${notes.map(([icon, index]) => `<button type="button" class="smart-report-advice__node" title="Gợi ý ${index}">
+        <i class="ti ${icon}"></i><b>${index}</b><span></span>
+      </button>`).join('')}
+    </div>
+    <button type="button" class="smart-report-advice__btn" data-smart-report-advice-open>
+      <i class="ti ti-send"></i><span>Gửi góp ý</span>
+    </button>
+    <div class="smart-report-submit__status" data-smart-report-advice-status>Chưa gửi góp ý cho ban quản lý.</div>
+    <div class="smart-report-submit-modal smart-report-advice-modal" data-smart-report-advice-modal hidden>
+      <div class="smart-report-submit-modal__panel" role="dialog" aria-modal="true" aria-label="Gửi góp ý cho ban quản lý">
+        <button type="button" class="smart-report-submit-modal__close" data-smart-report-advice-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+        <div class="smart-report-submit-modal__head">
+          <span><i class="ti ti-message-report"></i></span>
+          <div>
+            <small>Gợi ý quản lý Smart City</small>
+            <h3>Gửi góp ý cho ban quản lý</h3>
+          </div>
+        </div>
+        <div class="smart-report-submit-modal__grid">
+          <label><span>Nhóm góp ý</span>
+            <select data-smart-report-advice-topic>
+              <option>Quy trình vận hành đô thị</option>
+              <option>An ninh và camera AI</option>
+              <option>Hạ tầng - tiện ích</option>
+              <option>Dịch vụ cư dân</option>
+            </select>
+          </label>
+          <label><span>Mức ưu tiên</span>
+            <select data-smart-report-advice-priority>
+              <option>Theo dõi</option>
+              <option>Ưu tiên</option>
+              <option>Cần xử lý ngay</option>
+            </select>
+          </label>
+        </div>
+        <label class="smart-report-advice-modal__note"><span>Nội dung</span>
+          <textarea data-smart-report-advice-message rows="4">Đề xuất ưu tiên các điểm nóng vận hành Smart City sau ca, tập trung nhóm cảnh báo SLA, hạ tầng và phản ánh cư dân cần theo dõi.</textarea>
+        </label>
+        <div class="smart-report-submit-modal__summary">
+          <span><b>03</b><em>Khuyến nghị</em></span>
+          <span><b>01</b><em>Ca vận hành</em></span>
+          <span><b>BQL</b><em>Người nhận</em></span>
+        </div>
+        <button type="button" class="smart-report-submit-modal__primary" data-smart-report-advice-confirm>
+          <i class="ti ti-send"></i><span>Xác nhận gửi góp ý</span>
+        </button>
+      </div>
+    </div>
+  </section>`;
+}
+
+const reportIncidentDetails = {
+  all: [
+    ['Giao thông', '42 vụ', 'Vượt tốc độ, vượt đèn đỏ, dừng đỗ sai', '14 vụ ưu tiên'],
+    ['An ninh', '18 vụ', 'Camera AI, tụ tập bất thường, xâm nhập khu hạn chế', '5 vụ ưu tiên'],
+    ['Hạ tầng', '23 vụ', 'Thang máy, cảm biến, chiếu sáng, áp lực nước', '6 vụ ưu tiên'],
+    ['Dịch vụ', '31 vụ', 'Phản ánh cư dân, VinBus, tiện ích công cộng', '8 vụ ưu tiên'],
+  ],
+  traffic: [
+    ['Vượt tốc độ', '16 vụ', 'Cổng S5A, trục S8D', 'Đã tạo 12 hồ sơ'],
+    ['Vượt đèn đỏ', '11 vụ', 'Nút giao S7C', 'Camera AI xác minh'],
+    ['Dừng đỗ sai', '9 vụ', 'Vành đai S6B', 'Đang nhắc xử lý'],
+    ['Ùn tắc cục bộ', '6 vụ', 'Khung 17:00-19:00', 'Đã điều tiết luồng'],
+  ],
+  security: [
+    ['Camera AI', '7 vụ', 'Phát hiện tụ tập bất thường', 'Đã xác minh 5 vụ'],
+    ['Xâm nhập hạn chế', '4 vụ', 'Khu kỹ thuật và tầng hầm', 'Cần phản ứng nhanh'],
+    ['Sự cố cư dân', '5 vụ', 'Yêu cầu hỗ trợ an ninh', 'Đã điều đội tuần tra'],
+    ['Camera offline', '2 vụ', 'Mất tín hiệu dưới 10 phút', 'Đội mạng đang xử lý'],
+  ],
+  infrastructure: [
+    ['Thang máy', '6 vụ', 'Lỗi cabin và kẹt tầng', 'Ưu tiên tòa S2'],
+    ['Cảm biến', '5 vụ', 'Mất tín hiệu môi trường', 'Đã reset 3 điểm'],
+    ['Chiếu sáng', '7 vụ', 'Đèn đường không phản hồi', 'Tạo phiếu bảo trì'],
+    ['Nước/điện', '5 vụ', 'Áp lực thấp, nhánh tải cao', 'Đang theo dõi'],
+  ],
+  service: [
+    ['Phản ánh cư dân', '12 vụ', 'Ứng dụng và hotline', 'SLA 91%'],
+    ['VinBus', '7 vụ', 'Chậm chuyến, quá tải trạm', 'Đã bổ sung lượt'],
+    ['Tiện ích công cộng', '6 vụ', 'Khu sinh hoạt, cảnh quan', 'Đã phân công'],
+    ['Phí dịch vụ', '6 vụ', 'Đối soát và nhắc thanh toán', 'Đang xử lý'],
+  ],
+};
+
+function reportIncidentDetailRows(group = 'all') {
+  const rows = reportIncidentDetails[group] || reportIncidentDetails.all;
+  return rows.map((row) => `<article class="report-incident-detail-row">
+    <b>${row[0]}</b><strong>${row[1]}</strong><span>${row[2]}</span><em>${row[3]}</em>
+  </article>`).join('');
+}
+
+function reportIncidentDetailModal() {
+  const tabs = [
+    ['all', 'Tất cả vụ việc'],
+    ['traffic', 'Giao thông'],
+    ['security', 'An ninh'],
+    ['infrastructure', 'Hạ tầng'],
+    ['service', 'Dịch vụ'],
+  ];
+  return `<div class="report-incident-detail-modal" data-report-incident-modal hidden>
+    <div class="report-incident-detail-modal__panel" role="dialog" aria-modal="true" aria-label="Chi tiết thống kê vụ việc">
+      <button type="button" class="report-incident-detail-modal__close" data-report-incident-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <header class="report-incident-detail-modal__head">
+        <small>Smart City Incident Report</small>
+        <h3>Chi tiết thống kê vụ việc</h3>
+        <p>Tổng hợp các vụ việc phát sinh theo phân hệ để đội vận hành ưu tiên xử lý trong kỳ báo cáo.</p>
+      </header>
+      <section class="report-incident-detail-modal__kpis">
+        <span><b>114</b><em>Tổng vụ việc</em></span>
+        <span><b>33</b><em>Ưu tiên</em></span>
+        <span><b>92%</b><em>SLA xử lý</em></span>
+      </section>
+      <nav class="report-incident-detail-modal__tabs">
+        ${tabs.map(([id, label]) => `<button type="button" class="${id === 'all' ? 'is-active' : ''}" data-report-incident-tab="${id}">${label}</button>`).join('')}
+      </nav>
+      <section class="report-incident-detail-modal__list" data-report-incident-list>
+        ${reportIncidentDetailRows('all')}
+      </section>
+    </div>
+  </div>`;
+}
+
 function reportSensorChart() {
   const bars = [
-    { label: 'AQI', value: 88 },
-    { label: 'Lux', value: 91 },
-    { label: 'SLA', value: 94 },
-    { label: 'Clean', value: 97 },
+    { label: 'Giao thông', value: 42 },
+    { label: 'An ninh', value: 18 },
+    { label: 'Hạ tầng', value: 23 },
+    { label: 'Dịch vụ', value: 31 },
   ];
+  const maxValue = Math.max(...bars.map((bar) => bar.value));
   return `<section class="hud-block sc-diagram" data-diagram-family="report-bars">
-    ${hudHead('Chỉ số đưa vào báo cáo')}
+    ${hudHead('Thống kê vụ việc')}
     <div class="sc-report-bars">
-      ${bars.map((bar) => `<span><em>${bar.label}</em><i style="height:${bar.value}%"></i><b>${bar.value}%</b></span>`).join('')}
+      ${bars.map((bar) => `<span><em>${bar.label}</em><i style="height:${Math.max(18, bar.value / maxValue * 100)}%"></i><b>${bar.value}</b></span>`).join('')}
     </div>
+    <button type="button" class="report-incident-detail-open" data-report-incident-open>
+      <i class="ti ti-list-details"></i><span>Xem chi tiết vụ việc</span>
+    </button>
+    ${reportIncidentDetailModal()}
   </section>`;
 }
 
@@ -1732,18 +2183,8 @@ const pageRenderers = {
     right: () => [
       reportOverviewMap(),
       reportSensorChart(),
-      reportSendFlow(),
-      standardChecklist('Checklist báo cáo FIFA', [
-        { label: 'Matchday command log', value: 'Done', icon: 'ti-file-check' },
-        { label: 'SLA khép vòng', value: '94%', icon: 'ti-refresh' },
-      { label: 'KPI hạ tầng', value: 'OK', icon: 'ti-building-estate' },
-        { label: 'Gửi BTC/FIFA', value: '20:30', icon: 'ti-send' },
-      ]),
-      statusAlerts('Dòng báo cáo', [
-        { tag: 'VOC', title: 'Báo cáo ca vận hành đã tổng hợp 42 case', time: '3 phút', tone: BLUE },
-        { tag: 'FIFA', title: '5 tiêu chí cần theo dõi sau trận', time: '9 phút', tone: AMBER },
-        { tag: 'SLA', title: '37 case đã đóng đúng hạn', time: '15 phút', tone: GREEN },
-      ]),
+      smartcityReportSendCard(),
+      smartcityManagementAdviceCard(),
     ].join(''),
   },
 };
@@ -1754,6 +2195,219 @@ export function renderSmartcityDomainLeft(pageId) {
 
 export function renderSmartcityDomainRight(pageId) {
   return pageRenderers[pageId]?.right() || '';
+}
+
+export function bindSmartcityReportHistory() {
+  if (document.body.dataset.smartcityReportHistoryBound === 'true') return;
+  document.body.dataset.smartcityReportHistoryBound = 'true';
+
+  const getItems = (modal) => {
+    const panel = modal?.querySelector('[data-smart-report-history-panel]');
+    try {
+      return JSON.parse(decodeURIComponent(panel?.dataset.smartReportCases || '%5B%5D'));
+    } catch {
+      return [];
+    }
+  };
+
+  document.addEventListener('click', (event) => {
+    const historyModal = document.querySelector('[data-smart-report-history-modal]');
+    const openHistoryModal = document.querySelector('[data-smart-report-history-modal]:not([hidden])');
+    const actionModal = document.querySelector('[data-smart-report-action-modal]');
+    const openActionModal = document.querySelector('[data-smart-report-action-modal]:not([hidden])');
+    const violationModal = document.querySelector('[data-traffic-violation-modal]');
+    const openViolationModal = document.querySelector('[data-traffic-violation-modal]:not([hidden])');
+    const incidentModal = document.querySelector('[data-report-incident-modal]');
+    const openIncidentModal = document.querySelector('[data-report-incident-modal]:not([hidden])');
+    const sendModal = document.querySelector('[data-smart-report-send-modal]');
+    const openSendModal = document.querySelector('[data-smart-report-send-modal]:not([hidden])');
+    const adviceModal = document.querySelector('[data-smart-report-advice-modal]');
+    const openAdviceModal = document.querySelector('[data-smart-report-advice-modal]:not([hidden])');
+
+    if (event.target.closest('[data-smart-report-send-open]')) {
+      if (sendModal) {
+        if (sendModal.parentElement !== document.body) document.body.appendChild(sendModal);
+        sendModal.hidden = false;
+      }
+      return;
+    }
+
+    if (openSendModal && (event.target.closest('[data-smart-report-send-close]') || event.target === openSendModal)) {
+      openSendModal.hidden = true;
+      return;
+    }
+
+    if (openSendModal && event.target.closest('[data-smart-report-send-confirm]')) {
+      const recipient = openSendModal.querySelector('[data-smart-report-recipient]')?.value || 'cấp trên';
+      const delivery = openSendModal.querySelector('[data-smart-report-delivery]')?.value || 'system';
+      const format = openSendModal.querySelector('[data-smart-report-format]')?.value || 'PDF';
+      const status = document.querySelector('[data-smart-report-send-status]');
+      const method = delivery === 'system' ? 'trực tiếp từ hệ thống' : `dưới định dạng ${format}`;
+      if (status) status.textContent = `Đã gửi báo cáo tổng hợp tới ${recipient} ${method}.`;
+      openSendModal.hidden = true;
+      return;
+    }
+
+    if (event.target.closest('[data-smart-report-advice-open]')) {
+      if (adviceModal) {
+        if (adviceModal.parentElement !== document.body) document.body.appendChild(adviceModal);
+        adviceModal.hidden = false;
+      }
+      return;
+    }
+
+    if (openAdviceModal && (event.target.closest('[data-smart-report-advice-close]') || event.target === openAdviceModal)) {
+      openAdviceModal.hidden = true;
+      return;
+    }
+
+    if (openAdviceModal && event.target.closest('[data-smart-report-advice-confirm]')) {
+      const topic = openAdviceModal.querySelector('[data-smart-report-advice-topic]')?.value || 'góp ý';
+      const priority = openAdviceModal.querySelector('[data-smart-report-advice-priority]')?.value || 'theo dõi';
+      const status = document.querySelector('[data-smart-report-advice-status]');
+      if (status) status.textContent = `Đã gửi góp ý "${topic}" với mức ${priority} tới ban quản lý Smart City.`;
+      openAdviceModal.hidden = true;
+      return;
+    }
+
+    if (event.target.closest('[data-report-incident-open]')) {
+      if (incidentModal) {
+        if (incidentModal.parentElement !== document.body) document.body.appendChild(incidentModal);
+        incidentModal.hidden = false;
+      }
+      return;
+    }
+
+    if (openIncidentModal && (event.target.closest('[data-report-incident-close]') || event.target === openIncidentModal)) {
+      openIncidentModal.hidden = true;
+      return;
+    }
+
+    const incidentTab = event.target.closest('[data-report-incident-tab]');
+    if (openIncidentModal && incidentTab) {
+      openIncidentModal.querySelectorAll('[data-report-incident-tab]').forEach((button) => {
+        button.classList.toggle('is-active', button === incidentTab);
+      });
+      const list = openIncidentModal.querySelector('[data-report-incident-list]');
+      if (list) list.innerHTML = reportIncidentDetailRows(incidentTab.dataset.reportIncidentTab);
+      return;
+    }
+
+    if (event.target.closest('[data-traffic-violation-open]')) {
+      if (violationModal) {
+        if (violationModal.parentElement !== document.body) document.body.appendChild(violationModal);
+        violationModal.hidden = false;
+      }
+      return;
+    }
+
+    if (openViolationModal && (event.target.closest('[data-traffic-violation-close]') || event.target === openViolationModal)) {
+      openViolationModal.hidden = true;
+      return;
+    }
+
+    const violationTab = event.target.closest('[data-traffic-violation-tab]');
+    if (openViolationModal && violationTab) {
+      openViolationModal.querySelectorAll('[data-traffic-violation-tab]').forEach((button) => {
+        button.classList.toggle('is-active', button === violationTab);
+      });
+      const list = openViolationModal.querySelector('[data-traffic-violation-list]');
+      if (list) list.innerHTML = trafficViolationDetailRows(violationTab.dataset.trafficViolationTab);
+      return;
+    }
+
+    if (event.target.closest('[data-smart-report-history-open]')) {
+      if (historyModal) {
+        if (historyModal.parentElement !== document.body) document.body.appendChild(historyModal);
+        historyModal.hidden = false;
+      }
+      return;
+    }
+
+    if (openHistoryModal && (event.target.closest('[data-smart-report-history-close]') || event.target === openHistoryModal)) {
+      openHistoryModal.hidden = true;
+      return;
+    }
+
+    const tab = event.target.closest('[data-smart-report-history-tab]');
+    if (openHistoryModal && tab) {
+      openHistoryModal.querySelectorAll('[data-smart-report-history-tab]').forEach((button) => {
+        button.classList.toggle('hud-tab--active', button === tab);
+      });
+      const panel = openHistoryModal.querySelector('[data-smart-report-history-panel]');
+      if (panel) panel.innerHTML = smartReportCaseList(getItems(openHistoryModal), tab.dataset.smartReportHistoryTab);
+      return;
+    }
+
+    const escalate = event.target.closest('[data-smart-report-escalate]');
+    if (openHistoryModal && escalate) {
+      const card = openHistoryModal.querySelector(`[data-smart-report-case="${escalate.dataset.smartReportEscalate}"]`);
+      const item = getItems(openHistoryModal).find((entry) => entry.id === escalate.dataset.smartReportEscalate);
+      const status = card?.querySelector('[data-smart-report-case-status]');
+      if (status && item) {
+        status.textContent = `Đã đẩy ${item.owner} vào hàng ưu tiên điều phối; dashboard sẽ giữ cảnh báo đến khi có xác nhận SLA.`;
+        status.hidden = false;
+      }
+      escalate.disabled = true;
+      escalate.querySelector('span').textContent = 'Đã đẩy điều phối';
+      return;
+    }
+
+    const resolve = event.target.closest('[data-smart-report-resolve]');
+    if (openHistoryModal && actionModal && resolve) {
+      const item = getItems(openHistoryModal).find((entry) => entry.id === resolve.dataset.smartReportResolve);
+      if (!item) return;
+      if (actionModal.parentElement !== document.body) document.body.appendChild(actionModal);
+      actionModal.dataset.activeReport = item.id;
+      actionModal.querySelector('[data-smart-report-action-tag]').textContent = `${item.id} · ${item.owner}`;
+      actionModal.querySelector('[data-smart-report-action-title]').textContent = item.action;
+      actionModal.querySelector('[data-smart-report-action-summary]').textContent = item.summary;
+      actionModal.querySelector('[data-smart-report-action-primary]').textContent = item.action;
+      actionModal.querySelector('[data-smart-report-action-status]').textContent = 'Chưa kích hoạt thao tác.';
+      actionModal.querySelector('[data-smart-report-action-route]').innerHTML = item.route
+        .map((step, index) => `${index ? '<i></i>' : ''}<span>${step}</span>`)
+        .join('');
+      actionModal.querySelector('[data-smart-report-action-metrics]').innerHTML = item.metrics
+        .map(([label, value]) => `<span><b>${value}</b><em>${label}</em></span>`)
+        .join('');
+      actionModal.querySelector('[data-smart-report-action-steps]').innerHTML = item.steps
+        .map((step, index) => `<span><b>0${index + 1}</b>${step}</span>`)
+        .join('');
+      actionModal.hidden = false;
+      return;
+    }
+
+    if (openActionModal && (event.target.closest('[data-smart-report-action-close]') || event.target === openActionModal)) {
+      openActionModal.hidden = true;
+      return;
+    }
+
+    if (openActionModal && event.target.closest('[data-smart-report-action-confirm]')) {
+      const id = openActionModal.dataset.activeReport;
+      const card = historyModal?.querySelector(`[data-smart-report-case="${id}"]`);
+      const status = card?.querySelector('[data-smart-report-case-status]');
+      const resolveButton = card?.querySelector('[data-smart-report-resolve]');
+      if (status) {
+        status.textContent = 'Đã gửi lệnh tác động lên dashboard Smart City; trạng thái chuyển sang đang giải quyết.';
+        status.hidden = false;
+      }
+      if (resolveButton) {
+        resolveButton.disabled = true;
+        resolveButton.querySelector('span').textContent = 'Đang giải quyết';
+      }
+      openActionModal.querySelector('[data-smart-report-action-status]').textContent = 'Đã kích hoạt luồng tác động nội bộ Smart City.';
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    document.querySelector('[data-report-incident-modal]:not([hidden])')?.setAttribute('hidden', '');
+    document.querySelector('[data-traffic-violation-modal]:not([hidden])')?.setAttribute('hidden', '');
+    document.querySelector('[data-smart-report-send-modal]:not([hidden])')?.setAttribute('hidden', '');
+    document.querySelector('[data-smart-report-advice-modal]:not([hidden])')?.setAttribute('hidden', '');
+    document.querySelector('[data-smart-report-action-modal]:not([hidden])')?.setAttribute('hidden', '');
+    document.querySelector('[data-smart-report-history-modal]:not([hidden])')?.setAttribute('hidden', '');
+  });
 }
 
 export function bindVinServiceModal() {

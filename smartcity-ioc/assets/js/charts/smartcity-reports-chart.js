@@ -1,4 +1,8 @@
+import { chartTickFont } from './chart-font.js';
+
 const charts = {};
+const tick = chartTickFont(9);
+const legendFont = chartTickFont(10);
 
 export function initReportsChart() {
   if (charts.reportsChart) return;
@@ -17,10 +21,10 @@ export function initReportsChart() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: legendFont } } },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 9 } } },
-        y: { grid: { color: 'rgba(0,0,0,0.05)' }, max: 100, ticks: { font: { size: 9 } } },
+        x: { grid: { display: false }, ticks: { font: tick } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, max: 100, ticks: { font: tick } },
       },
     },
   });

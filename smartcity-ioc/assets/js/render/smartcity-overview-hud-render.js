@@ -241,11 +241,12 @@ function kpiStrip(items) {
 }
 
 function domainCard(card) {
-  const action = card.action === false
+  const action = card.actions
+    || (card.action === false
     ? ''
     : `<button type="button" class="smart-overview-domain__open" ${card.action === 'redlight' ? 'data-redlight-open' : `data-nav="${card.nav}"`}>
-      <i class="ti ${card.actionIcon || card.icon}"></i><span>${card.actionLabel || `Mở ${card.shortTitle}`}</span>
-    </button>`;
+       <i class="ti ${card.actionIcon || card.icon}"></i><span>${card.actionLabel || `Mở ${card.shortTitle}`}</span>
+    </button>`);
 
   return `<section class="hud-block smart-overview-domain smart-overview-domain--${card.id}">
     ${hudHead(card.title)}
@@ -286,6 +287,17 @@ export function renderSmartcityOverviewLeft(d) {
       shortTitle: 'an ninh',
       chart: `<div class="smart-overview-stack">${radarChart(d.security.radar.values, d.security.radar.labels)}${miniBars(d.security.metrics)}</div>`,
       kpis: d.security.kpis,
+      actions: `<div class="smart-overview-route-actions">
+        <button type="button" class="event-risk__btn" data-smartcity-route-action="open">
+          <i class="ti ti-door-exit"></i><span>Mở B2/C1</span>
+        </button>
+        <button type="button" class="event-risk__btn" data-smartcity-route-action="reverse">
+          <i class="ti ti-arrow-guide"></i><span>Đảo luồng</span>
+        </button>
+        <button type="button" class="event-risk__btn" data-smartcity-route-action="pa">
+          <i class="ti ti-speakerphone"></i><span>PA hướng dẫn</span>
+        </button>
+      </div>`,
     },
   ];
   return cards.map(domainCard).join('');
@@ -301,6 +313,13 @@ export function renderSmartcityOverviewRight(d) {
       shortTitle: 'hạ tầng',
       chart: `<div class="smart-overview-stack">${compactLineChart(d.environment.trend.values, d.environment.trend.labels, 'smartOverviewInfraLine')}${miniBars(d.environment.metrics)}</div>`,
       kpis: d.environment.kpis,
+      actions: `<div class="event-fire-auto smart-overview-pccc-action">
+        <button type="button" class="event-fire-auto__button" data-pccc-open="auto" aria-label="Kích hoạt Auto PCCC">
+          <i class="ti ti-shield-bolt"></i>
+          <span>Auto PCCC</span>
+        </button>
+        <p data-pccc-card-status>2 tòa nhà có nguy cơ cháy nổ</p>
+      </div>`,
     },
     {
       id: 'utilities',

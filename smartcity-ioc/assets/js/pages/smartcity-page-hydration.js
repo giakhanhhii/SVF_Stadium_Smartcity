@@ -15,6 +15,7 @@ import {
 } from '../render/security-panels-right.js';
 import {
   bindInfrastructureOpsModal,
+  bindSmartcityReportHistory,
   bindVinServiceModal,
   renderSmartcityDomainLeft,
   renderSmartcityDomainRight,
@@ -60,6 +61,7 @@ export function hydratePage(pageId) {
     reports: () => {
       root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('reports');
       root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('reports');
+      bindSmartcityReportHistory();
     },
   };
 
@@ -77,4 +79,6 @@ export function hydrateAllPages() {
   bindTrafficKpiControls();
   bindTrafficFlowControls();
   bindTrafficSignalControls();
+  bindInfrastructureOpsModal();
+  bindSmartcityReportHistory();
 }

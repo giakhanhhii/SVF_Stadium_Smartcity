@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "blender:smartcity:create": "node scripts/smartcity-blender.mjs create",
+    "blender:smartcity:export": "node scripts/smartcity-blender.mjs export",
+    "blender:smartcity:validate": "node scripts/smartcity-blender.mjs validate",
+    "generate:smartcity": "node scripts/generate-smartcity-glb.mjs",
     "generate:stadium": "node scripts/generate-stadium-glb.mjs",
     "dev": "node scripts/dev-server.mjs",
     "dev:start": "node scripts/start-dev-server.mjs",

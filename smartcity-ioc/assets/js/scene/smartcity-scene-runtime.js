@@ -16,22 +16,23 @@ import {
   getRouteSpawnS,
   getRouteStopLineS,
   normalizeAngle,
-} from './traffic/traffic-lanes.js?v=roundabout-flow-20260618j';
+} from './traffic/traffic-lanes.js?v=roundabout-replay-20260619b';
 import {
   distanceBetweenRouteSamples,
   findBodyContactBlocker,
   findGlobalProximityBlocker,
+  getVehicleFootprintGap,
   getVehicleRouteSample,
-} from './traffic/traffic-occupancy.js?v=roundabout-flow-20260618j';
-import { createTrafficSpawner } from './traffic/traffic-spawn.js?v=roundabout-flow-20260618j';
-import { setVehiclePoseFromLane } from './traffic/traffic-vehicle-pose.js?v=roundabout-flow-20260618j';
+} from './traffic/traffic-occupancy.js?v=roundabout-replay-20260619b';
+import { createTrafficSpawner } from './traffic/traffic-spawn.js?v=roundabout-replay-20260619b';
+import { setVehiclePoseFromLane } from './traffic/traffic-vehicle-pose.js?v=roundabout-replay-20260619b';
 import {
   VEHICLE_MODEL_RELOAD_INTERVAL_SECONDS,
   cloneVehicleModel,
   loadVehicleModelTemplates,
   readVehicleModelAssetSignature,
   resetVehicleModelOpacity,
-} from './traffic/traffic-vehicle-models.js?v=roundabout-flow-20260618j';
+} from './traffic/traffic-vehicle-models.js?v=roundabout-replay-20260619b';
 
 let activeScene = null;
 let activeScenePromise = null;
@@ -52,14 +53,15 @@ const ROUNDABOUT_MAX_ACTIVE_PER_APPROACH = 2;
 const ROUNDABOUT_MIN_SPAWN_INTERVAL_SECONDS = 0.7;
 const ROUNDABOUT_HEADING_TURN_RATE = 4.8;
 const ROUNDABOUT_MODEL_START_STAGGER_SECONDS = 0.75;
-const ROUNDABOUT_CONTACT_BACKOFF_DISTANCE = 3.2;
-const ROUNDABOUT_CONTACT_BACKOFF_SPEED = 1.15;
-const ROUNDABOUT_CONTACT_BACKOFF_MAX_SECONDS = 4.5;
+const REVERSE_HISTORY_SECONDS = 8;
+const REVERSE_HISTORY_SAMPLE_SECONDS = 0.05;
+const REVERSE_PLAYBACK_ATTEMPT_SECONDS = [1.5, 2, 2.5];
+const REVERSE_PLAYBACK_STOP_SPEED = 0.45;
 const TRAFFIC_FIXED_STEP_SECONDS = 0.05;
 const TRAFFIC_MAX_FIXED_STEPS = 5;
 const TRAFFIC_ACCELERATION_METERS_PER_SECOND = 1.5;
 const TRAFFIC_BRAKE_METERS_PER_SECOND = 3.0;
-const SMARTCITY_TRAFFIC_RUNTIME_VERSION = 'roundabout-flow-20260618j';
+const SMARTCITY_TRAFFIC_RUNTIME_VERSION = 'roundabout-replay-20260619b';
 const STATIC_SCENE_ASSETS = ['terrain', 'roads', 'buildings', 'landscape'].map((name) => ({
   name,
   url: new URL(`../../models/smartcity/${name}.glb`, import.meta.url).href,
@@ -376,6 +378,7 @@ function applyVehicleRoutePose(vehicle, delta) {
     const isSpaceState = vehicle.state?.startsWith('SPACE_');
     setTextSprite(vehicle.label, `${vehicle.route.id} ${vehicle.state}`, vehicle.state === 'WAITING_TO_ENTER' || isSpaceState ? '#EF9F27' : vehicle.state === 'CIRCULATING' ? '#E24B4A' : '#85B7EB');
   }
+  recordVehicleHistory(vehicle, delta);
 }
 
 function releaseRoundaboutReservations(t) {
@@ -400,115 +403,161 @@ function reserveRoundaboutEntry(vehicle, t) {
   });
 }
 
-function getRoundaboutPriorityRank(vehicle) {
-  if (!vehicle.route) return 0;
-  if (vehicle.distance > vehicle.route.exitS) return 4;
-  if (vehicle.distance >= vehicle.route.entryS) return 3;
-  if (vehicle.distance >= vehicle.route.entryS - 2.5) return 2;
-  return 1;
+function makeVehicleHistoryFrame(vehicle) {
+  return {
+    time: vehicle.historyTravelTime || 0,
+    distance: vehicle.distance,
+    speed: Math.max(0, vehicle.velocity || 0),
+    position: vehicle.mesh.position.toArray(),
+    quaternion: vehicle.mesh.quaternion.toArray(),
+    rotation: [vehicle.mesh.rotation.x, vehicle.mesh.rotation.y, vehicle.mesh.rotation.z],
+  };
 }
 
-function getContactApproachScore(vehicle, other) {
-  const vehicleSample = getVehicleRouteSample(vehicle, vehicle.distance);
-  const otherSample = getVehicleRouteSample(other, other.distance);
-  const dx = otherSample.x - vehicleSample.x;
-  const dz = otherSample.z - vehicleSample.z;
-  const forward = { x: Math.sin(vehicleSample.heading), z: Math.cos(vehicleSample.heading) };
-  const right = { x: Math.cos(vehicleSample.heading), z: -Math.sin(vehicleSample.heading) };
-  const forwardGap = dx * forward.x + dz * forward.z;
-  const sideGap = Math.abs(dx * right.x + dz * right.z);
-  const speedBias = Math.max(0, vehicle.velocity || 0) * 0.25;
-  const rearPenalty = forwardGap < -0.8 ? 4 : 0;
-  const sidePenalty = sideGap > 2.4 ? 1.2 : sideGap * 0.45;
-  return forwardGap + speedBias - rearPenalty - sidePenalty;
-}
-
-function chooseContactBackoffVehicle(vehicle, other) {
-  const vehicleApproachScore = getContactApproachScore(vehicle, other);
-  const otherApproachScore = getContactApproachScore(other, vehicle);
-  if (Math.abs(vehicleApproachScore - otherApproachScore) > 0.75) {
-    return vehicleApproachScore > otherApproachScore ? vehicle : other;
+function recordVehicleHistory(vehicle, delta, force = false) {
+  if (!vehicle?.mesh?.visible || vehicle.reversePlayback) return;
+  vehicle.historyElapsed = (vehicle.historyElapsed || 0) + delta;
+  if (Math.max(0, vehicle.velocity || 0) > 0.05) {
+    vehicle.historyTravelTime = (vehicle.historyTravelTime || 0) + delta;
   }
+  vehicle.historySampleElapsed = (vehicle.historySampleElapsed || 0) + delta;
+  if (!force && vehicle.historySampleElapsed < REVERSE_HISTORY_SAMPLE_SECONDS) return;
+  vehicle.historySampleElapsed = 0;
+  const frame = makeVehicleHistoryFrame(vehicle);
+  const history = vehicle.movementHistory || (vehicle.movementHistory = []);
+  const previous = history[history.length - 1];
+  if (previous && Math.abs(previous.time - frame.time) < 0.0001) history[history.length - 1] = frame;
+  else history.push(frame);
+  const cutoff = frame.time - REVERSE_HISTORY_SECONDS;
+  while (history.length > 2 && history[1].time < cutoff) history.shift();
+}
 
-  const vehicleRank = getRoundaboutPriorityRank(vehicle);
-  const otherRank = getRoundaboutPriorityRank(other);
-  if (vehicleRank !== otherRank) return vehicleRank < otherRank ? vehicle : other;
-
-  const sameApproach = vehicle.route?.approach && vehicle.route.approach === other.route?.approach;
-  if (sameApproach && vehicle.distance !== other.distance) return vehicle.distance < other.distance ? vehicle : other;
-
-  if (vehicle.vehicleKind === 'moto' && other.vehicleKind !== 'moto') return vehicle;
-  if (other.vehicleKind === 'moto' && vehicle.vehicleKind !== 'moto') return other;
-
+function chooseSpawnPriorityVehicles(vehicle, other) {
+  const vehicleOrder = Number.isFinite(vehicle.spawnOrder) ? vehicle.spawnOrder : Infinity;
+  const otherOrder = Number.isFinite(other.spawnOrder) ? other.spawnOrder : Infinity;
+  if (vehicleOrder !== otherOrder) {
+    return vehicleOrder < otherOrder
+      ? { priorityVehicle: vehicle, yielder: other }
+      : { priorityVehicle: other, yielder: vehicle };
+  }
   const vehicleIndex = trafficRuntime?.vehicles.indexOf(vehicle) ?? 0;
   const otherIndex = trafficRuntime?.vehicles.indexOf(other) ?? 0;
-  return vehicleIndex > otherIndex ? vehicle : other;
+  return vehicleIndex <= otherIndex
+    ? { priorityVehicle: vehicle, yielder: other }
+    : { priorityVehicle: other, yielder: vehicle };
 }
 
-function beginContactBackoff(yielder, priorityVehicle, t) {
+function isYieldingToPriority(vehicle, priorityVehicle) {
+  return vehicle?.reversePriorityVehicle === priorityVehicle;
+}
+
+function getReversePlaybackFrame(history, targetTime) {
+  if (!history.length) return null;
+  if (targetTime <= history[0].time) return history[0];
+  let upperIndex = history.length - 1;
+  while (upperIndex > 0 && history[upperIndex - 1].time >= targetTime) upperIndex -= 1;
+  const upper = history[upperIndex];
+  const lower = history[Math.max(0, upperIndex - 1)];
+  if (upper === lower || upper.time <= lower.time) return lower;
+  const alpha = clamp((targetTime - lower.time) / (upper.time - lower.time), 0, 1);
+  return {
+    time: targetTime,
+    distance: lower.distance + (upper.distance - lower.distance) * alpha,
+    speed: lower.speed + (upper.speed - lower.speed) * alpha,
+    position: lower.position.map((value, index) => value + (upper.position[index] - value) * alpha),
+    quaternion: new THREE.Quaternion(...lower.quaternion)
+      .slerp(new THREE.Quaternion(...upper.quaternion), alpha)
+      .toArray(),
+  };
+}
+
+function applyReversePlaybackFrame(vehicle, frame) {
+  vehicle.distance = frame.distance;
+  vehicle.s = frame.distance;
+  vehicle.velocity = -Math.max(0.1, frame.speed || vehicle.speed || 0);
+  vehicle.mesh.position.fromArray(frame.position);
+  vehicle.mesh.quaternion.fromArray(frame.quaternion);
+  vehicle.mesh.updateMatrix();
+  vehicle.mesh.updateWorldMatrix(false, true);
+  vehicle.displayHeading = vehicle.mesh.rotation.y;
+  syncVehicleLaneState(vehicle);
+  if (vehicle.label) {
+    vehicle.label.visible = true;
+    vehicle.label.position.set(frame.position[0], 2.1, frame.position[2]);
+    setTextSprite(vehicle.label, `${vehicle.route.id} REVERSE_PLAYBACK_${vehicle.reverseAttempt}`, '#EF9F27');
+  }
+}
+
+function beginReversePlayback(yielder, priorityVehicle, t) {
   if (!yielder?.route || !yielder.mesh?.visible) return false;
-  if (yielder.contactBackoffTargetS !== null && yielder.contactBackoffDuration > 0) return true;
-  const minBackoffS = Math.max(getRouteSpawnS(yielder.route), yielder.distance - ROUNDABOUT_CONTACT_BACKOFF_DISTANCE);
-  if (yielder.distance <= minBackoffS + 0.05) return false;
-  yielder.contactBackoffTargetS = minBackoffS;
-  yielder.contactBackoffUntil = t + ROUNDABOUT_CONTACT_BACKOFF_MAX_SECONDS;
-  yielder.contactBackoffForVehicle = priorityVehicle;
-  yielder.contactBackoffStartedAt = yielder.contactBackoffStartedAt || t;
-  yielder.contactBackoffStartS = yielder.distance;
-  yielder.contactBackoffElapsed = 0;
-  yielder.contactBackoffDuration = Math.min(
-    ROUNDABOUT_CONTACT_BACKOFF_MAX_SECONDS,
-    Math.max(0.8, ((yielder.distance - minBackoffS) * 1.5) / ROUNDABOUT_CONTACT_BACKOFF_SPEED),
-  );
-  yielder.contactBackoffSpeed = 0;
+  if (yielder.reversePlayback) return true;
+  if ((yielder.reverseCooldownUntil || 0) > t) return false;
+  if ((yielder.reverseAttempt || 0) >= REVERSE_PLAYBACK_ATTEMPT_SECONDS.length) return false;
+  const history = yielder.movementHistory || [];
+  if (history.length < 2) return false;
+  const attempt = Math.min((yielder.reverseAttempt || 0) + 1, REVERSE_PLAYBACK_ATTEMPT_SECONDS.length);
+  const requestedDuration = REVERSE_PLAYBACK_ATTEMPT_SECONDS[attempt - 1];
+  const endTime = history[history.length - 1].time;
+  const availableDuration = endTime - history[0].time;
+  const duration = Math.min(requestedDuration, availableDuration);
+  if (duration < 0.2) return false;
+  yielder.reverseAttempt = attempt;
+  yielder.reversePriorityVehicle = priorityVehicle;
+  yielder.reversePlayback = { attempt, duration, elapsed: 0, endTime, targetTime: endTime - duration };
   yielder.velocity = 0;
-  yielder.state = 'BACKING_UP';
+  yielder.state = `REVERSE_PLAYBACK_${attempt}`;
+  if (trafficRuntime?.debug) console.info('[traffic-debug] reverse playback start', yielder.id, `attempt=${attempt}`, `duration=${duration.toFixed(2)}`, `priority=${priorityVehicle.id}`);
   return true;
 }
 
-function resolveContactBackoff(vehicle, delta, t) {
-  if (vehicle.contactBackoffTargetS === null || vehicle.contactBackoffDuration <= 0 || !vehicle.mesh.visible) {
-    vehicle.contactBackoffUntil = 0;
-    vehicle.contactBackoffForVehicle = null;
-    vehicle.contactBackoffTargetS = null;
-    vehicle.contactBackoffStartedAt = 0;
-    vehicle.contactBackoffStartS = null;
-    vehicle.contactBackoffElapsed = 0;
-    vehicle.contactBackoffDuration = 0;
-    vehicle.contactBackoffSpeed = 0;
-    return false;
-  }
+function hasReverseClearance(vehicle, priorityVehicle) {
+  if (!priorityVehicle?.mesh?.visible) return true;
+  const centerGap = distanceBetweenRouteSamples(vehicle, vehicle.distance, priorityVehicle, priorityVehicle.distance);
+  const requiredGap = getVehicleFootprintGap(vehicle, priorityVehicle) + 0.8;
+  const blocker = findGlobalProximityBlocker(
+    vehicle,
+    Math.min(vehicle.route.length, vehicle.distance + 0.35),
+    animatedObjects,
+    trafficRuntime?.vehicles,
+  );
+  return centerGap >= requiredGap && (!blocker || blocker.other !== priorityVehicle);
+}
 
-  const targetS = Math.max(getRouteSpawnS(vehicle.route), vehicle.contactBackoffTargetS ?? vehicle.distance);
-  const startS = Math.max(targetS, vehicle.contactBackoffStartS ?? vehicle.distance);
-  const backoffDistance = startS - targetS;
-  const duration = Math.max(0.001, vehicle.contactBackoffDuration || ROUNDABOUT_CONTACT_BACKOFF_MAX_SECONDS);
-  vehicle.contactBackoffElapsed = Math.min(duration, (vehicle.contactBackoffElapsed || 0) + delta);
-  const progress = clamp(vehicle.contactBackoffElapsed / duration, 0, 1);
-  const easedProgress = progress * progress * (3 - 2 * progress);
-  const reverseSpeed = (backoffDistance * 6 * progress * (1 - progress)) / duration;
-  const nextDistance = Math.max(targetS, startS - backoffDistance * easedProgress);
-  vehicle.distance = nextDistance;
-  vehicle.s = nextDistance;
-  vehicle.contactBackoffSpeed = reverseSpeed;
-  vehicle.velocity = -reverseSpeed;
+function finishReversePlayback(vehicle, t) {
+  const playback = vehicle.reversePlayback;
+  const priorityVehicle = vehicle.reversePriorityVehicle;
+  const finalTime = playback?.targetTime ?? 0;
+  vehicle.movementHistory = (vehicle.movementHistory || []).filter((frame) => frame.time <= finalTime + 0.0001);
+  vehicle.historyTravelTime = finalTime;
+  vehicle.historySampleElapsed = 0;
+  vehicle.reversePlayback = null;
+  vehicle.velocity = 0;
+  const clear = hasReverseClearance(vehicle, priorityVehicle);
+  if (!clear && (vehicle.reverseAttempt || 0) < REVERSE_PLAYBACK_ATTEMPT_SECONDS.length) {
+    recordVehicleHistory(vehicle, 0, true);
+    if (beginReversePlayback(vehicle, priorityVehicle, t)) return;
+  }
+  vehicle.reverseCooldownUntil = t + 0.45;
+  vehicle.state = vehicle.distance < vehicle.route.entryS ? 'WAITING_TO_ENTER' : 'YIELDING';
+  if (clear) {
+    vehicle.reverseAttempt = 0;
+    vehicle.reversePriorityVehicle = null;
+  }
+  recordVehicleHistory(vehicle, 0, true);
+  if (trafficRuntime?.debug) console.info('[traffic-debug] reverse playback end', vehicle.id, `clear=${clear}`, `attempt=${vehicle.reverseAttempt || 0}`);
+}
+
+function resolveReversePlayback(vehicle, delta, t) {
+  const playback = vehicle.reversePlayback;
+  if (!playback || !vehicle.mesh.visible) return false;
+  playback.elapsed = Math.min(playback.duration, playback.elapsed + delta);
+  const targetTime = playback.endTime - playback.elapsed;
+  const frame = getReversePlaybackFrame(vehicle.movementHistory || [], targetTime);
+  if (frame) applyReversePlaybackFrame(vehicle, frame);
   vehicle.blockedFor = 0;
   vehicle.bodyContactFor = 0;
-  vehicle.state = 'BACKING_UP';
-  applyVehicleRoutePose(vehicle, delta);
-
-  if (progress >= 1) {
-    vehicle.contactBackoffUntil = 0;
-    vehicle.contactBackoffForVehicle = null;
-    vehicle.contactBackoffTargetS = null;
-    vehicle.contactBackoffStartedAt = 0;
-    vehicle.contactBackoffStartS = null;
-    vehicle.contactBackoffElapsed = 0;
-    vehicle.contactBackoffDuration = 0;
-    vehicle.contactBackoffSpeed = 0;
-    vehicle.velocity = 0;
-    vehicle.state = vehicle.distance < vehicle.route.entryS ? 'WAITING_TO_ENTER' : 'YIELDING';
-  }
+  vehicle.state = `REVERSE_PLAYBACK_${playback.attempt}`;
+  if (playback.elapsed >= playback.duration - 0.0001) finishReversePlayback(vehicle, t);
   return true;
 }
 
@@ -522,25 +571,34 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
   const yieldLineS = getRouteStopLineS(route);
   const beforeRoundaboutEntry = vehicle.distance < route.entryS - 0.15;
 
-  if (resolveContactBackoff(vehicle, delta, t)) return true;
+  if (resolveReversePlayback(vehicle, delta, t)) return true;
+  if (vehicle.reversePriorityVehicle && hasReverseClearance(vehicle, vehicle.reversePriorityVehicle)) {
+    vehicle.reversePriorityVehicle = null;
+    vehicle.reverseAttempt = 0;
+  }
 
   const bodyContactBlocker = findBodyContactBlocker(vehicle, vehicle.distance, animatedObjects);
-  if (bodyContactBlocker) {
-    const yielder = chooseContactBackoffVehicle(vehicle, bodyContactBlocker.other);
-    const priorityVehicle = yielder === vehicle ? bodyContactBlocker.other : vehicle;
-    if (beginContactBackoff(yielder, priorityVehicle, t)) {
-      if (yielder === vehicle) return resolveContactBackoff(vehicle, delta, t);
-      vehicle.velocity = approachVehicleSpeed(vehicle.velocity, Math.min(vehicle.speed || 5, 1.2), delta);
-      vehicle.state = vehicle.distance < route.entryS ? 'APPROACHING' : 'CIRCULATING';
-    } else {
+  const stoppedNearBlocker = Math.abs(vehicle.velocity || 0) <= REVERSE_PLAYBACK_STOP_SPEED
+    ? findGlobalProximityBlocker(
+      vehicle,
+      Math.min(route.length, vehicle.distance + 0.35),
+      animatedObjects,
+      trafficRuntime?.vehicles,
+    )
+    : null;
+  const mutualBlocker = bodyContactBlocker || stoppedNearBlocker;
+  if (mutualBlocker) {
+    const { yielder, priorityVehicle } = chooseSpawnPriorityVehicles(vehicle, mutualBlocker.other);
+    const shouldReverseNow = Boolean(bodyContactBlocker) || Math.abs(yielder.velocity || 0) <= REVERSE_PLAYBACK_STOP_SPEED;
+    if (shouldReverseNow && beginReversePlayback(yielder, priorityVehicle, t)) {
+      if (yielder === vehicle) return resolveReversePlayback(vehicle, delta, t);
+    } else if (yielder === vehicle) {
       vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
       vehicle.state = beforeRoundaboutEntry ? 'WAITING_TO_ENTER' : 'YIELDING';
+      vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
+      applyVehicleRoutePose(vehicle, delta);
+      return true;
     }
-    vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
-    vehicle.bodyContactFor = (vehicle.bodyContactFor || 0) + delta;
-    vehicle.continuousReverse = false;
-    applyVehicleRoutePose(vehicle, delta);
-    return true;
   }
   vehicle.bodyContactFor = 0;
 
@@ -560,9 +618,10 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
     && (!trafficRuntime.entryGrantedThisStep || hasOwnReservation)
     && entryClear
     && isRoundaboutExitClear(vehicle);
-  const sameRouteAhead = findVehicleAhead(vehicle);
-  const approachAhead = findApproachVehicleAhead(vehicle);
-  const circulatingAhead = findCirculatingVehicleAhead(vehicle);
+  const ignoreYieldingVehicle = (ahead) => (ahead && isYieldingToPriority(ahead.other, vehicle) ? null : ahead);
+  const sameRouteAhead = ignoreYieldingVehicle(findVehicleAhead(vehicle));
+  const approachAhead = ignoreYieldingVehicle(findApproachVehicleAhead(vehicle));
+  const circulatingAhead = ignoreYieldingVehicle(findCirculatingVehicleAhead(vehicle));
   const safeGap = route.safeGap + (vehicle.vehicleKind === 'bus' ? 2 : 0);
   let desiredSpeed = vehicle.speed || 5;
 
@@ -607,9 +666,12 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
     nextDistance = Math.min(nextDistance, yieldLineS);
     if (nextDistance >= yieldLineS - 0.001) vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
   }
-  const hardBlocker = beforeRoundaboutEntry
+  const detectedHardBlocker = beforeRoundaboutEntry
     ? null
     : findGlobalProximityBlocker(vehicle, nextDistance, animatedObjects, trafficRuntime?.vehicles);
+  const hardBlocker = detectedHardBlocker && isYieldingToPriority(detectedHardBlocker.other, vehicle)
+    ? null
+    : detectedHardBlocker;
   if (hardBlocker) {
     vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
     vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
@@ -877,14 +939,15 @@ function createVehicle(vehicle) {
     continuousReverse: false,
     bodyContactFor: 0,
     entryClearUntil: 0,
-    contactBackoffUntil: 0,
-    contactBackoffForVehicle: null,
-    contactBackoffTargetS: null,
-    contactBackoffStartedAt: 0,
-    contactBackoffStartS: null,
-    contactBackoffElapsed: 0,
-    contactBackoffDuration: 0,
-    contactBackoffSpeed: 0,
+    movementHistory: [],
+    historyElapsed: 0,
+    historyTravelTime: 0,
+    historySampleElapsed: 0,
+    spawnOrder: Infinity,
+    reverseAttempt: 0,
+    reversePlayback: null,
+    reversePriorityVehicle: null,
+    reverseCooldownUntil: 0,
     respawnAt: spawnFromOutside
       ? Math.max(vehicle.startDelay ?? 0, (trafficRuntime?.vehicles?.length || 0) * ROUNDABOUT_MODEL_START_STAGGER_SECONDS)
       : 0,
@@ -948,6 +1011,7 @@ function addTrafficLayer() {
     lastSpawnAt: -Infinity,
     lastSpawnAtByLane: new Map(),
     lastSpawnAtByApproach: new Map(),
+    spawnSequence: 0,
     phaseSprite: null,
   };
   trafficSpawner = createTrafficSpawner({

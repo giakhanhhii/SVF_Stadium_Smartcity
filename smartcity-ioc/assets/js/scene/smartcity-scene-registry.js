@@ -1,4 +1,4 @@
-import { initSmartcityScene, disposeSmartcityScene } from './smartcity-scene-runtime.js?v=roundabout-flow-20260618j';
+import { initSmartcityScene, disposeSmartcityScene } from './smartcity-scene-runtime.js?v=roundabout-replay-20260619b';
 
 let currentPage = null;
 
@@ -14,4 +14,4 @@ export function initPageScenes(pageId) {
   currentPage = pageId;
 }
 
-export { applyPageView } from './smartcity-scene-runtime.js?v=roundabout-flow-20260618j';
+export { applyPageView } from './smartcity-scene-runtime.js?v=roundabout-replay-20260619b';

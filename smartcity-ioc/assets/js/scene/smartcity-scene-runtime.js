@@ -1028,10 +1028,13 @@ function addTrafficLayer() {
       ROUNDABOUT_MIN_SPAWN_INTERVAL_SECONDS,
     },
   });
-  if (trafficRuntime.debug && typeof window !== 'undefined') {
+  if (typeof window !== 'undefined') {
+    // Luôn chia sẻ runtime để camera 2D thời gian thực đọc đúng xe trong model 3D.
     window.__smartcityTrafficRuntime = trafficRuntime;
     document.documentElement.__smartcityTrafficRuntime = trafficRuntime;
     document.documentElement.dataset.smartcityTrafficRuntimeVersion = SMARTCITY_TRAFFIC_RUNTIME_VERSION;
+  }
+  if (trafficRuntime.debug && typeof window !== 'undefined') {
     if (trafficRuntime.directionAudit) {
       document.documentElement.dataset.smartcityVehicleDirectionMinAlignment = '1';
       delete document.documentElement.dataset.smartcityVehicleDirectionWorst;
@@ -1435,4 +1438,8 @@ export async function initSmartcityScene(pageId) {
 export function disposeSmartcityScene() {
   activeScene?.dispose();
   activeScene = null;
+  if (typeof window !== 'undefined' && window.__smartcityTrafficRuntime) {
+    window.__smartcityTrafficRuntime = null;
+    if (document.documentElement) document.documentElement.__smartcityTrafficRuntime = null;
+  }
 }

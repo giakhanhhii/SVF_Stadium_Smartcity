@@ -1,4 +1,5 @@
 import { renderTrafficViolations, redLightModal } from './traffic-violations.js';
+import { openTrafficLiveMap, closeTrafficLiveMap } from './traffic-live-map.js';
 
 const BLUE = '#00d4ff';
 const BLUE_DARK = '#185FA5';
@@ -193,10 +194,10 @@ function compactCameraGrid(feeds) {
       <circle class="traffic-camera-map__ring" cx="${hub.x}" cy="${hub.y}" r="22"/>
       <circle class="traffic-camera-map__pulse" cx="${hub.x}" cy="${hub.y}" r="12"/>
       ${positions.map((p, index) => `<line class="traffic-camera-map__link traffic-camera-map__link--${cameraItems[index]?.tone || 'ok'}" x1="${hub.x}" y1="${hub.y}" x2="${p.x}" y2="${p.y}"/>`).join('')}
-      <circle class="traffic-camera-map__hub-glow" cx="${hub.x}" cy="${hub.y}" r="14"/>
-      <circle class="traffic-camera-map__hub" cx="${hub.x}" cy="${hub.y}" r="8"/>
-      <path class="traffic-camera-map__hub-icon" d="M47 28L56 33L47 38Z"/>
     </svg>
+    <button type="button" class="traffic-camera-map__play" data-traffic-live aria-label="Mở camera 2D nút A4 thời gian thực" style="--x:${hub.x}%;--y:${hub.y}%">
+      <i class="ti ti-player-play-filled"></i>
+    </button>
     ${cameraItems.map((f, index) => {
     const pos = positions[index] || positions[0];
     return `<button type="button" class="traffic-camera-node traffic-camera-node--${f.tone} traffic-camera-node--${f.id}" data-traffic-camera="${f.id}" aria-label="Mở popup ${f.title}" style="--x:${pos.x}%;--y:${pos.y}%">
@@ -231,6 +232,32 @@ function trafficCameraModal() {
       <button type="button" class="traffic-camera-modal__primary" data-traffic-camera-confirm>
         <i class="ti ti-send"></i><span>Xác nhận theo dõi</span>
       </button>
+    </section>
+  </div>`;
+}
+
+function trafficLiveModal() {
+  return `<div class="traffic-live-modal" data-traffic-live-modal hidden>
+    <button type="button" class="traffic-live-modal__backdrop" data-traffic-live-close aria-label="Đóng"></button>
+    <section class="traffic-live-modal__panel" role="dialog" aria-modal="true" aria-label="Camera 2D nút A4 thời gian thực">
+      <button type="button" class="traffic-live-modal__close" data-traffic-live-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+      <div class="traffic-live-modal__head">
+        <span class="traffic-live-modal__icon"><i class="ti ti-map-2"></i></span>
+        <div>
+          <small>CAM A4 · LIVE 2D</small>
+          <h3>Camera 2D nút A4</h3>
+        </div>
+        <span class="traffic-live-modal__live"><i></i>Trực tiếp</span>
+      </div>
+      <div class="traffic-live-modal__stage">
+        <canvas data-traffic-live-canvas></canvas>
+        <p class="traffic-live-modal__hint" data-traffic-live-status hidden>Đang kết nối luồng giao thông 3D…</p>
+      </div>
+      <div class="traffic-live-modal__counts" aria-label="Số lượng phương tiện theo thời gian thực">
+        <span class="traffic-live-count traffic-live-count--total"><i class="ti ti-car-suv"></i><b data-live-total>0</b><em>Tổng xe</em></span>
+        <span class="traffic-live-count traffic-live-count--car"><i class="ti ti-car"></i><b data-live-car>0</b><em>Ô tô</em></span>
+        <span class="traffic-live-count traffic-live-count--moto"><i class="ti ti-motorbike"></i><b data-live-moto>0</b><em>Xe máy</em></span>
+      </div>
     </section>
   </div>`;
 }
@@ -290,13 +317,40 @@ export function renderTrafficLeftSidebar(d) {
       ${compactCameraGrid(d.cameras.feeds)}
     </section>
     ${trafficCameraModal()}
+    ${trafficLiveModal()}
     ${redLightModal()}`;
+}
+
+function getTrafficLiveModal(root = document) {
+  const modal = root.querySelector('[data-traffic-live-modal]') || document.querySelector('[data-traffic-live-modal]');
+  if (!modal) return null;
+  const bodyModal = document.body.querySelector('[data-traffic-live-modal]');
+  if (bodyModal && bodyModal !== modal) bodyModal.remove();
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
+  return modal;
 }
 
 export function bindTrafficCameraModal() {
   if (document.documentElement.dataset.trafficCameraModalBound === 'true') return;
   document.documentElement.dataset.trafficCameraModalBound = 'true';
   document.addEventListener('click', (event) => {
+    const liveBtn = event.target.closest('[data-traffic-live]');
+    if (liveBtn) {
+      const modal = getTrafficLiveModal(liveBtn.closest('#page-traffic') || document);
+      if (modal) {
+        modal.hidden = false;
+        openTrafficLiveMap(modal);
+      }
+      return;
+    }
+
+    const liveModal = document.querySelector('[data-traffic-live-modal]:not([hidden])');
+    if (liveModal && event.target.closest('[data-traffic-live-close]')) {
+      liveModal.hidden = true;
+      closeTrafficLiveMap();
+      return;
+    }
+
     const cameraBtn = event.target.closest('[data-traffic-camera]');
     if (cameraBtn) {
       openTrafficCameraModal(cameraBtn.closest('#page-traffic') || document, cameraBtn.dataset.trafficCamera);

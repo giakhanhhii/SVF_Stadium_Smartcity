@@ -118,12 +118,27 @@ export function createIfcPicking({ getCityReveal, urls }) {
       // Vẫn bấm được từng phần tử nhờ _ifc_index (id TOÀN CỤC) tra vào danh sách phẳng.
       const liteCache = new Map();   // vật liệu PBR gốc -> Basic phẳng (giữ màu)
       const geomsByMat = new Map();  // vật liệu Basic -> [geometry, ...]
+      // Đổi MÀU tòa TecnoPark sang tông kính xanh thép (theo ảnh thực tế),
+      // CHỈ đổi màu — vẫn giữ nguyên vật liệu/hình học. Giữ độ sáng tương đối
+      // của từng vật liệu (kính vs khung) để không mất chi tiết, chỉ dịch tông màu.
+      const TECHNOPARK_TINT = new THREE.Color(0x123f66); // tông kính xanh nước biển (ocean blue)
+      // BRIGHTNESS < 1 = đậm/tối hơn (giữ luminance tương đối giữa kính/khung,
+      // chỉ kéo toàn bộ tối xuống cho ra xanh nước biển đậm). Giảm số này để đậm hơn.
+      const TECHNOPARK_BRIGHTNESS = 0.6;
+      const tintLum = 0.299 * TECHNOPARK_TINT.r + 0.587 * TECHNOPARK_TINT.g + 0.114 * TECHNOPARK_TINT.b;
+      const recolor = (src) => {
+        const base = src && src.color ? src.color : new THREE.Color(0x9bb7c7);
+        const lum = 0.299 * base.r + 0.587 * base.g + 0.114 * base.b;
+        // map độ sáng nguồn lên tông màu mục tiêu (giữ tương phản sáng/tối)
+        const scale = (tintLum > 0 ? lum / tintLum : 1) * TECHNOPARK_BRIGHTNESS;
+        return TECHNOPARK_TINT.clone().multiplyScalar(scale);
+      };
       // MeshBasicMaterial = không tính ánh sáng → nhẹ nhất, phẳng đúng như chế độ
       // Solid 'Flat' của Blender (GPU tích hợp Intel UHD đỡ tải nhất).
       const toLite = (src) => {
         if (liteCache.has(src)) return liteCache.get(src);
         const lite = new THREE.MeshBasicMaterial({
-          color: src && src.color ? src.color.clone() : new THREE.Color(0x9bb7c7),
+          color: recolor(src),
           side: src ? src.side : THREE.FrontSide,
           vertexColors: src ? src.vertexColors : false,
         });

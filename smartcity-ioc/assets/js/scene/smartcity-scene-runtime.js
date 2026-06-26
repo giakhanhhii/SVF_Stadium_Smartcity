@@ -10,27 +10,19 @@ import { applyCameraPreset, isCameraTweening, setSceneHint, showSceneLoading, tw
 import { addProceduralCityFallback } from './smartcity-procedural-scene.js';
 import {
   buildTrafficRoutes,
-  ccwAngleDistance,
   getLaneTangentHeading as getVehiclePoseHeading,
   getRouteSample,
   getRouteSpawnS,
   getRouteStopLineS,
-  normalizeAngle,
-} from './traffic/traffic-lanes.js?v=roundabout-replay-20260625a';
+} from './traffic/traffic-lanes.js?v=traffic-sim-idm-20260626d';
+import { createTrafficSpawner } from './traffic/traffic-spawn.js?v=traffic-sim-idm-20260626d';
 import {
-  distanceBetweenRouteSamples,
-  findBodyContactBlocker,
-  findGlobalProximityBlocker,
-  getVehicleFootprintGap,
-  getVehicleRouteSample,
-} from './traffic/traffic-occupancy.js?v=roundabout-replay-20260625a';
-import { createTrafficSpawner } from './traffic/traffic-spawn.js?v=roundabout-replay-20260625a';
-import {
+  createTrafficSimulation,
   getRoundaboutApproachSignal,
   getSignalState,
   getVehicleLengthAllowance,
   syncVehicleLaneState,
-} from './traffic/traffic-simulation.js?v=traffic-sim-20260626a';
+} from './traffic/traffic-simulation.js?v=traffic-sim-idm-20260626d';
 import { createTextSprite, setTextSprite } from './smartcity-scene-sprites.js?v=sprites-20260626a';
 import { createWorldMap } from './smartcity-world-map.js?v=worldmap-20260626a';
 import { createIfcPicking } from './smartcity-ifc-picking.js?v=ifc-picking-20260626a';
@@ -56,6 +48,7 @@ const emphasisTargets = new Map();
 const animatedObjects = [];
 let trafficRuntime = null;
 let trafficSpawner = null;
+let trafficSim = null; // cụm mô phỏng (createTrafficSimulation) — tạo sau buildCity mỗi cảnh
 let cityPicking = null; // controller mạng ống + tòa TecnoPark (loader + picking) — tạo mỗi cảnh
 
 // ===== Bản đồ thế giới georeferenced (toggle "Bật bản đồ" ở tab Tổng quan) =====
@@ -65,30 +58,13 @@ let cityPicking = null; // controller mạng ống + tòa TecnoPark (loader + pi
 // và là điểm neo của mô hình lên tọa độ thật (đáy tòa nhà nằm đúng pin trên bản đồ).
 const TECHNOPARK_SCENE_POS = [29.78, 6, -38.3];
 
+// Hằng spawn/stagger còn dùng ở runtime (truyền vào trafficSpawner + createVehicle). Các hằng
+// mô phỏng khác (REVERSE_*, PHASE_THROUGH_*, TRAFFIC_ACCEL/BRAKE, ROUNDABOUT_HEADING_TURN_RATE)
+// đã chuyển sang ./traffic/traffic-simulation.js cùng cụm hàm mô phỏng (Phase 4b).
 const ROUNDABOUT_MAX_SMOOTH_VEHICLES = 7;
 const ROUNDABOUT_MAX_ACTIVE_PER_APPROACH = 3;
 const ROUNDABOUT_MIN_SPAWN_INTERVAL_SECONDS = 0.7;
-const ROUNDABOUT_HEADING_TURN_RATE = 4.8;
 const ROUNDABOUT_MODEL_START_STAGGER_SECONDS = 0.75;
-const REVERSE_HISTORY_SECONDS = 10;
-const REVERSE_HISTORY_SAMPLE_SECONDS = 0.05;
-// Lùi "từ từ": mỗi nhịp chỉ lùi một đoạn ngắn rồi kiểm tra lại đã thoát chưa.
-// Cần thì lùi nhiều (lặp nhiều nhịp), không cần thì lùi ít (1 nhịp rồi dừng).
-const REVERSE_PLAYBACK_CHUNK_SECONDS = 0.5;
-// Còn ít hơn thế này trong lịch sử thì coi như hết đường lùi (không lùi xuyên / ra ngoài làn).
-const REVERSE_PLAYBACK_MIN_DURATION = 0.15;
-// Chạm thân + kẹt cứng quá lâu mới chủ động lùi (xe nhường trước, chỉ lùi khi thật sự kẹt).
-const REVERSE_TRIGGER_BLOCKED_SECONDS = 2.2;
-const REVERSE_PLAYBACK_STOP_SPEED = 0.45;
-// "Đi xuyên": xe spawn TRƯỚC (ưu tiên) không bao giờ lùi. Nếu bị chặn đứng yên quá
-// PHASE_THROUGH_TRIGGER_SECONDS thì luôn đi tiếp, đi xuyên qua xe cản trong
-// PHASE_THROUGH_DURATION_SECONDS để phá thế kẹt, sau đó nếu lại bị chặn thì lặp lại.
-const PHASE_THROUGH_TRIGGER_SECONDS = 2.5;
-const PHASE_THROUGH_DURATION_SECONDS = 3;
-const TRAFFIC_FIXED_STEP_SECONDS = 0.05;
-const TRAFFIC_MAX_FIXED_STEPS = 5;
-const TRAFFIC_ACCELERATION_METERS_PER_SECOND = 1.5;
-const TRAFFIC_BRAKE_METERS_PER_SECOND = 3.0;
 const SMARTCITY_TRAFFIC_RUNTIME_VERSION = 'roundabout-reverse-20260626a';
 const SMARTCITY_MODEL_VERSION = 'technopark-20260625e';
 
@@ -149,16 +125,6 @@ function isDirectionAuditEnabled() {
   return params.get('directionAudit') === '1' || window.localStorage?.getItem('directionAudit') === '1';
 }
 
-function getLaneSignalState(vehicle, t) {
-  const state = getSignalState(trafficRuntime.cycle, t);
-  const signalGroup = vehicle.route?.signalGroup || vehicle.route?.movement;
-  return {
-    ...state,
-    signalGroup,
-    allowsEntry: state.color === 'green' && state.movement === signalGroup,
-  };
-}
-
 // Đặt đèn ngay trước vạch dừng của làn vào, lệch ra mép vỉa hè bên làn tới,
 // mặt đèn quay về phía xe đang chạy tới để tài xế thấy trước khi tới vạch.
 function computeRoundaboutLightTransforms() {
@@ -189,49 +155,6 @@ function computeRoundaboutLightTransforms() {
     });
   });
   return out;
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function approachVehicleSpeed(currentSpeed, desiredSpeed, delta) {
-  const current = Math.max(0, currentSpeed || 0);
-  const target = Math.max(0, desiredSpeed || 0);
-  const limit = (target >= current ? TRAFFIC_ACCELERATION_METERS_PER_SECOND : TRAFFIC_BRAKE_METERS_PER_SECOND) * delta;
-  return clamp(current + clamp(target - current, -limit, limit), 0, target >= current ? target : current);
-}
-
-function stoppingSpeedForDistance(distance, brake = TRAFFIC_BRAKE_METERS_PER_SECOND) {
-  return Math.sqrt(Math.max(0, 2 * brake * Math.max(0, distance)));
-}
-
-function findNearestVehicleAheadOnLane(vehicle, maxDistance = Infinity) {
-  let nearest = null;
-  animatedObjects.forEach((other) => {
-    if (other === vehicle || other.type !== 'vehicle' || other.route !== vehicle.route || !other.mesh.visible) return;
-    const gap = other.distance - vehicle.distance;
-    if (gap <= 0 || gap > maxDistance) return;
-    if (!nearest || gap < nearest.gap) nearest = { other, gap };
-  });
-  return nearest;
-}
-
-function applyCarFollowingSpeed(vehicle, desiredSpeed, ahead, safeGap, delta) {
-  if (!ahead) return desiredSpeed;
-  const vehicleLength = getVehicleLengthAllowance(ahead.other);
-  const currentSpeed = Math.max(0, vehicle.velocity || 0);
-  const leadSpeed = Math.max(0, ahead.other.velocity || 0);
-  const closingSpeed = Math.max(0, currentSpeed - leadSpeed);
-  const desiredGap = safeGap
-    + vehicleLength * 0.45
-    + currentSpeed * 0.7
-    + (closingSpeed * closingSpeed) / (2 * TRAFFIC_BRAKE_METERS_PER_SECOND);
-  if (ahead.gap >= desiredGap) return desiredSpeed;
-  const gapRatio = clamp((ahead.gap - vehicleLength * 0.25) / Math.max(0.1, desiredGap), 0, 1);
-  const smoothSpeed = desiredSpeed * gapRatio * gapRatio;
-  const leadBound = leadSpeed + Math.max(0, ahead.gap - safeGap) * 0.35;
-  return Math.min(desiredSpeed, Math.max(0, Math.min(smoothSpeed, leadBound)));
 }
 
 function addTrafficDebugLayer(parent) {
@@ -271,603 +194,6 @@ function addTrafficDebugLayer(parent) {
   parent.add(trafficRuntime.phaseSprite);
 }
 
-function isIntersectionReserved(vehicle) {
-  return animatedObjects.some((other) => (
-    other !== vehicle
-    && other.type === 'vehicle'
-    && other.route
-    && other.mesh.visible
-    && other.distance >= other.route.stopS - 0.2
-    && other.distance <= other.route.exitS + 1.5
-  ));
-}
-
-function isOutgoingBlocked(vehicle) {
-  return animatedObjects.some((other) => (
-    other !== vehicle
-    && other.type === 'vehicle'
-    && other.route
-    && other.mesh.visible
-    && other.route.id !== vehicle.route.id
-    && other.distance > other.route.exitS
-    && distanceBetweenRouteSamples(other, other.distance, vehicle, vehicle.distance) < 4.2
-  ));
-}
-
-function findVehicleAhead(vehicle) {
-  let nearest = null;
-  animatedObjects.forEach((other) => {
-    if (other === vehicle || other.type !== 'vehicle' || other.route !== vehicle.route || !other.mesh.visible) return;
-    const gap = other.distance - vehicle.distance;
-    if (gap > 0 && (!nearest || gap < nearest.gap)) nearest = { other, gap };
-  });
-  return nearest;
-}
-
-function findApproachVehicleAhead(vehicle) {
-  if (vehicle.route?.mode !== 'roundabout' || vehicle.distance >= vehicle.route.entryS) return null;
-  let nearest = null;
-  animatedObjects.forEach((other) => {
-    if (
-      other === vehicle
-      || other.type !== 'vehicle'
-      || other.route?.mode !== 'roundabout'
-      || other.route.approach !== vehicle.route.approach
-      || !other.mesh.visible
-      || other.distance >= other.route.entryS + 0.3
-    ) return;
-    const gap = other.distance - vehicle.distance;
-    if (gap > 0 && (!nearest || gap < nearest.gap)) nearest = { other, gap };
-  });
-  return nearest;
-}
-
-function isRoundaboutCirculating(vehicle) {
-  return vehicle.route?.mode === 'roundabout'
-    && vehicle.mesh.visible
-    && vehicle.distance >= vehicle.route.entryS
-    && vehicle.distance <= vehicle.route.exitS + 0.6;
-}
-
-function getRoundaboutAngle(vehicle) {
-  const sample = getVehicleRouteSample(vehicle, vehicle.distance);
-  return normalizeAngle(Math.atan2(sample.z, sample.x));
-}
-
-function findCirculatingVehicleAhead(vehicle) {
-  if (!isRoundaboutCirculating(vehicle)) return null;
-  const radius = trafficSceneData.roundabout?.laneRadius || 5.35;
-  const angle = getRoundaboutAngle(vehicle);
-  let nearest = null;
-  animatedObjects.forEach((other) => {
-    if (other === vehicle || other.type !== 'vehicle' || !isRoundaboutCirculating(other)) return;
-    const gap = ccwAngleDistance(angle, getRoundaboutAngle(other)) * radius;
-    if (gap > 0.05 && (!nearest || gap < nearest.gap)) nearest = { other, gap };
-  });
-  return nearest;
-}
-
-function isRoundaboutEntryClear(vehicle) {
-  const roundabout = trafficSceneData.roundabout;
-  const radius = roundabout?.laneRadius || 6;
-  const safeGap = roundabout?.entryYieldGap || 11.5;
-  const minTimeToConflict = roundabout?.entryMinTimeToConflictSeconds || 2.3;
-  const entryAngle = normalizeAngle(vehicle.route.entryAngle);
-  return !animatedObjects.some((other) => {
-    if (other === vehicle || other.type !== 'vehicle' || !isRoundaboutCirculating(other)) return false;
-    const otherAngle = getRoundaboutAngle(other);
-    const arcGapToEntry = ccwAngleDistance(otherAngle, entryAngle) * radius;
-    const otherSpeed = Math.max(other.velocity || 0, other.speed || 4.5, 0.1);
-    const timeToConflict = arcGapToEntry / otherSpeed;
-    const requiredGap = getVehicleLengthAllowance(other) + safeGap;
-    return arcGapToEntry < requiredGap && timeToConflict <= minTimeToConflict;
-  });
-}
-
-function isRoundaboutExitClear(vehicle) {
-  const roundabout = trafficSceneData.roundabout;
-  return !animatedObjects.some((other) => {
-    if (other === vehicle || other.type !== 'vehicle' || other.route?.mode !== 'roundabout' || !other.mesh.visible) return false;
-    if (other.distance <= other.route.exitS) return false;
-    const otherSample = getVehicleRouteSample(other, other.distance);
-    return Math.hypot(otherSample.x - vehicle.route.exitPoint[0], otherSample.z - vehicle.route.exitPoint[1]) < (roundabout?.exitConflictRadius || 3.4);
-  });
-}
-
-function shouldHoldRoundaboutApproachHeading(vehicle) {
-  return vehicle.route?.mode !== 'roundabout'
-    && Number.isFinite(vehicle.route?.entryS)
-    && vehicle.distance < vehicle.route.entryS - 0.15
-    && Math.abs(vehicle.velocity || 0) < 0.05;
-}
-
-function applyVehicleRoutePose(vehicle, delta) {
-  const pose = setVehiclePoseFromLane(vehicle, {
-    s: vehicle.distance,
-    velocity: vehicle.velocity,
-    holdApproachHeading: shouldHoldRoundaboutApproachHeading(vehicle),
-    smoothHeading: vehicle.route?.mode === 'roundabout',
-    delta,
-    maxHeadingTurnRate: ROUNDABOUT_HEADING_TURN_RATE,
-  });
-  syncVehicleLaneState(vehicle);
-  auditVehicleHeadingError(vehicle, pose.heading);
-  auditVehicleLightDirection(vehicle, pose.heading);
-  if (vehicle.label) {
-    vehicle.label.visible = vehicle.mesh.visible;
-    vehicle.label.position.set(pose.x, 2.1, pose.z);
-    const isSpaceState = vehicle.state?.startsWith('SPACE_');
-    setTextSprite(vehicle.label, `${vehicle.route.id} ${vehicle.state}`, vehicle.state === 'WAITING_TO_ENTER' || isSpaceState ? '#EF9F27' : vehicle.state === 'CIRCULATING' ? '#E24B4A' : '#85B7EB');
-  }
-  recordVehicleHistory(vehicle, delta);
-}
-
-function releaseRoundaboutReservations(t) {
-  if (!trafficRuntime?.entryReservations) return;
-  trafficRuntime.entryReservations.forEach((reservation, approach) => {
-    if (!reservation.vehicle.mesh.visible || reservation.vehicle.distance > reservation.vehicle.route.entryS + 5 || reservation.expiresAt < t) {
-      trafficRuntime.entryReservations.delete(approach);
-    }
-  });
-}
-
-function canReserveRoundaboutEntry(vehicle, t) {
-  releaseRoundaboutReservations(t);
-  const existing = trafficRuntime.entryReservations.get(vehicle.route.approach);
-  return !existing || existing.vehicle === vehicle;
-}
-
-function reserveRoundaboutEntry(vehicle, t) {
-  trafficRuntime.entryReservations.set(vehicle.route.approach, {
-    vehicle,
-    expiresAt: t + 4,
-  });
-}
-
-function makeVehicleHistoryFrame(vehicle) {
-  return {
-    time: vehicle.historyTravelTime || 0,
-    distance: vehicle.distance,
-    speed: Math.max(0, vehicle.velocity || 0),
-    position: vehicle.mesh.position.toArray(),
-    quaternion: vehicle.mesh.quaternion.toArray(),
-    rotation: [vehicle.mesh.rotation.x, vehicle.mesh.rotation.y, vehicle.mesh.rotation.z],
-  };
-}
-
-function recordVehicleHistory(vehicle, delta, force = false) {
-  if (!vehicle?.mesh?.visible || vehicle.reversePlayback) return;
-  vehicle.historyElapsed = (vehicle.historyElapsed || 0) + delta;
-  if (Math.max(0, vehicle.velocity || 0) > 0.05) {
-    vehicle.historyTravelTime = (vehicle.historyTravelTime || 0) + delta;
-  }
-  vehicle.historySampleElapsed = (vehicle.historySampleElapsed || 0) + delta;
-  if (!force && vehicle.historySampleElapsed < REVERSE_HISTORY_SAMPLE_SECONDS) return;
-  vehicle.historySampleElapsed = 0;
-  const frame = makeVehicleHistoryFrame(vehicle);
-  const history = vehicle.movementHistory || (vehicle.movementHistory = []);
-  const previous = history[history.length - 1];
-  if (previous && Math.abs(previous.time - frame.time) < 0.0001) history[history.length - 1] = frame;
-  else history.push(frame);
-  const cutoff = frame.time - REVERSE_HISTORY_SECONDS;
-  while (history.length > 2 && history[1].time < cutoff) history.shift();
-}
-
-function chooseSpawnPriorityVehicles(vehicle, other) {
-  const vehicleOrder = Number.isFinite(vehicle.spawnOrder) ? vehicle.spawnOrder : Infinity;
-  const otherOrder = Number.isFinite(other.spawnOrder) ? other.spawnOrder : Infinity;
-  if (vehicleOrder !== otherOrder) {
-    return vehicleOrder < otherOrder
-      ? { priorityVehicle: vehicle, yielder: other }
-      : { priorityVehicle: other, yielder: vehicle };
-  }
-  const vehicleIndex = trafficRuntime?.vehicles.indexOf(vehicle) ?? 0;
-  const otherIndex = trafficRuntime?.vehicles.indexOf(other) ?? 0;
-  return vehicleIndex <= otherIndex
-    ? { priorityVehicle: vehicle, yielder: other }
-    : { priorityVehicle: other, yielder: vehicle };
-}
-
-function isYieldingToPriority(vehicle, priorityVehicle) {
-  return vehicle?.reversePriorityVehicle === priorityVehicle;
-}
-
-function getReversePlaybackFrame(history, targetTime) {
-  if (!history.length) return null;
-  if (targetTime <= history[0].time) return history[0];
-  let upperIndex = history.length - 1;
-  while (upperIndex > 0 && history[upperIndex - 1].time >= targetTime) upperIndex -= 1;
-  const upper = history[upperIndex];
-  const lower = history[Math.max(0, upperIndex - 1)];
-  if (upper === lower || upper.time <= lower.time) return lower;
-  const alpha = clamp((targetTime - lower.time) / (upper.time - lower.time), 0, 1);
-  return {
-    time: targetTime,
-    distance: lower.distance + (upper.distance - lower.distance) * alpha,
-    speed: lower.speed + (upper.speed - lower.speed) * alpha,
-    position: lower.position.map((value, index) => value + (upper.position[index] - value) * alpha),
-    quaternion: new THREE.Quaternion(...lower.quaternion)
-      .slerp(new THREE.Quaternion(...upper.quaternion), alpha)
-      .toArray(),
-  };
-}
-
-function applyReversePlaybackFrame(vehicle, frame) {
-  vehicle.distance = frame.distance;
-  vehicle.s = frame.distance;
-  vehicle.velocity = -Math.max(0.1, frame.speed || vehicle.speed || 0);
-  vehicle.mesh.position.fromArray(frame.position);
-  vehicle.mesh.quaternion.fromArray(frame.quaternion);
-  vehicle.mesh.updateMatrix();
-  vehicle.mesh.updateWorldMatrix(false, true);
-  vehicle.displayHeading = vehicle.mesh.rotation.y;
-  syncVehicleLaneState(vehicle);
-  if (vehicle.label) {
-    vehicle.label.visible = true;
-    vehicle.label.position.set(frame.position[0], 2.1, frame.position[2]);
-    setTextSprite(vehicle.label, `${vehicle.route.id} REVERSING_${vehicle.reverseAttempt}`, '#EF9F27');
-  }
-}
-
-// Còn đủ lịch sử di chuyển để lùi tiếp một đoạn hay chưa (lùi theo đúng vệt đã đi
-// nên không bao giờ đi xuyên xe khác hay lệch ra ngoài làn).
-function hasReversibleHistory(vehicle) {
-  const history = vehicle.movementHistory || [];
-  if (history.length < 2) return false;
-  return (history[history.length - 1].time - history[0].time) >= REVERSE_PLAYBACK_MIN_DURATION;
-}
-
-function beginReversePlayback(yielder, priorityVehicle, t) {
-  if (!yielder?.route || !yielder.mesh?.visible) return false;
-  if (yielder.reversePlayback) return true;
-  if ((yielder.reverseCooldownUntil || 0) > t) return false;
-  if (!hasReversibleHistory(yielder)) return false;
-  const history = yielder.movementHistory;
-  const attempt = (yielder.reverseAttempt || 0) + 1;
-  const endTime = history[history.length - 1].time;
-  const availableDuration = endTime - history[0].time;
-  // Lùi từng nhịp ngắn (CHUNK) rồi kiểm tra lại; số nhịp không giới hạn nên xe có thể
-  // lùi đến khi xe trước đi mới thôi, không bị kẹt vĩnh viễn như cách cũ (chỉ 3 lần).
-  const duration = Math.min(REVERSE_PLAYBACK_CHUNK_SECONDS, availableDuration);
-  if (duration < REVERSE_PLAYBACK_MIN_DURATION) return false;
-  yielder.reverseAttempt = attempt;
-  yielder.reversePriorityVehicle = priorityVehicle;
-  yielder.reversePlayback = { attempt, duration, elapsed: 0, endTime, targetTime: endTime - duration };
-  yielder.velocity = 0;
-  yielder.state = 'REVERSING';
-  if (trafficRuntime?.debug) console.info('[traffic-debug] reverse playback start', yielder.id, `attempt=${attempt}`, `duration=${duration.toFixed(2)}`, `priority=${priorityVehicle?.id}`);
-  return true;
-}
-
-function hasReverseClearance(vehicle, priorityVehicle) {
-  if (!priorityVehicle?.mesh?.visible) return true;
-  const centerGap = distanceBetweenRouteSamples(vehicle, vehicle.distance, priorityVehicle, priorityVehicle.distance);
-  const requiredGap = getVehicleFootprintGap(vehicle, priorityVehicle) + 0.8;
-  const blocker = findGlobalProximityBlocker(
-    vehicle,
-    Math.min(vehicle.route.length, vehicle.distance + 0.35),
-    animatedObjects,
-    trafficRuntime?.vehicles,
-  );
-  return centerGap >= requiredGap && (!blocker || blocker.other !== priorityVehicle);
-}
-
-function finishReversePlayback(vehicle, t) {
-  const playback = vehicle.reversePlayback;
-  const priorityVehicle = vehicle.reversePriorityVehicle;
-  const finalTime = playback?.targetTime ?? 0;
-  vehicle.movementHistory = (vehicle.movementHistory || []).filter((frame) => frame.time <= finalTime + 0.0001);
-  vehicle.historyTravelTime = finalTime;
-  vehicle.historySampleElapsed = 0;
-  vehicle.reversePlayback = null;
-  vehicle.velocity = 0;
-  const clear = hasReverseClearance(vehicle, priorityVehicle);
-  // Chưa thoát mà vẫn còn lịch sử để lùi -> lùi tiếp nhịp nữa (không giới hạn số nhịp),
-  // nên xe lùi đến khi xe trước đi mới thôi thay vì bỏ cuộc và kẹt cứng.
-  if (!clear && hasReversibleHistory(vehicle)) {
-    recordVehicleHistory(vehicle, 0, true);
-    if (beginReversePlayback(vehicle, priorityVehicle, t)) return;
-  }
-  vehicle.reverseCooldownUntil = t + 0.3;
-  vehicle.state = vehicle.distance < vehicle.route.entryS ? 'WAITING_TO_ENTER' : 'YIELDING';
-  if (clear) {
-    vehicle.reverseAttempt = 0;
-    vehicle.reversePriorityVehicle = null;
-  }
-  recordVehicleHistory(vehicle, 0, true);
-  if (trafficRuntime?.debug) console.info('[traffic-debug] reverse playback end', vehicle.id, `clear=${clear}`, `attempt=${vehicle.reverseAttempt || 0}`);
-}
-
-function resolveReversePlayback(vehicle, delta, t) {
-  const playback = vehicle.reversePlayback;
-  if (!playback || !vehicle.mesh.visible) return false;
-  playback.elapsed = Math.min(playback.duration, playback.elapsed + delta);
-  const targetTime = playback.endTime - playback.elapsed;
-  const frame = getReversePlaybackFrame(vehicle.movementHistory || [], targetTime);
-  if (frame) applyReversePlaybackFrame(vehicle, frame);
-  vehicle.blockedFor = 0;
-  vehicle.bodyContactFor = 0;
-  vehicle.state = 'REVERSING';
-  if (playback.elapsed >= playback.duration - 0.0001) finishReversePlayback(vehicle, t);
-  return true;
-}
-
-// Xe ưu tiên (spawn trước, không lùi) bị chặn đứng yên quá lâu -> bật chế độ "đi xuyên".
-// Trong lúc đi xuyên xe bỏ qua mọi vật cản và luôn tiến tới; xe đang lùi (spawn sau) thì
-// không kích hoạt vì nó nhường đường bằng cách lùi chứ không đi xuyên.
-function maybeStartPhaseThrough(vehicle, t) {
-  if ((vehicle.phaseThroughUntil || 0) > t) return true;
-  if (vehicle.reversePlayback || vehicle.reversePriorityVehicle) return false;
-  if ((vehicle.blockedFor || 0) < PHASE_THROUGH_TRIGGER_SECONDS) return false;
-  vehicle.phaseThroughUntil = t + PHASE_THROUGH_DURATION_SECONDS;
-  vehicle.blockedFor = 0;
-  vehicle.continuousReverse = false;
-  if (trafficRuntime?.debug) console.info('[traffic-debug] phase-through start', vehicle.id, vehicle.routeId);
-  return true;
-}
-
-function updateRoundaboutVehicle(vehicle, delta, t) {
-  if (!vehicle.mesh.visible) {
-    if (trafficSpawner?.canSpawnVehicle(vehicle, t)) trafficSpawner.resetVehicleOnRoute(vehicle, t);
-    return true;
-  }
-
-  const route = vehicle.route;
-  const yieldLineS = getRouteStopLineS(route);
-  const beforeRoundaboutEntry = vehicle.distance < route.entryS - 0.15;
-
-  if (resolveReversePlayback(vehicle, delta, t)) return true;
-  if (vehicle.reversePriorityVehicle && hasReverseClearance(vehicle, vehicle.reversePriorityVehicle)) {
-    vehicle.reversePriorityVehicle = null;
-    vehicle.reverseAttempt = 0;
-  }
-
-  // Đang trong cửa sổ "đi xuyên": bỏ qua mọi xử lý nhường/lùi/chạm, chỉ đi tiếp.
-  const phasingThrough = (vehicle.phaseThroughUntil || 0) > t;
-
-  const bodyContactBlocker = phasingThrough ? null : findBodyContactBlocker(vehicle, vehicle.distance, animatedObjects);
-  const stoppedNearBlocker = !phasingThrough && Math.abs(vehicle.velocity || 0) <= REVERSE_PLAYBACK_STOP_SPEED
-    ? findGlobalProximityBlocker(
-      vehicle,
-      Math.min(route.length, vehicle.distance + 0.35),
-      animatedObjects,
-      trafficRuntime?.vehicles,
-    )
-    : null;
-  const mutualBlocker = bodyContactBlocker || stoppedNearBlocker;
-  if (mutualBlocker) {
-    let { yielder, priorityVehicle } = chooseSpawnPriorityVehicles(vehicle, mutualBlocker.other);
-    // Dây chuyền: nếu xe phía trước đang LÙI và chạm vào ta, ta phải lùi theo nó
-    // (bất kể quyền ưu tiên) rồi sẽ tiến lại khi nó đi — lan truyền tự nhiên về phía sau.
-    const blockerReversingIntoUs = Boolean(bodyContactBlocker) && Boolean(mutualBlocker.other.reversePlayback);
-    if (blockerReversingIntoUs) {
-      yielder = vehicle;
-      priorityVehicle = mutualBlocker.other;
-    }
-    // Giống giao thông thật: gặp xe phía trước thì NHƯỜNG (dừng chờ), không lùi.
-    // Chỉ chủ động lùi khi đã chạm thân VÀ kẹt cứng đủ lâu (cần thì lùi, không cần thì
-    // chỉ nhường) — lùi từng nhịp ngắn tới khi thoát.
-    const contactDeadlock = Boolean(bodyContactBlocker)
-      && (yielder.blockedFor || 0) >= REVERSE_TRIGGER_BLOCKED_SECONDS
-      && Math.abs(yielder.velocity || 0) <= REVERSE_PLAYBACK_STOP_SPEED;
-    if ((blockerReversingIntoUs || contactDeadlock) && beginReversePlayback(yielder, priorityVehicle, t)) {
-      if (yielder === vehicle) return resolveReversePlayback(vehicle, delta, t);
-    } else if (yielder === vehicle) {
-      vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
-      vehicle.state = beforeRoundaboutEntry ? 'WAITING_TO_ENTER' : 'YIELDING';
-      vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
-      // KHÔNG despawn giữa đường: nếu chưa thoát thì cứ nhường/lùi tiếp, không bao giờ
-      // biến mất giữa đường. Lùi không giới hạn số nhịp đã đủ phá mọi thế kẹt thực tế.
-      applyVehicleRoutePose(vehicle, delta);
-      return true;
-    }
-  }
-  vehicle.bodyContactFor = 0;
-
-  if (vehicle.yieldingTo) {
-    vehicle.yieldingTo = null;
-    vehicle.yieldUntil = 0;
-  }
-
-  const entryBrakingDistance = Math.max(2.5, (vehicle.speed || 5) * 0.9);
-  const atEntryGate = vehicle.distance < route.entryS
-    && vehicle.distance >= yieldLineS - entryBrakingDistance;
-  const existingReservation = trafficRuntime.entryReservations.get(route.approach);
-  const hasOwnReservation = existingReservation?.vehicle === vehicle && existingReservation.expiresAt >= t;
-  const hasRecentEntryClearance = atEntryGate && (vehicle.entryClearUntil || 0) >= t && vehicle.distance < route.entryS + 0.7;
-  const entryClear = hasRecentEntryClearance || isRoundaboutEntryClear(vehicle);
-  const canEnter = canReserveRoundaboutEntry(vehicle, t)
-    && (!trafficRuntime.entryGrantedThisStep || hasOwnReservation)
-    && entryClear
-    && isRoundaboutExitClear(vehicle);
-  const ignoreYieldingVehicle = (ahead) => (ahead && isYieldingToPriority(ahead.other, vehicle) ? null : ahead);
-  const sameRouteAhead = ignoreYieldingVehicle(findVehicleAhead(vehicle));
-  const approachAhead = ignoreYieldingVehicle(findApproachVehicleAhead(vehicle));
-  const circulatingAhead = ignoreYieldingVehicle(findCirculatingVehicleAhead(vehicle));
-  const safeGap = route.safeGap + (vehicle.vehicleKind === 'bus' ? 2 : 0);
-  let desiredSpeed = vehicle.speed || 5;
-
-  // Đèn tín hiệu CHỈ áp dụng trước vạch dừng, trước khi vào vòng xuyến.
-  // Đã qua vạch / đã vào vòng xuyến => bỏ qua đèn, không bao giờ dừng trong vòng.
-  const signalCfg = trafficRuntime.roundaboutSignal;
-  let signalStop = false;
-  if (signalCfg?.enabled && !vehicle.enteredIntersection) {
-    const signalColor = getRoundaboutApproachSignal(route.approach, t, signalCfg);
-    if (vehicle.runsRedLight) {
-      // Xe vi phạm: KHÔNG dừng đèn. Đánh dấu vượt đèn đỏ khi cán vạch lúc đèn không xanh.
-      // Cờ giữ tới khi xe despawn (reset ở resetVehicleOnRoute) để map 2D báo liên tục.
-      if (signalColor !== 'green' && vehicle.distance >= yieldLineS - 0.4) {
-        vehicle.redLightViolation = true;
-      }
-    } else if (vehicle.distance < yieldLineS - 0.02) {
-      if (signalColor === 'red') {
-        signalStop = true;
-      } else if (signalColor === 'yellow') {
-        // Vàng: dừng nếu còn phanh kịp trước vạch, nếu không thì đi tiếp.
-        const distToStop = yieldLineS - vehicle.distance;
-        signalStop = (vehicle.velocity || 0) <= stoppingSpeedForDistance(distToStop) + 0.05;
-      }
-    }
-  }
-
-  if (!atEntryGate && vehicle.distance < route.entryS - 0.4) {
-    vehicle.entryClearUntil = 0;
-  } else if (canEnter && vehicle.distance < route.entryS + 0.7) {
-    vehicle.entryClearUntil = Math.max(vehicle.entryClearUntil || 0, t + 1.4);
-  } else if (vehicle.distance < route.entryS - 0.4 && !entryClear) {
-    vehicle.entryClearUntil = 0;
-  }
-
-  // Đang đi xuyên: luôn chạy hết tốc độ, bỏ qua cổng vào / đèn / giữ khoảng cách xe trước.
-  if (phasingThrough) {
-    vehicle.state = 'PHASING_THROUGH';
-  } else if ((atEntryGate && !canEnter) || signalStop) {
-    desiredSpeed = Math.min(desiredSpeed, stoppingSpeedForDistance(yieldLineS - vehicle.distance));
-    vehicle.state = 'WAITING_TO_ENTER';
-  } else if (vehicle.distance < route.entryS) {
-    vehicle.state = 'APPROACHING';
-  } else if (vehicle.distance <= route.exitS) {
-    vehicle.state = 'CIRCULATING';
-  } else {
-    vehicle.state = 'EXITING';
-  }
-
-  if (!phasingThrough) {
-    [sameRouteAhead, approachAhead, circulatingAhead].forEach((ahead) => {
-      const followedSpeed = applyCarFollowingSpeed(vehicle, desiredSpeed, ahead, safeGap, delta);
-      if (followedSpeed >= desiredSpeed) return;
-      desiredSpeed = followedSpeed;
-      if (vehicle.distance < route.entryS) vehicle.state = 'WAITING_TO_ENTER';
-    });
-  }
-
-  if (vehicle.distance < route.entryS && vehicle.distance + desiredSpeed * delta >= route.entryS - 0.2) {
-    reserveRoundaboutEntry(vehicle, t);
-    trafficRuntime.entryGrantedThisStep = true;
-  }
-
-  vehicle.velocity = approachVehicleSpeed(vehicle.velocity, desiredSpeed, delta);
-  const despawnDistance = route.length + 1.5;
-  let nextDistance = Math.min(despawnDistance, vehicle.distance + vehicle.velocity * delta);
-  const shouldHoldAtYieldLine = !phasingThrough
-    && vehicle.state === 'WAITING_TO_ENTER'
-    && vehicle.distance < route.entryS
-    && (vehicle.distance > yieldLineS || (atEntryGate && !canEnter) || signalStop);
-  if (shouldHoldAtYieldLine) {
-    nextDistance = Math.min(nextDistance, yieldLineS);
-    if (nextDistance >= yieldLineS - 0.001) vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
-  }
-  const detectedHardBlocker = (phasingThrough || beforeRoundaboutEntry)
-    ? null
-    : findGlobalProximityBlocker(vehicle, nextDistance, animatedObjects, trafficRuntime?.vehicles);
-  const hardBlocker = detectedHardBlocker && isYieldingToPriority(detectedHardBlocker.other, vehicle)
-    ? null
-    : detectedHardBlocker;
-  if (hardBlocker) {
-    vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
-    // Bị chặn đứng yên quá lâu -> đi xuyên: từ frame này luôn đi tiếp (xuyên qua xe cản).
-    if (maybeStartPhaseThrough(vehicle, t)) {
-      vehicle.continuousReverse = false;
-      vehicle.yieldingTo = null;
-      vehicle.yieldUntil = 0;
-      vehicle.state = 'PHASING_THROUGH';
-      vehicle.distance = nextDistance;
-    } else {
-      vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
-      vehicle.continuousReverse = false;
-      vehicle.state = beforeRoundaboutEntry ? 'WAITING_TO_ENTER' : 'YIELDING';
-    }
-  } else {
-    if (!phasingThrough) vehicle.blockedFor = 0;
-    vehicle.bodyContactFor = 0;
-    vehicle.continuousReverse = false;
-    vehicle.yieldingTo = null;
-    vehicle.yieldUntil = 0;
-    if (phasingThrough) vehicle.state = 'PHASING_THROUGH';
-    vehicle.distance = nextDistance;
-  }
-  vehicle.enteredIntersection = vehicle.distance >= route.entryS;
-  vehicle.exitedIntersection = vehicle.distance >= route.exitS;
-
-  if (vehicle.distance >= despawnDistance) {
-    trafficSpawner?.despawnVehicle(vehicle, t, 'EXITING');
-    return true;
-  }
-
-  applyVehicleRoutePose(vehicle, delta);
-  return true;
-}
-
-function updateTrafficVehicle(vehicle, delta, t, signal) {
-  if (!vehicle.route) return false;
-  if (vehicle.route.mode === 'roundabout') return updateRoundaboutVehicle(vehicle, delta, t);
-  if (!vehicle.mesh.visible) {
-    if (trafficSpawner?.canSpawnVehicle(vehicle, t)) trafficSpawner.resetVehicleOnRoute(vehicle, t);
-    return true;
-  }
-
-  const route = vehicle.route;
-  const laneSignal = getLaneSignalState(vehicle, t);
-  const stopLineS = getRouteStopLineS(route);
-  const beforeStop = vehicle.distance < stopLineS - 0.1;
-  const atStopGate = vehicle.distance < route.entryS && vehicle.distance >= stopLineS - 0.2;
-  const signalAllowsEntry = laneSignal.allowsEntry;
-  const mustWaitForSignal = !vehicle.enteredIntersection && (beforeStop || atStopGate) && !signalAllowsEntry;
-  const mustWaitForReservation = !vehicle.enteredIntersection && vehicle.distance >= stopLineS - 2.5 && (isIntersectionReserved(vehicle) || isOutgoingBlocked(vehicle));
-  const ahead = findNearestVehicleAheadOnLane(vehicle);
-  const safeGap = route.safeGap + (vehicle.vehicleKind === 'bus' ? 1.8 : 0);
-  const targetSpeed = (vehicle.speed || 5) * route.turnSlowdown;
-  let desiredSpeed = targetSpeed;
-
-  if (mustWaitForSignal || mustWaitForReservation) {
-    desiredSpeed = Math.min(desiredSpeed, Math.max(0, (stopLineS - vehicle.distance) * 2.2));
-    vehicle.state = mustWaitForSignal ? 'red-wait' : 'reserved-wait';
-  } else {
-    vehicle.state = route.turn === 'straight' ? 'moving' : `${route.turn}-turn`;
-  }
-
-  const followedSpeed = applyCarFollowingSpeed(vehicle, desiredSpeed, ahead, safeGap, delta);
-  if (followedSpeed < desiredSpeed) {
-    desiredSpeed = followedSpeed;
-    vehicle.state = 'queue';
-  }
-
-  vehicle.velocity += (desiredSpeed - vehicle.velocity) * Math.min(1, delta * 5.5);
-  vehicle.distance += vehicle.velocity * delta;
-  if (vehicle.distance >= route.entryS) vehicle.enteredIntersection = true;
-  if (vehicle.distance >= route.exitS) vehicle.exitedIntersection = true;
-
-  if (vehicle.distance >= route.length + 1.5) {
-    trafficSpawner?.despawnVehicle(vehicle, t);
-    return true;
-  }
-
-  applyVehicleRoutePose(vehicle, delta);
-  if (vehicle.label) {
-    vehicle.label.visible = vehicle.mesh.visible;
-    setTextSprite(vehicle.label, `${route.id} ${laneSignal.signalGroup} ${vehicle.state}`, vehicle.enteredIntersection && !vehicle.exitedIntersection ? '#E24B4A' : '#85B7EB');
-  }
-  return true;
-}
-
-function updateRoundaboutFleet(delta, t) {
-  releaseRoundaboutReservations(t);
-  trafficRuntime.entryGrantedThisStep = false;
-  const roundaboutVehicles = trafficRuntime.vehicles.filter((vehicle) => vehicle.route?.mode === 'roundabout');
-  const circulating = roundaboutVehicles
-    .filter((vehicle) => vehicle.mesh.visible && vehicle.distance >= vehicle.route.entryS && vehicle.distance <= vehicle.route.exitS)
-    .sort((a, b) => ccwAngleDistance(0, getRoundaboutAngle(b)) - ccwAngleDistance(0, getRoundaboutAngle(a)));
-  const exiting = roundaboutVehicles
-    .filter((vehicle) => vehicle.mesh.visible && vehicle.distance > vehicle.route.exitS)
-    .sort((a, b) => b.distance - a.distance);
-  const approaching = roundaboutVehicles
-    .filter((vehicle) => vehicle.mesh.visible && vehicle.distance < vehicle.route.entryS)
-    .sort((a, b) => b.distance - a.distance);
-  const hidden = roundaboutVehicles.filter((vehicle) => !vehicle.mesh.visible);
-
-  [...circulating, ...exiting, ...approaching, ...hidden].forEach((vehicle) => updateRoundaboutVehicle(vehicle, delta, t));
-}
-
 function getLayer(name) {
   if (!layerGroups.has(name)) {
     const group = new THREE.Group();
@@ -886,60 +212,6 @@ function makeMaterial(color, options = {}) {
   });
   material.userData.baseOpacity = material.opacity;
   return material;
-}
-
-function getAverageNamedMeshWorldCenter(root, pattern) {
-  const points = [];
-  root.updateWorldMatrix(true, true);
-  root.traverse((object) => {
-    if (!object.isMesh || !pattern.test((object.name || '').toLowerCase())) return;
-    const box = new THREE.Box3().setFromObject(object);
-    if (box.isEmpty()) return;
-    points.push(box.getCenter(new THREE.Vector3()));
-  });
-  if (!points.length) return null;
-  return points.reduce((sum, point) => sum.add(point), new THREE.Vector3()).multiplyScalar(1 / points.length);
-}
-
-function getVehicleLightRouteAlignment(vehicle, routeHeading) {
-  if (!vehicle?.mesh?.userData || vehicle.mesh.userData.vehicleModelSource !== 'glb') return null;
-  const white = getAverageNamedMeshWorldCenter(vehicle.mesh, /(headlight|headlamp|front-head|front-lamp|scooter-front-headlamp)/);
-  const red = getAverageNamedMeshWorldCenter(vehicle.mesh, /(taillight|tail-light|rear-light|brake-light)/);
-  if (!white || !red) return null;
-  const routeForward = new THREE.Vector3(Math.sin(routeHeading), 0, Math.cos(routeHeading));
-  const lightForward = white.clone().sub(red).setY(0);
-  if (lightForward.lengthSq() < 0.0001) return null;
-  return lightForward.normalize().dot(routeForward);
-}
-
-function auditVehicleLightDirection(vehicle, routeHeading) {
-  if (!trafficRuntime?.directionAudit) return;
-  const alignment = getVehicleLightRouteAlignment(vehicle, routeHeading);
-  if (alignment === null) return;
-  const rounded = Math.round(alignment * 1000) / 1000;
-  const currentMin = Number(document.documentElement.dataset.smartcityVehicleDirectionMinAlignment || 1);
-  if (rounded < currentMin) {
-    document.documentElement.dataset.smartcityVehicleDirectionMinAlignment = String(rounded);
-    document.documentElement.dataset.smartcityVehicleDirectionWorst = `${vehicle.id}:${vehicle.routeId}:${vehicle.state}:${Math.round(vehicle.distance * 10) / 10}`;
-  }
-  if (rounded < 0.15) {
-    document.documentElement.dataset.smartcityVehicleDirectionLastBad = `${vehicle.id}:${vehicle.routeId}:${vehicle.state}:${rounded}`;
-  }
-}
-
-function auditVehicleHeadingError(vehicle, routeHeading) {
-  if (!trafficRuntime?.directionAudit || vehicle.route?.mode !== 'roundabout') return;
-  if (vehicle.mesh?.userData?.vehicleModelSource === 'glb') return;
-  const error = Math.abs(Math.atan2(
-    Math.sin(routeHeading - vehicle.mesh.rotation.y),
-    Math.cos(routeHeading - vehicle.mesh.rotation.y),
-  ));
-  const rounded = Math.round(error * 1000) / 1000;
-  const currentMax = Number(document.documentElement.dataset.smartcityVehicleRoundaboutMaxHeadingError || 0);
-  if (rounded > currentMax) {
-    document.documentElement.dataset.smartcityVehicleRoundaboutMaxHeadingError = String(rounded);
-    document.documentElement.dataset.smartcityVehicleRoundaboutHeadingWorst = `${vehicle.id}:${vehicle.routeId}:${vehicle.state}:${Math.round(vehicle.distance * 10) / 10}`;
-  }
 }
 
 function lockOpacityForVehicle(root) {
@@ -1028,28 +300,7 @@ function createVehicle(vehicle) {
     distance: initialDistance,
     s: initialDistance,
     velocity: spawnFromOutside ? 0 : vehicle.speed || 0,
-    blockedFor: 0,
-    spaceRequestFrom: null,
-    spaceRequestUntil: 0,
-    reverseRequestedAt: 0,
-    reverseUntil: 0,
-    reverseStartedAt: 0,
-    reverseReason: null,
-    reverseBlockedBy: null,
-    reverseBlockedAt: 0,
-    continuousReverse: false,
-    bodyContactFor: 0,
     entryClearUntil: 0,
-    movementHistory: [],
-    historyElapsed: 0,
-    historyTravelTime: 0,
-    historySampleElapsed: 0,
-    spawnOrder: Infinity,
-    reverseAttempt: 0,
-    reversePlayback: null,
-    reversePriorityVehicle: null,
-    reverseCooldownUntil: 0,
-    phaseThroughUntil: 0,
     redLightViolation: false,
     respawnAt: spawnFromOutside
       ? Math.max(vehicle.startDelay ?? 0, (trafficRuntime?.vehicles?.length || 0) * ROUNDABOUT_MODEL_START_STAGGER_SECONDS)
@@ -1110,12 +361,9 @@ function addTrafficLayer() {
     debug: isTrafficDebugEnabled(),
     directionAudit: isDirectionAuditEnabled(),
     vehicles: [],
-    entryReservations: new Map(),
-    entryGrantedThisStep: false,
     lastSpawnAt: -Infinity,
     lastSpawnAtByLane: new Map(),
     lastSpawnAtByApproach: new Map(),
-    spawnSequence: 0,
     phaseSprite: null,
   };
   trafficSpawner = createTrafficSpawner({
@@ -1460,11 +708,11 @@ function updateAnimations(clock, delta) {
       velocity: Math.round(vehicle.velocity * 10) / 10,
     }))));
   }
-  if (trafficRuntime?.mode === 'roundabout') {
+  if (trafficRuntime?.mode === 'roundabout' && trafficSim) {
     let remaining = Math.min(delta, 0.08);
     while (remaining > 0) {
       const step = Math.min(remaining, 0.025);
-      updateRoundaboutFleet(step, t);
+      trafficSim.updateRoundaboutFleet(step, t);
       remaining -= step;
     }
   }
@@ -1501,7 +749,7 @@ function updateAnimations(clock, delta) {
 
     if (item.type === 'vehicle') {
       if (trafficRuntime?.mode === 'roundabout') return;
-      if (trafficRuntime && updateTrafficVehicle(item, delta, t, signal)) return;
+      if (trafficSim && trafficSim.updateTrafficVehicle(item, delta, t, signal)) return;
       const dir = item.axis === 'z'
         ? (item.rot === 0 ? 1 : -1)
         : (item.rot === Math.PI / 2 ? 1 : -1);
@@ -1569,6 +817,17 @@ async function createScene(container, pageId) {
   });
 
   await buildCity(scene);
+
+  // Cụm mô phỏng giao thông — tạo SAU buildCity (addTrafficLayer đã gán trafficRuntime &
+  // trafficSpawner). createTrafficSimulation chụp tham chiếu 1 lần; 3 thứ đó ổn định suốt
+  // vòng đời cảnh nên cụm hàm chỉ cần đọc state singleton trong module mô phỏng.
+  trafficSim = createTrafficSimulation({
+    getAnimatedObjects: () => animatedObjects,
+    getRuntime: () => trafficRuntime,
+    getSpawner: () => trafficSpawner,
+    sprites: { createTextSprite, setTextSprite },
+  });
+
   applyLayerFocus(pageId);
   showSceneLoading(container, false);
   setSceneHint(container, smartcitySceneData.cameraPresets[pageId]?.hint || smartcitySceneData.cameraPresets.overview.hint);
@@ -1669,6 +928,8 @@ async function createScene(container, pageId) {
         window.__smartcitySetWorldMap = null;
         window.__smartcityFocusTechnopark = null;
       }
+      trafficSim?.dispose();
+      trafficSim = null;
       trafficRuntime = null;
       trafficSpawner = null;
       vehicleModelAssetSignature = null;

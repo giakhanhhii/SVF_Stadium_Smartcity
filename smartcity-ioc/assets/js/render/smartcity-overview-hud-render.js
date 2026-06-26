@@ -241,10 +241,15 @@ function kpiStrip(items) {
 }
 
 function domainCard(card) {
+  const actionAttr = card.action === 'redlight'
+    ? 'data-redlight-open'
+    : card.action === 'trafficlive'
+      ? 'data-traffic-live'
+      : `data-nav="${card.nav}"`;
   const action = card.actions
     || (card.action === false
     ? ''
-    : `<button type="button" class="smart-overview-domain__open" ${card.action === 'redlight' ? 'data-redlight-open' : `data-nav="${card.nav}"`}>
+    : `<button type="button" class="smart-overview-domain__open" ${actionAttr}>
        <i class="ti ${card.actionIcon || card.icon}"></i><span>${card.actionLabel || `Mở ${card.shortTitle}`}</span>
     </button>`);
 
@@ -284,9 +289,9 @@ export function renderSmartcityOverviewLeft(d) {
       shortTitle: 'giao thông',
       chart: routeDiagram(d.traffic.routes),
       kpis: d.traffic.kpis,
-      action: 'redlight',
-      actionIcon: 'ti-traffic-lights-off',
-      actionLabel: 'Xử lý vượt đèn đỏ',
+      action: 'trafficlive',
+      actionIcon: 'ti-map-2',
+      actionLabel: 'Camera nút A4',
     },
     {
       id: 'security',

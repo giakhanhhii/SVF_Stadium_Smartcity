@@ -2,7 +2,7 @@ import { createApp } from '../../../shared-ioc/assets/js/bootstrap.js';
 import { bindHudTabs } from '../../../shared-ioc/assets/js/render/hud-tabs.js';
 import { hydrateAllPages } from './pages/smartcity-page-hydration.js';
 import { initPageCharts } from './charts/smartcity-chart-registry.js';
-import { initPageScenes } from './scene/smartcity-scene-registry.js?v=roundabout-replay-20260619b';
+import { initPageScenes } from './scene/smartcity-scene-registry.js?v=pipe-reveal-20260625';
 import { mountSmartcitySideNav } from './render/smartcity-side-nav.js';
 import { initSidebarResize } from '../../../shared-ioc/assets/js/render/sidebar-resize.js';
 import { initHudBlockDrag } from '../../../shared-ioc/assets/js/render/hud-block-drag.js';

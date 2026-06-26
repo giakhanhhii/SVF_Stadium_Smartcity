@@ -6,7 +6,7 @@ import { smartcitySceneData } from '../data/smartcity-scene-data.js';
 import { trafficSceneData } from '../data/traffic-scene.js';
 import { disposeSceneEnvironment } from './scene-building-materials.js';
 import { setupLighting } from './scene-lighting.js';
-import { applyCameraPreset, isCameraTweening, setSceneHint, showSceneLoading, tweenCamera } from './smartcity-camera.js';
+import { applyCameraPreset, isCameraTweening, setSceneHint, showSceneLoading, tweenCamera, tweenCameraTo } from './smartcity-camera.js';
 import { addProceduralCityFallback } from './smartcity-procedural-scene.js';
 import {
   buildTrafficRoutes,
@@ -16,23 +16,26 @@ import {
   getRouteSpawnS,
   getRouteStopLineS,
   normalizeAngle,
-} from './traffic/traffic-lanes.js?v=roundabout-replay-20260619b';
+} from './traffic/traffic-lanes.js?v=roundabout-replay-20260625a';
 import {
   distanceBetweenRouteSamples,
   findBodyContactBlocker,
   findGlobalProximityBlocker,
   getVehicleFootprintGap,
   getVehicleRouteSample,
-} from './traffic/traffic-occupancy.js?v=roundabout-replay-20260619b';
-import { createTrafficSpawner } from './traffic/traffic-spawn.js?v=roundabout-replay-20260619b';
-import { setVehiclePoseFromLane } from './traffic/traffic-vehicle-pose.js?v=roundabout-replay-20260619b';
+} from './traffic/traffic-occupancy.js?v=roundabout-replay-20260625a';
+import { createTrafficSpawner } from './traffic/traffic-spawn.js?v=roundabout-replay-20260625a';
+import { createTextSprite, setTextSprite } from './smartcity-scene-sprites.js?v=sprites-20260626a';
+import { createWorldMap } from './smartcity-world-map.js?v=worldmap-20260626a';
+import { createIfcPicking } from './smartcity-ifc-picking.js?v=ifc-picking-20260626a';
+import { setVehiclePoseFromLane } from './traffic/traffic-vehicle-pose.js?v=roundabout-replay-20260625a';
 import {
   VEHICLE_MODEL_RELOAD_INTERVAL_SECONDS,
   cloneVehicleModel,
   loadVehicleModelTemplates,
   readVehicleModelAssetSignature,
   resetVehicleModelOpacity,
-} from './traffic/traffic-vehicle-models.js?v=roundabout-replay-20260619b';
+} from './traffic/traffic-vehicle-models.js?v=roundabout-reverse-20260625b';
 
 let activeScene = null;
 let activeScenePromise = null;
@@ -47,27 +50,79 @@ const emphasisTargets = new Map();
 const animatedObjects = [];
 let trafficRuntime = null;
 let trafficSpawner = null;
+let cityPicking = null; // controller mạng ống + tòa TecnoPark (loader + picking) — tạo mỗi cảnh
 
-const ROUNDABOUT_MAX_SMOOTH_VEHICLES = 8;
-const ROUNDABOUT_MAX_ACTIVE_PER_APPROACH = 2;
+// ===== Bản đồ thế giới georeferenced (toggle "Bật bản đồ" ở tab Tổng quan) =====
+// State + dựng bản đồ đã tách sang ./smartcity-world-map.js (createWorldMap). Runtime chỉ
+// giữ vị trí tòa TecnoPark cho "Đến TechnoPark" bằng camera 3D (focusTechnopark).
+// Vị trí tòa TecnoPark trong cảnh (lấy từ technopark-transform.json) — đích "Đến TechnoPark"
+// và là điểm neo của mô hình lên tọa độ thật (đáy tòa nhà nằm đúng pin trên bản đồ).
+const TECHNOPARK_SCENE_POS = [29.78, 6, -38.3];
+
+const ROUNDABOUT_MAX_SMOOTH_VEHICLES = 7;
+const ROUNDABOUT_MAX_ACTIVE_PER_APPROACH = 3;
 const ROUNDABOUT_MIN_SPAWN_INTERVAL_SECONDS = 0.7;
 const ROUNDABOUT_HEADING_TURN_RATE = 4.8;
 const ROUNDABOUT_MODEL_START_STAGGER_SECONDS = 0.75;
-const REVERSE_HISTORY_SECONDS = 8;
+const REVERSE_HISTORY_SECONDS = 10;
 const REVERSE_HISTORY_SAMPLE_SECONDS = 0.05;
-const REVERSE_PLAYBACK_ATTEMPT_SECONDS = [1.5, 2, 2.5];
+// Lùi "từ từ": mỗi nhịp chỉ lùi một đoạn ngắn rồi kiểm tra lại đã thoát chưa.
+// Cần thì lùi nhiều (lặp nhiều nhịp), không cần thì lùi ít (1 nhịp rồi dừng).
+const REVERSE_PLAYBACK_CHUNK_SECONDS = 0.5;
+// Còn ít hơn thế này trong lịch sử thì coi như hết đường lùi (không lùi xuyên / ra ngoài làn).
+const REVERSE_PLAYBACK_MIN_DURATION = 0.15;
+// Chạm thân + kẹt cứng quá lâu mới chủ động lùi (xe nhường trước, chỉ lùi khi thật sự kẹt).
+const REVERSE_TRIGGER_BLOCKED_SECONDS = 2.2;
 const REVERSE_PLAYBACK_STOP_SPEED = 0.45;
+// "Đi xuyên": xe spawn TRƯỚC (ưu tiên) không bao giờ lùi. Nếu bị chặn đứng yên quá
+// PHASE_THROUGH_TRIGGER_SECONDS thì luôn đi tiếp, đi xuyên qua xe cản trong
+// PHASE_THROUGH_DURATION_SECONDS để phá thế kẹt, sau đó nếu lại bị chặn thì lặp lại.
+const PHASE_THROUGH_TRIGGER_SECONDS = 2.5;
+const PHASE_THROUGH_DURATION_SECONDS = 3;
 const TRAFFIC_FIXED_STEP_SECONDS = 0.05;
 const TRAFFIC_MAX_FIXED_STEPS = 5;
 const TRAFFIC_ACCELERATION_METERS_PER_SECOND = 1.5;
 const TRAFFIC_BRAKE_METERS_PER_SECOND = 3.0;
-const SMARTCITY_TRAFFIC_RUNTIME_VERSION = 'roundabout-replay-20260619b';
+const SMARTCITY_TRAFFIC_RUNTIME_VERSION = 'roundabout-reverse-20260626a';
+const SMARTCITY_MODEL_VERSION = 'technopark-20260625e';
+
+function smartcityModelUrl(name) {
+  return new URL(`../../models/smartcity/${name}.glb?v=${SMARTCITY_MODEL_VERSION}`, import.meta.url).href;
+}
+
 const STATIC_SCENE_ASSETS = ['terrain', 'roads', 'buildings', 'landscape'].map((name) => ({
   name,
-  url: new URL(`../../models/smartcity/${name}.glb`, import.meta.url).href,
+  url: smartcityModelUrl(name),
 }));
+const TRAFFIC_LIGHTS_GLB_URL = smartcityModelUrl('traffic-lights');
+const PIPES_GLB_URL = smartcityModelUrl('pipes');
 let vehicleModelAssetSignature = null;
 let vehicleModelReloadInFlight = false;
+let trafficLightTransformsFromBlender = null;
+
+// Mạng đường ống ngầm (twin.glb) + điều khiển làm mờ thành phố để lộ đường ống.
+const PIPES_IFC_MAP_URL = new URL(
+  `../../models/smartcity/pipes-ifc-map.json?v=${SMARTCITY_MODEL_VERSION}`,
+  import.meta.url,
+).href;
+
+// Tòa TecnoPark (thay cho trung tâm thương mại cũ) — GLB nén Draco, đã đặt sẵn
+// vị trí + tỉ lệ trong Blender (master) nên chỉ cần add vào gốc cảnh. Mỗi phần tử
+// IFC bấm được để xem IOC info, giống mạng đường ống.
+const TECHNOPARK_GLB_URL = smartcityModelUrl('technopark');
+const TECHNOPARK_IFC_MAP_URL = new URL(
+  `../../models/smartcity/technopark-ifc-map.json?v=${SMARTCITY_MODEL_VERSION}`,
+  import.meta.url,
+).href;
+// Vị trí/tỉ lệ/xoay của tòa nhà (cập nhật mỗi lần lưu Blender) — áp lên GLB
+// (GLB chỉ chứa hình học gốc) nên di chuyển/thu phóng trong Blender đồng bộ real-time.
+const TECHNOPARK_TRANSFORM_URL = new URL(
+  `../../models/smartcity/technopark-transform.json?v=${SMARTCITY_MODEL_VERSION}&t=${Date.now()}`,
+  import.meta.url,
+).href;
+const cityFadeRoots = []; // các GLB tĩnh (terrain/roads/buildings/landscape)
+let cityRevealAmount = 0; // 0 = thành phố đầy đủ, 1 = chỉ còn đường ống
+let cityRevealDisplayed = 0; // giá trị đã làm mượt mỗi khung hình
 
 const TRAFFIC_LIGHT_GROUPS = {
   N: ['NS_STRAIGHT_RIGHT', 'NS_LEFT'],
@@ -86,47 +141,6 @@ function isDirectionAuditEnabled() {
   if (typeof window === 'undefined') return false;
   const params = new URLSearchParams(window.location.search);
   return params.get('directionAudit') === '1' || window.localStorage?.getItem('directionAudit') === '1';
-}
-
-function createTextSprite(text, color = '#ffffff') {
-  const canvas = document.createElement('canvas');
-  canvas.width = 384;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'rgba(7, 20, 36, 0.78)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 5;
-  ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '700 28px Roboto, Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
-  sprite.userData.canvas = canvas;
-  sprite.userData.ctx = ctx;
-  sprite.userData.color = color;
-  sprite.scale.set(4.2, 1.4, 1);
-  return sprite;
-}
-
-function setTextSprite(sprite, text, color = sprite.userData.color || '#ffffff') {
-  const { canvas, ctx } = sprite.userData;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgba(7, 20, 36, 0.78)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 5;
-  ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '700 28px Roboto, Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-  sprite.material.map.needsUpdate = true;
 }
 
 function getSignalState(cycle, t) {
@@ -162,6 +176,56 @@ function getLaneSignalState(vehicle, t) {
     signalGroup,
     allowsEntry: state.color === 'green' && state.movement === signalGroup,
   };
+}
+
+// Đèn điều tiết lối vào vòng xuyến: cặp đối diện cùng pha (N+S, rồi E+W),
+// xen kẽ vàng và toàn đỏ. Trả về 'green' | 'yellow' | 'red' cho từng hướng.
+function getRoundaboutApproachSignal(approach, t, cfg) {
+  const green = cfg?.greenSeconds ?? 8;
+  const yellow = cfg?.yellowSeconds ?? 2.5;
+  const allRed = cfg?.allRedSeconds ?? 1.5;
+  const half = green + yellow + allRed;
+  const cycle = half * 2;
+  const p = ((t % cycle) + cycle) % cycle;
+  const inFirstHalf = p < half;
+  const local = inFirstHalf ? p : p - half;
+  const phaseColor = local < green ? 'green' : local < green + yellow ? 'yellow' : 'red';
+  const groupNS = approach === 'N' || approach === 'S';
+  // Nửa đầu chu kỳ ưu tiên nhóm N+S, nửa sau ưu tiên E+W.
+  const groupActive = groupNS ? inFirstHalf : !inFirstHalf;
+  return groupActive ? phaseColor : 'red';
+}
+
+// Đặt đèn ngay trước vạch dừng của làn vào, lệch ra mép vỉa hè bên làn tới,
+// mặt đèn quay về phía xe đang chạy tới để tài xế thấy trước khi tới vạch.
+function computeRoundaboutLightTransforms() {
+  const approaches = ['N', 'E', 'S', 'W'];
+  const lateral = 2.6; // dịch ra mép đường, không nằm trên làn xe
+  const backFromLine = 0.6; // nhích về phía trước vạch dừng một chút
+  const out = [];
+  approaches.forEach((approach) => {
+    const route = trafficRuntime.routes.get(`${approach}-straight`)
+      || [...trafficRuntime.routes.values()].find((r) => r.approach === approach);
+    if (!route) return;
+    const stopS = getRouteStopLineS(route);
+    const stop = getRouteSample(route, stopS);
+    const back = getRouteSample(route, Math.max(0, stopS - 1.2));
+    let dx = stop.x - back.x;
+    let dz = stop.z - back.z;
+    const len = Math.hypot(dx, dz) || 1;
+    dx /= len;
+    dz /= len;
+    // Vuông góc hướng tới, hướng ra xa tâm (mép vỉa hè bên làn vào).
+    const ox = -dz;
+    const oz = dx;
+    out.push({
+      approach,
+      x: stop.x + ox * lateral - dx * backFromLine,
+      z: stop.z + oz * lateral - dz * backFromLine,
+      rot: Math.atan2(-dx, -dz),
+    });
+  });
+  return out;
 }
 
 function getVehicleLengthAllowance(vehicle) {
@@ -484,29 +548,37 @@ function applyReversePlaybackFrame(vehicle, frame) {
   if (vehicle.label) {
     vehicle.label.visible = true;
     vehicle.label.position.set(frame.position[0], 2.1, frame.position[2]);
-    setTextSprite(vehicle.label, `${vehicle.route.id} REVERSE_PLAYBACK_${vehicle.reverseAttempt}`, '#EF9F27');
+    setTextSprite(vehicle.label, `${vehicle.route.id} REVERSING_${vehicle.reverseAttempt}`, '#EF9F27');
   }
+}
+
+// Còn đủ lịch sử di chuyển để lùi tiếp một đoạn hay chưa (lùi theo đúng vệt đã đi
+// nên không bao giờ đi xuyên xe khác hay lệch ra ngoài làn).
+function hasReversibleHistory(vehicle) {
+  const history = vehicle.movementHistory || [];
+  if (history.length < 2) return false;
+  return (history[history.length - 1].time - history[0].time) >= REVERSE_PLAYBACK_MIN_DURATION;
 }
 
 function beginReversePlayback(yielder, priorityVehicle, t) {
   if (!yielder?.route || !yielder.mesh?.visible) return false;
   if (yielder.reversePlayback) return true;
   if ((yielder.reverseCooldownUntil || 0) > t) return false;
-  if ((yielder.reverseAttempt || 0) >= REVERSE_PLAYBACK_ATTEMPT_SECONDS.length) return false;
-  const history = yielder.movementHistory || [];
-  if (history.length < 2) return false;
-  const attempt = Math.min((yielder.reverseAttempt || 0) + 1, REVERSE_PLAYBACK_ATTEMPT_SECONDS.length);
-  const requestedDuration = REVERSE_PLAYBACK_ATTEMPT_SECONDS[attempt - 1];
+  if (!hasReversibleHistory(yielder)) return false;
+  const history = yielder.movementHistory;
+  const attempt = (yielder.reverseAttempt || 0) + 1;
   const endTime = history[history.length - 1].time;
   const availableDuration = endTime - history[0].time;
-  const duration = Math.min(requestedDuration, availableDuration);
-  if (duration < 0.2) return false;
+  // Lùi từng nhịp ngắn (CHUNK) rồi kiểm tra lại; số nhịp không giới hạn nên xe có thể
+  // lùi đến khi xe trước đi mới thôi, không bị kẹt vĩnh viễn như cách cũ (chỉ 3 lần).
+  const duration = Math.min(REVERSE_PLAYBACK_CHUNK_SECONDS, availableDuration);
+  if (duration < REVERSE_PLAYBACK_MIN_DURATION) return false;
   yielder.reverseAttempt = attempt;
   yielder.reversePriorityVehicle = priorityVehicle;
   yielder.reversePlayback = { attempt, duration, elapsed: 0, endTime, targetTime: endTime - duration };
   yielder.velocity = 0;
-  yielder.state = `REVERSE_PLAYBACK_${attempt}`;
-  if (trafficRuntime?.debug) console.info('[traffic-debug] reverse playback start', yielder.id, `attempt=${attempt}`, `duration=${duration.toFixed(2)}`, `priority=${priorityVehicle.id}`);
+  yielder.state = 'REVERSING';
+  if (trafficRuntime?.debug) console.info('[traffic-debug] reverse playback start', yielder.id, `attempt=${attempt}`, `duration=${duration.toFixed(2)}`, `priority=${priorityVehicle?.id}`);
   return true;
 }
 
@@ -533,11 +605,13 @@ function finishReversePlayback(vehicle, t) {
   vehicle.reversePlayback = null;
   vehicle.velocity = 0;
   const clear = hasReverseClearance(vehicle, priorityVehicle);
-  if (!clear && (vehicle.reverseAttempt || 0) < REVERSE_PLAYBACK_ATTEMPT_SECONDS.length) {
+  // Chưa thoát mà vẫn còn lịch sử để lùi -> lùi tiếp nhịp nữa (không giới hạn số nhịp),
+  // nên xe lùi đến khi xe trước đi mới thôi thay vì bỏ cuộc và kẹt cứng.
+  if (!clear && hasReversibleHistory(vehicle)) {
     recordVehicleHistory(vehicle, 0, true);
     if (beginReversePlayback(vehicle, priorityVehicle, t)) return;
   }
-  vehicle.reverseCooldownUntil = t + 0.45;
+  vehicle.reverseCooldownUntil = t + 0.3;
   vehicle.state = vehicle.distance < vehicle.route.entryS ? 'WAITING_TO_ENTER' : 'YIELDING';
   if (clear) {
     vehicle.reverseAttempt = 0;
@@ -556,8 +630,22 @@ function resolveReversePlayback(vehicle, delta, t) {
   if (frame) applyReversePlaybackFrame(vehicle, frame);
   vehicle.blockedFor = 0;
   vehicle.bodyContactFor = 0;
-  vehicle.state = `REVERSE_PLAYBACK_${playback.attempt}`;
+  vehicle.state = 'REVERSING';
   if (playback.elapsed >= playback.duration - 0.0001) finishReversePlayback(vehicle, t);
+  return true;
+}
+
+// Xe ưu tiên (spawn trước, không lùi) bị chặn đứng yên quá lâu -> bật chế độ "đi xuyên".
+// Trong lúc đi xuyên xe bỏ qua mọi vật cản và luôn tiến tới; xe đang lùi (spawn sau) thì
+// không kích hoạt vì nó nhường đường bằng cách lùi chứ không đi xuyên.
+function maybeStartPhaseThrough(vehicle, t) {
+  if ((vehicle.phaseThroughUntil || 0) > t) return true;
+  if (vehicle.reversePlayback || vehicle.reversePriorityVehicle) return false;
+  if ((vehicle.blockedFor || 0) < PHASE_THROUGH_TRIGGER_SECONDS) return false;
+  vehicle.phaseThroughUntil = t + PHASE_THROUGH_DURATION_SECONDS;
+  vehicle.blockedFor = 0;
+  vehicle.continuousReverse = false;
+  if (trafficRuntime?.debug) console.info('[traffic-debug] phase-through start', vehicle.id, vehicle.routeId);
   return true;
 }
 
@@ -577,8 +665,11 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
     vehicle.reverseAttempt = 0;
   }
 
-  const bodyContactBlocker = findBodyContactBlocker(vehicle, vehicle.distance, animatedObjects);
-  const stoppedNearBlocker = Math.abs(vehicle.velocity || 0) <= REVERSE_PLAYBACK_STOP_SPEED
+  // Đang trong cửa sổ "đi xuyên": bỏ qua mọi xử lý nhường/lùi/chạm, chỉ đi tiếp.
+  const phasingThrough = (vehicle.phaseThroughUntil || 0) > t;
+
+  const bodyContactBlocker = phasingThrough ? null : findBodyContactBlocker(vehicle, vehicle.distance, animatedObjects);
+  const stoppedNearBlocker = !phasingThrough && Math.abs(vehicle.velocity || 0) <= REVERSE_PLAYBACK_STOP_SPEED
     ? findGlobalProximityBlocker(
       vehicle,
       Math.min(route.length, vehicle.distance + 0.35),
@@ -588,14 +679,28 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
     : null;
   const mutualBlocker = bodyContactBlocker || stoppedNearBlocker;
   if (mutualBlocker) {
-    const { yielder, priorityVehicle } = chooseSpawnPriorityVehicles(vehicle, mutualBlocker.other);
-    const shouldReverseNow = Boolean(bodyContactBlocker) || Math.abs(yielder.velocity || 0) <= REVERSE_PLAYBACK_STOP_SPEED;
-    if (shouldReverseNow && beginReversePlayback(yielder, priorityVehicle, t)) {
+    let { yielder, priorityVehicle } = chooseSpawnPriorityVehicles(vehicle, mutualBlocker.other);
+    // Dây chuyền: nếu xe phía trước đang LÙI và chạm vào ta, ta phải lùi theo nó
+    // (bất kể quyền ưu tiên) rồi sẽ tiến lại khi nó đi — lan truyền tự nhiên về phía sau.
+    const blockerReversingIntoUs = Boolean(bodyContactBlocker) && Boolean(mutualBlocker.other.reversePlayback);
+    if (blockerReversingIntoUs) {
+      yielder = vehicle;
+      priorityVehicle = mutualBlocker.other;
+    }
+    // Giống giao thông thật: gặp xe phía trước thì NHƯỜNG (dừng chờ), không lùi.
+    // Chỉ chủ động lùi khi đã chạm thân VÀ kẹt cứng đủ lâu (cần thì lùi, không cần thì
+    // chỉ nhường) — lùi từng nhịp ngắn tới khi thoát.
+    const contactDeadlock = Boolean(bodyContactBlocker)
+      && (yielder.blockedFor || 0) >= REVERSE_TRIGGER_BLOCKED_SECONDS
+      && Math.abs(yielder.velocity || 0) <= REVERSE_PLAYBACK_STOP_SPEED;
+    if ((blockerReversingIntoUs || contactDeadlock) && beginReversePlayback(yielder, priorityVehicle, t)) {
       if (yielder === vehicle) return resolveReversePlayback(vehicle, delta, t);
     } else if (yielder === vehicle) {
       vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
       vehicle.state = beforeRoundaboutEntry ? 'WAITING_TO_ENTER' : 'YIELDING';
       vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
+      // KHÔNG despawn giữa đường: nếu chưa thoát thì cứ nhường/lùi tiếp, không bao giờ
+      // biến mất giữa đường. Lùi không giới hạn số nhịp đã đủ phá mọi thế kẹt thực tế.
       applyVehicleRoutePose(vehicle, delta);
       return true;
     }
@@ -625,6 +730,29 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
   const safeGap = route.safeGap + (vehicle.vehicleKind === 'bus' ? 2 : 0);
   let desiredSpeed = vehicle.speed || 5;
 
+  // Đèn tín hiệu CHỈ áp dụng trước vạch dừng, trước khi vào vòng xuyến.
+  // Đã qua vạch / đã vào vòng xuyến => bỏ qua đèn, không bao giờ dừng trong vòng.
+  const signalCfg = trafficRuntime.roundaboutSignal;
+  let signalStop = false;
+  if (signalCfg?.enabled && !vehicle.enteredIntersection) {
+    const signalColor = getRoundaboutApproachSignal(route.approach, t, signalCfg);
+    if (vehicle.runsRedLight) {
+      // Xe vi phạm: KHÔNG dừng đèn. Đánh dấu vượt đèn đỏ khi cán vạch lúc đèn không xanh.
+      // Cờ giữ tới khi xe despawn (reset ở resetVehicleOnRoute) để map 2D báo liên tục.
+      if (signalColor !== 'green' && vehicle.distance >= yieldLineS - 0.4) {
+        vehicle.redLightViolation = true;
+      }
+    } else if (vehicle.distance < yieldLineS - 0.02) {
+      if (signalColor === 'red') {
+        signalStop = true;
+      } else if (signalColor === 'yellow') {
+        // Vàng: dừng nếu còn phanh kịp trước vạch, nếu không thì đi tiếp.
+        const distToStop = yieldLineS - vehicle.distance;
+        signalStop = (vehicle.velocity || 0) <= stoppingSpeedForDistance(distToStop) + 0.05;
+      }
+    }
+  }
+
   if (!atEntryGate && vehicle.distance < route.entryS - 0.4) {
     vehicle.entryClearUntil = 0;
   } else if (canEnter && vehicle.distance < route.entryS + 0.7) {
@@ -633,7 +761,10 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
     vehicle.entryClearUntil = 0;
   }
 
-  if (atEntryGate && !canEnter) {
+  // Đang đi xuyên: luôn chạy hết tốc độ, bỏ qua cổng vào / đèn / giữ khoảng cách xe trước.
+  if (phasingThrough) {
+    vehicle.state = 'PHASING_THROUGH';
+  } else if ((atEntryGate && !canEnter) || signalStop) {
     desiredSpeed = Math.min(desiredSpeed, stoppingSpeedForDistance(yieldLineS - vehicle.distance));
     vehicle.state = 'WAITING_TO_ENTER';
   } else if (vehicle.distance < route.entryS) {
@@ -644,12 +775,14 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
     vehicle.state = 'EXITING';
   }
 
-  [sameRouteAhead, approachAhead, circulatingAhead].forEach((ahead) => {
-    const followedSpeed = applyCarFollowingSpeed(vehicle, desiredSpeed, ahead, safeGap, delta);
-    if (followedSpeed >= desiredSpeed) return;
-    desiredSpeed = followedSpeed;
-    if (vehicle.distance < route.entryS) vehicle.state = 'WAITING_TO_ENTER';
-  });
+  if (!phasingThrough) {
+    [sameRouteAhead, approachAhead, circulatingAhead].forEach((ahead) => {
+      const followedSpeed = applyCarFollowingSpeed(vehicle, desiredSpeed, ahead, safeGap, delta);
+      if (followedSpeed >= desiredSpeed) return;
+      desiredSpeed = followedSpeed;
+      if (vehicle.distance < route.entryS) vehicle.state = 'WAITING_TO_ENTER';
+    });
+  }
 
   if (vehicle.distance < route.entryS && vehicle.distance + desiredSpeed * delta >= route.entryS - 0.2) {
     reserveRoundaboutEntry(vehicle, t);
@@ -659,30 +792,41 @@ function updateRoundaboutVehicle(vehicle, delta, t) {
   vehicle.velocity = approachVehicleSpeed(vehicle.velocity, desiredSpeed, delta);
   const despawnDistance = route.length + 1.5;
   let nextDistance = Math.min(despawnDistance, vehicle.distance + vehicle.velocity * delta);
-  const shouldHoldAtYieldLine = vehicle.state === 'WAITING_TO_ENTER'
+  const shouldHoldAtYieldLine = !phasingThrough
+    && vehicle.state === 'WAITING_TO_ENTER'
     && vehicle.distance < route.entryS
-    && (vehicle.distance > yieldLineS || (atEntryGate && !canEnter));
+    && (vehicle.distance > yieldLineS || (atEntryGate && !canEnter) || signalStop);
   if (shouldHoldAtYieldLine) {
     nextDistance = Math.min(nextDistance, yieldLineS);
     if (nextDistance >= yieldLineS - 0.001) vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
   }
-  const detectedHardBlocker = beforeRoundaboutEntry
+  const detectedHardBlocker = (phasingThrough || beforeRoundaboutEntry)
     ? null
     : findGlobalProximityBlocker(vehicle, nextDistance, animatedObjects, trafficRuntime?.vehicles);
   const hardBlocker = detectedHardBlocker && isYieldingToPriority(detectedHardBlocker.other, vehicle)
     ? null
     : detectedHardBlocker;
   if (hardBlocker) {
-    vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
     vehicle.blockedFor = (vehicle.blockedFor || 0) + delta;
-    vehicle.continuousReverse = false;
-    vehicle.state = beforeRoundaboutEntry ? 'WAITING_TO_ENTER' : 'YIELDING';
+    // Bị chặn đứng yên quá lâu -> đi xuyên: từ frame này luôn đi tiếp (xuyên qua xe cản).
+    if (maybeStartPhaseThrough(vehicle, t)) {
+      vehicle.continuousReverse = false;
+      vehicle.yieldingTo = null;
+      vehicle.yieldUntil = 0;
+      vehicle.state = 'PHASING_THROUGH';
+      vehicle.distance = nextDistance;
+    } else {
+      vehicle.velocity = approachVehicleSpeed(vehicle.velocity, 0, delta);
+      vehicle.continuousReverse = false;
+      vehicle.state = beforeRoundaboutEntry ? 'WAITING_TO_ENTER' : 'YIELDING';
+    }
   } else {
-    vehicle.blockedFor = 0;
+    if (!phasingThrough) vehicle.blockedFor = 0;
     vehicle.bodyContactFor = 0;
     vehicle.continuousReverse = false;
     vehicle.yieldingTo = null;
     vehicle.yieldUntil = 0;
+    if (phasingThrough) vehicle.state = 'PHASING_THROUGH';
     vehicle.distance = nextDistance;
   }
   vehicle.enteredIntersection = vehicle.distance >= route.entryS;
@@ -889,7 +1033,7 @@ function updateVehicleModelHotReload(t) {
       replaceMovingVehicleModels();
       if (trafficRuntime.debug) console.info('[traffic-debug] reloaded vehicle models from vehicles.glb');
     })
-    .catch(() => {})
+    .catch(() => { })
     .finally(() => {
       vehicleModelReloadInFlight = false;
     });
@@ -948,6 +1092,8 @@ function createVehicle(vehicle) {
     reversePlayback: null,
     reversePriorityVehicle: null,
     reverseCooldownUntil: 0,
+    phaseThroughUntil: 0,
+    redLightViolation: false,
     respawnAt: spawnFromOutside
       ? Math.max(vehicle.startDelay ?? 0, (trafficRuntime?.vehicles?.length || 0) * ROUNDABOUT_MODEL_START_STAGGER_SECONDS)
       : 0,
@@ -992,7 +1138,7 @@ function addTrafficLight(light) {
   animatedObjects.push({ type: 'trafficLight', bulbs, approach: light.approach });
 }
 
-function addCamera() {}
+function addCamera() { }
 
 function addTrafficLayer() {
   const layout = smartcitySceneData.roadLayout || trafficSceneData.roadLayout || {};
@@ -1002,6 +1148,7 @@ function addTrafficLayer() {
     cycle,
     mode: trafficSceneData.roundabout?.enabled ? 'roundabout' : 'signal',
     roundabout: trafficSceneData.roundabout,
+    roundaboutSignal: trafficSceneData.roundabout?.signal || null,
     routes: buildTrafficRoutes(layout),
     debug: isTrafficDebugEnabled(),
     directionAudit: isDirectionAuditEnabled(),
@@ -1050,7 +1197,14 @@ function addTrafficLayer() {
       state: vehicle.state,
     }))));
   }
-  smartcitySceneData.trafficLights.forEach(addTrafficLight);
+  // Ưu tiên transform từ smartcity-master.blend (traffic-lights.glb). Nếu chưa có,
+  // dùng cách dựng cũ: vòng xuyến tính theo vạch dừng, ngã tư đèn dùng cấu hình tĩnh.
+  const lightDefs = trafficLightTransformsFromBlender && trafficLightTransformsFromBlender.length
+    ? trafficLightTransformsFromBlender
+    : (trafficRuntime.mode === 'roundabout'
+      ? computeRoundaboutLightTransforms()
+      : smartcitySceneData.trafficLights);
+  lightDefs.forEach(addTrafficLight);
   if (trafficRuntime.debug) {
     addTrafficDebugLayer(getLayer('traffic'));
   }
@@ -1103,6 +1257,44 @@ function addReportsLayer() {
   // Report metrics stay in the UI panels; avoid adding 3D columns over the city map.
 }
 
+// Đọc 4 vị trí đèn tín hiệu từ traffic-lights.glb (xuất từ smartcity-master.blend).
+// Trả về [{ approach, x, z, rot }] hoặc null nếu file chưa có / không có node nào hợp lệ.
+async function loadTrafficLightTransforms(loader) {
+  try {
+    const gltf = await loader.loadAsync(TRAFFIC_LIGHTS_GLB_URL);
+    const out = [];
+    const fallbackApproaches = ['N', 'E', 'S', 'W'];
+    gltf.scene.updateMatrixWorld(true);
+    gltf.scene.traverse((node) => {
+      const extras = node.userData || {};
+      let approach = extras.approach || extras.Approach;
+      if (!approach && typeof node.name === 'string') {
+        const match = node.name.match(/traffic-light-([NESW])$/i);
+        if (match) approach = match[1].toUpperCase();
+      }
+      if (!approach) return;
+      if (out.some((entry) => entry.approach === approach)) return;
+      const worldPos = new THREE.Vector3();
+      const worldQuat = new THREE.Quaternion();
+      node.getWorldPosition(worldPos);
+      node.getWorldQuaternion(worldQuat);
+      const euler = new THREE.Euler().setFromQuaternion(worldQuat, 'YXZ');
+      out.push({
+        approach: approach.toUpperCase(),
+        x: worldPos.x,
+        z: worldPos.z,
+        rot: euler.y,
+      });
+    });
+    if (!out.length) return null;
+    out.sort((a, b) => fallbackApproaches.indexOf(a.approach) - fallbackApproaches.indexOf(b.approach));
+    return out;
+  } catch (error) {
+    console.warn('[smartcity-scene] Chưa có traffic-lights.glb, dùng vị trí đèn mặc định.', error);
+    return null;
+  }
+}
+
 async function loadStaticCity(scene) {
   const loader = new GLTFLoader();
   const assets = await Promise.all(
@@ -1123,8 +1315,16 @@ async function loadStaticCity(scene) {
     }),
   );
 
-  assets.forEach((asset) => scene.add(asset));
+  assets.forEach((asset) => {
+    scene.add(asset);
+    cityFadeRoots.push(asset);
+  });
+  // Tải mạng đường ống ở chế độ nền (74MB) — không chặn việc dựng thành phố.
+  cityPicking.loadPipeNetwork(scene, loader);
+  // Tải tòa TecnoPark ở chế độ nền (Draco ~27MB) — thay cho trung tâm thương mại.
+  cityPicking.loadTechnopark(scene);
   await loadVehicleModelTemplates(loader, Date.now(), isTrafficDebugEnabled());
+  trafficLightTransformsFromBlender = await loadTrafficLightTransforms(loader);
   const water = scene.getObjectByName('terrain-water');
   if (water?.material) {
     animatedObjects.push({ type: 'pulseOpacity', mesh: water, base: 0.7, amp: 0.12, speed: 1.25 });
@@ -1205,21 +1405,79 @@ function applyLayerFocus(pageId) {
 }
 
 function updateGroupMaterials(delta) {
+  const cityFactor = 1 - cityRevealDisplayed;
   emphasisTargets.forEach((target, group) => {
     group.scale.lerp(new THREE.Vector3(target.targetScale, target.targetScale, target.targetScale), Math.min(1, delta * 5));
+    group.visible = cityFactor > 0.015;
     group.traverse((obj) => {
       if (!obj.material || obj.isSprite) return;
       const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
       materials.forEach((material) => {
-        if (material.userData.lockOpacity) return;
         if (material.opacity === undefined) return;
         const baseOpacity = material.userData.baseOpacity ?? 1;
-        const desiredOpacity = baseOpacity * target.targetOpacity;
-        if (material.transparent || desiredOpacity < 1) material.transparent = true;
-        material.opacity += (desiredOpacity - material.opacity) * Math.min(1, delta * 4);
+        // Vật liệu xe khoá opacity (lockOpacity) bỏ qua việc dim theo emphasis, NHƯNG
+        // vẫn phải mờ theo cityFactor để cả xe cũng mờ dần khi hiện đường ống.
+        const desiredOpacity = material.userData.lockOpacity
+          ? baseOpacity * cityFactor
+          : baseOpacity * target.targetOpacity * cityFactor;
+        if (cityFactor < 0.995) {
+          material.transparent = true;
+          material.depthWrite = false;
+        } else {
+          material.depthWrite = true;
+        }
+        // Gán trực tiếp (không lerp) để mọi vật liệu mờ đồng đều theo thanh trượt.
+        material.opacity = desiredOpacity;
       });
     });
   });
+}
+
+// 0 = thành phố đầy đủ, 1 = mờ hẳn thành phố và chỉ còn mạng đường ống dưới lòng đất.
+export function setCityPipeReveal(amount) {
+  cityRevealAmount = Math.max(0, Math.min(1, Number(amount) || 0));
+}
+
+function fadeRootMaterials(root, factor) {
+  const fading = factor < 0.995;
+  root.traverse((obj) => {
+    if (obj.isSprite || !obj.material) return;
+    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+    materials.forEach((material) => {
+      if (material.opacity === undefined) return;
+      const baseOpacity = material.userData.baseOpacity ?? 1;
+      // Vật liệu mặt đường/nền vốn đục: phải bật transparent VÀ tắt depthWrite khi
+      // đang mờ, nếu không chúng vẫn ghi chiều sâu và trông như không hề mờ đi.
+      if (fading) {
+        material.transparent = true;
+        material.depthWrite = false;
+      } else {
+        material.depthWrite = true;
+      }
+      // Gán trực tiếp opacity theo factor — mọi vật liệu mờ đồng đều, không trễ.
+      material.opacity = baseOpacity * factor;
+    });
+  });
+}
+
+function updatePipeReveal(delta) {
+  cityRevealDisplayed += (cityRevealAmount - cityRevealDisplayed) * Math.min(1, delta * 8);
+  if (Math.abs(cityRevealAmount - cityRevealDisplayed) < 0.004) cityRevealDisplayed = cityRevealAmount;
+  const cityFactor = 1 - cityRevealDisplayed;
+
+  // Làm mờ các GLB tĩnh (mặt đất, đường, toà nhà, cảnh quan) theo cityFactor.
+  cityFadeRoots.forEach((root) => {
+    fadeRootMaterials(root, cityFactor);
+    root.visible = cityFactor > 0.01;
+  });
+
+  // Hiện dần mạng đường ống theo mức reveal (gán trực tiếp).
+  const pipeGroup = cityPicking?.getPipeGroup();
+  const pipeMaterials = cityPicking?.getPipeMaterials() || [];
+  if (pipeGroup && pipeMaterials.length) {
+    for (const mat of pipeMaterials) mat.opacity = cityRevealDisplayed;
+    pipeGroup.visible = cityRevealDisplayed > 0.01;
+  }
 }
 
 function updateAnimations(clock, delta) {
@@ -1256,10 +1514,22 @@ function updateAnimations(clock, delta) {
   animatedObjects.forEach((item) => {
     if (item.type === 'trafficLight') {
       if (trafficRuntime?.mode === 'roundabout') {
-        item.bulbs.forEach((bulb) => {
-          bulb.material.emissive.setHex(0x111111);
-          bulb.material.emissiveIntensity = 0.04;
-        });
+        const cfg = trafficRuntime.roundaboutSignal;
+        if (cfg?.enabled) {
+          const color = getRoundaboutApproachSignal(item.approach, t, cfg);
+          // bulbs: 0 = đỏ (trên), 1 = vàng (giữa), 2 = xanh (dưới).
+          const onIndex = color === 'green' ? 2 : color === 'yellow' ? 1 : 0;
+          item.bulbs.forEach((bulb, i) => {
+            const on = i === onIndex;
+            bulb.material.emissive.setHex(on ? bulb.userData.signalColor : 0x111111);
+            bulb.material.emissiveIntensity = on ? 0.95 : 0.05;
+          });
+        } else {
+          item.bulbs.forEach((bulb) => {
+            bulb.material.emissive.setHex(0x111111);
+            bulb.material.emissiveIntensity = 0.04;
+          });
+        }
         return;
       }
       const lightGroups = TRAFFIC_LIGHT_GROUPS[item.approach] || [];
@@ -1292,9 +1562,23 @@ function updateAnimations(clock, delta) {
     }
 
     if (item.type === 'pulseOpacity') {
-      item.mesh.material.opacity = item.base + Math.sin(t * item.speed) * item.amp;
+      item.mesh.material.opacity = (item.base + Math.sin(t * item.speed) * item.amp) * (1 - cityRevealDisplayed);
     }
   });
+}
+
+// Kéo camera về tòa TecnoPark. onDone chạy sau khi tween xong (để khôi phục far/limit).
+function focusTechnopark(onDone = null, duration = 1100) {
+  const refs = sceneRefs;
+  if (!refs) { onDone?.(); return; }
+  const [tx, ty, tz] = TECHNOPARK_SCENE_POS;
+  tweenCameraTo(
+    refs.camera,
+    refs.controls,
+    [tx + 30, 34, tz + 46],
+    [tx, ty, tz],
+    duration,
+  ).then(() => onDone?.());
 }
 
 async function createScene(container, pageId) {
@@ -1313,10 +1597,28 @@ async function createScene(container, pageId) {
   controls.maxDistance = 105;
   applyCameraPreset(camera, controls, pageId);
 
+  // Controller mạng ống ngầm + tòa TecnoPark (loader + picking). Tạo TRƯỚC buildCity vì
+  // buildCity gọi loadPipeNetwork/loadTechnopark. State nằm trong closure của module; runtime
+  // chỉ đọc qua getter (getPipeGroup/getPipeMaterials) và inject mức reveal qua getCityReveal.
+  cityPicking = createIfcPicking({
+    getCityReveal: () => cityRevealDisplayed,
+    urls: {
+      pipesGlb: PIPES_GLB_URL,
+      pipesIfcMap: PIPES_IFC_MAP_URL,
+      technoparkGlb: TECHNOPARK_GLB_URL,
+      technoparkIfcMap: TECHNOPARK_IFC_MAP_URL,
+      technoparkTransform: TECHNOPARK_TRANSFORM_URL,
+    },
+  });
+
   await buildCity(scene);
   applyLayerFocus(pageId);
   showSceneLoading(container, false);
   setSceneHint(container, smartcitySceneData.cameraPresets[pageId]?.hint || smartcitySceneData.cameraPresets.overview.hint);
+
+  // Bản đồ thế giới 3D georeferenced — controller sở hữu state bản đồ trong closure, đọc
+  // sceneRefs qua getRefs (runtime gán sceneRefs ở cuối hàm này nên luôn đọc live đúng).
+  const worldMap = createWorldMap({ getRefs: () => sceneRefs });
 
   const clock = new THREE.Clock();
   let frameId;
@@ -1324,7 +1626,12 @@ async function createScene(container, pageId) {
     frameId = requestAnimationFrame(animate);
     const delta = Math.min(0.05, clock.getDelta());
     updateAnimations(clock, delta);
+    updatePipeReveal(delta);
     updateGroupMaterials(delta);
+    // Khi bật bản đồ: MapLibre tự vẽ scene qua custom layer (map.triggerRepaint) → bỏ
+    // render bằng canvas Three.js độc lập, nhưng VẪN chạy update để xe cộ/animation
+    // tiếp tục di chuyển và hiện đúng trên bản đồ.
+    if (worldMap.isEnabled()) return;
     if (!isCameraTweening(controls)) controls.update();
     renderer.render(scene, camera);
   }
@@ -1333,11 +1640,34 @@ async function createScene(container, pageId) {
   const ro = new ResizeObserver(() => sceneRefs?.onResize?.());
   ro.observe(container);
 
+  if (typeof window !== 'undefined') {
+    window.__smartcityScene = scene;
+    window.__smartcitySetPipeReveal = setCityPipeReveal;
+    window.__smartcityClearPipeHighlight = () => cityPicking.clearPipeHighlight();
+    window.__smartcityClearTechnoHighlight = () => cityPicking.clearTechnoHighlight();
+    window.__smartcitySetWorldMap = (on) => worldMap.setMode(on);
+    // "Đến TechnoPark": khi bản đồ đang mở → canh lại tâm bản đồ về TechnoPark;
+    // ngược lại → kéo camera 3D về tòa nhà như trước.
+    window.__smartcityFocusTechnopark = () => {
+      if (worldMap.isEnabled()) {
+        worldMap.flyToTechnopark();
+      } else {
+        focusTechnopark();
+      }
+    };
+  }
+  // Đồng bộ với thanh trượt nếu người dùng đã kéo trước khi cảnh 3D sẵn sàng.
+  const revealSlider = document.querySelector('[data-pipe-reveal]');
+  if (revealSlider) setCityPipeReveal((Number(revealSlider.value) || 0) / 100);
+
+  cityPicking.attachPipePicking(renderer.domElement, camera);
+  cityPicking.attachTechnoPicking(renderer.domElement, camera);
   sceneRefs = {
     camera,
     controls,
     container,
     renderer,
+    scene,
     onResize() {
       const host = rendererEl?.parentElement || container;
       const nw = host.clientWidth || 640;
@@ -1345,6 +1675,7 @@ async function createScene(container, pageId) {
       camera.aspect = nw / nh;
       camera.updateProjectionMatrix();
       renderer.setSize(nw, nh);
+      worldMap.resize();
     },
     dispose() {
       cancelAnimationFrame(frameId);
@@ -1369,6 +1700,18 @@ async function createScene(container, pageId) {
       layerGroups.clear();
       emphasisTargets.clear();
       animatedObjects.length = 0;
+      cityPicking.dispose();
+      cityPicking = null;
+      cityFadeRoots.length = 0;
+      cityRevealAmount = 0;
+      cityRevealDisplayed = 0;
+      worldMap.dispose();
+      if (typeof window !== 'undefined') {
+        window.__smartcitySetPipeReveal = null;
+        window.__smartcityClearPipeHighlight = null;
+        window.__smartcitySetWorldMap = null;
+        window.__smartcityFocusTechnopark = null;
+      }
       trafficRuntime = null;
       trafficSpawner = null;
       vehicleModelAssetSignature = null;

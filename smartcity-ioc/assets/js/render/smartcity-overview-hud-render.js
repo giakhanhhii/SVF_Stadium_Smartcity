@@ -265,7 +265,16 @@ export function renderSmartcityOverviewLeft(d) {
       title: 'Tổng quan vận hành',
       shortTitle: 'tổng quan',
       chart: cityOverviewChart(d.city),
-      action: false,
+      actions: `<div class="smart-overview-map-toggle" data-worldmap-host>
+        <label class="map-switch">
+          <input type="checkbox" class="map-switch__input" data-worldmap-toggle aria-label="Bật bản đồ thế giới">
+          <span class="map-switch__track"><span class="map-switch__thumb"></span></span>
+          <span class="map-switch__text">Bật bản đồ</span>
+        </label>
+        <button type="button" class="map-switch__goto" data-worldmap-goto hidden>
+          <i class="ti ti-map-pin"></i><span>Đến TechnoPark</span>
+        </button>
+      </div>`,
     },
     {
       id: 'traffic',

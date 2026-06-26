@@ -111,6 +111,55 @@ export function tweenCamera(camera, controls, pageId, duration = 850) {
   });
 }
 
+// Tween camera tới một vị trí/đích tùy ý (không qua preset) — dùng cho nút "Đến TechnoPark"
+// và lúc bật bản đồ thế giới (kéo camera ra để thấy bản đồ tròn).
+export function tweenCameraTo(camera, controls, posArray, targetArray, duration = 1100, fov = null) {
+  const token = nextTweenToken(camera);
+  const startPos = camera.position.clone();
+  const startTarget = controls.target.clone();
+  const endPos = new THREE.Vector3(...posArray);
+  const endTarget = new THREE.Vector3(...targetArray);
+  const startOrbit = new THREE.Spherical().setFromVector3(startPos.clone().sub(startTarget));
+  const endOrbit = new THREE.Spherical().setFromVector3(endPos.clone().sub(endTarget));
+  const thetaDelta = shortestAngleDelta(startOrbit.theta, endOrbit.theta);
+  const startFov = camera.fov;
+  const endFov = fov ?? startFov;
+  const t0 = performance.now();
+  beginCameraTransition(controls);
+
+  return new Promise((resolve) => {
+    function step(now) {
+      if (tweenTokens.get(camera) !== token) {
+        resolve(null);
+        return;
+      }
+      const t = Math.min(1, (now - t0) / Math.max(1, duration));
+      const e = smoothstepQuintic(t);
+      controls.target.lerpVectors(startTarget, endTarget, e);
+      const orbit = new THREE.Spherical(
+        THREE.MathUtils.lerp(startOrbit.radius, endOrbit.radius, e),
+        THREE.MathUtils.lerp(startOrbit.phi, endOrbit.phi, e),
+        startOrbit.theta + thetaDelta * e,
+      );
+      camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(orbit));
+      camera.fov = startFov + (endFov - startFov) * e;
+      camera.updateProjectionMatrix();
+      camera.lookAt(controls.target);
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        camera.position.copy(endPos);
+        controls.target.copy(endTarget);
+        camera.fov = endFov;
+        camera.updateProjectionMatrix();
+        camera.lookAt(controls.target);
+        endCameraTransition(controls);
+        resolve(true);
+      }
+    }
+    requestAnimationFrame(step);
+  });
+}
+
 export function setSceneHint(container, text) {
   const el = container?.querySelector('.map-scene-hint');
   if (el && text) el.textContent = `Kéo chuột xoay · Cuộn để zoom · ${text}`;

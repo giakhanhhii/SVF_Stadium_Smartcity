@@ -563,11 +563,120 @@ async function startPcccAutoChain(button) {
   button.dataset.running = 'false';
 }
 
+function renderPipeIocPanel(entry) {
+  const rows = [
+    ['Global ID', entry.IFC_GlobalId],
+    ['Tên', entry.IFC_Name],
+    ['Lớp IFC', entry.IFC_Class],
+    ['Tag', entry.IFC_Tag],
+    ['Tầng', entry.IFC_Storey],
+    ['Loại', entry.IFC_TypeName],
+    ['Vật liệu', entry.IFC_Materials],
+    ['Tệp nguồn', entry.IFC_SourceFile],
+    ['Trạng thái', entry.IOC_SQLite_Status],
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '');
+  return `<div class="pipe-ioc-panel" data-pipe-ioc-panel>
+    <button type="button" class="pipe-ioc-panel__close" data-pipe-ioc-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+    <div class="pipe-ioc-panel__head">
+      <span><i class="ti ti-pipe"></i></span>
+      <div><small>IOC Info · Đường ống</small><h3>${entry.IFC_Name || entry.IFC_GlobalId || 'Phần tử đường ống'}</h3></div>
+    </div>
+    <div class="pipe-ioc-panel__grid">
+      ${rows.map(([label, value]) => `<span class="pipe-ioc-panel__k">${label}</span><span class="pipe-ioc-panel__v">${value}</span>`).join('')}
+    </div>
+  </div>`;
+}
+
+function showPipeIocPanel(entry) {
+  document.querySelector('[data-pipe-ioc-panel]')?.remove();
+  if (!entry) return;
+  document.body.insertAdjacentHTML('beforeend', renderPipeIocPanel(entry));
+}
+
+// Bảng IOC info cho từng phần tử tòa TecnoPark (dùng lại style .pipe-ioc-panel).
+function renderTechnoIocPanel(entry) {
+  const rows = [
+    ['Global ID', entry.IFC_GlobalId],
+    ['Tên', entry.IFC_Name],
+    ['Lớp IFC', entry.IFC_Class],
+    ['Tag', entry.IFC_Tag],
+    ['Tầng', entry.IFC_Storey],
+    ['Loại', entry.IFC_TypeName],
+    ['Vật liệu', entry.IFC_Materials],
+    ['Tệp nguồn', entry.IFC_SourceFile],
+    ['Trạng thái', entry.IOC_SQLite_Status],
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '');
+  return `<div class="pipe-ioc-panel" data-techno-ioc-panel>
+    <button type="button" class="pipe-ioc-panel__close" data-techno-ioc-close aria-label="Đóng"><i class="ti ti-x"></i></button>
+    <div class="pipe-ioc-panel__head">
+      <span><i class="ti ti-building-skyscraper"></i></span>
+      <div><small>IOC Info · TecnoPark</small><h3>${entry.IFC_Name || entry.IFC_GlobalId || 'Phần tử tòa nhà'}</h3></div>
+    </div>
+    <div class="pipe-ioc-panel__grid">
+      ${rows.map(([label, value]) => `<span class="pipe-ioc-panel__k">${label}</span><span class="pipe-ioc-panel__v">${value}</span>`).join('')}
+    </div>
+  </div>`;
+}
+
+function showTechnoIocPanel(entry) {
+  document.querySelector('[data-techno-ioc-panel]')?.remove();
+  if (!entry) return;
+  document.body.insertAdjacentHTML('beforeend', renderTechnoIocPanel(entry));
+}
+
 export function bindInfrastructureOpsModal() {
   if (document.body.dataset.infraOpsBound === 'true') return;
   document.body.dataset.infraOpsBound = 'true';
 
+  // Thanh trượt "Hiện đường ống": mờ dần thành phố để lộ mạng đường ống ngầm.
+  document.addEventListener('input', (event) => {
+    const slider = event.target.closest('[data-pipe-reveal]');
+    if (!slider) return;
+    const pct = Math.max(0, Math.min(100, Number(slider.value) || 0));
+    const label = slider.closest('[data-pipe-reveal-host]')?.querySelector('[data-pipe-reveal-value]');
+    if (label) label.textContent = `${pct}%`;
+    window.__smartcitySetPipeReveal?.(pct / 100);
+  });
+
+  // Switch "Bật bản đồ": hiện bản đồ thế giới (đĩa tròn) dưới thành phố + nút Đến TechnoPark.
+  document.addEventListener('change', (event) => {
+    const toggle = event.target.closest('[data-worldmap-toggle]');
+    if (!toggle) return;
+    const on = toggle.checked;
+    const host = toggle.closest('[data-worldmap-host]');
+    const goto = host?.querySelector('[data-worldmap-goto]');
+    if (goto) goto.hidden = !on;
+    window.__smartcitySetWorldMap?.(on);
+  });
+
   document.addEventListener('click', (event) => {
+    if (event.target.closest('[data-worldmap-goto]')) {
+      window.__smartcityFocusTechnopark?.();
+    }
+  });
+
+  // Bấm vào phần tử đường ống trong cảnh 3D → hiện bảng IOC info của phần tử đó.
+  window.addEventListener('smartcity-pipe-pick', (event) => {
+    showPipeIocPanel(event.detail);
+  });
+
+  // Bấm vào phần tử tòa TecnoPark → hiện bảng IOC info của phần tử đó.
+  window.addEventListener('smartcity-tecnopark-pick', (event) => {
+    showTechnoIocPanel(event.detail);
+  });
+
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('[data-pipe-ioc-close]')) {
+      document.querySelector('[data-pipe-ioc-panel]')?.remove();
+      window.__smartcityClearPipeHighlight?.();
+      return;
+    }
+    if (event.target.closest('[data-techno-ioc-close]')) {
+      document.querySelector('[data-techno-ioc-panel]')?.remove();
+      window.__smartcityClearTechnoHighlight?.();
+      return;
+    }
+
     const opener = event.target.closest('[data-infra-ops-open]');
     if (opener) {
       const tab = opener.dataset.infraOpsOpen || 'overview';
@@ -2144,9 +2253,37 @@ function infrastructureAlertsPanel() {
   </section>`;
 }
 
+function pipeInfrastructurePanel() {
+  const kpis = [
+    { label: 'Áp suất', value: '4.2 bar', icon: 'ti-gauge' },
+    { label: 'Lưu lượng', value: '92%', icon: 'ti-ripple' },
+    { label: 'Điểm rò rỉ', value: '2', icon: 'ti-alert-triangle' },
+  ];
+  return `<section class="hud-block sc-diagram pipe-infra-card" data-diagram-family="pipe-infra">
+    ${hudHead('Hạ tầng đường ống')}
+    <div class="pipe-infra__stat">
+      <div class="pipe-infra__stat-main"><b>96.4%</b><span>Độ ổn định đường ống</span></div>
+      <em class="pipe-infra__trend"><i class="ti ti-trending-up"></i>+1.8%</em>
+    </div>
+    <div class="pipe-infra__chart"><canvas id="pipeStabilityChart"></canvas></div>
+    <div class="pipe-infra__kpis">
+      ${kpis.map((kpi) => `<span class="pipe-infra__kpi"><i class="ti ${kpi.icon}"></i><b>${kpi.value}</b><em>${kpi.label}</em></span>`).join('')}
+    </div>
+    <div class="pipe-reveal" data-pipe-reveal-host>
+      <div class="pipe-reveal__head">
+        <span><i class="ti ti-stack-2"></i>Hiện đường ống dưới lòng đất</span>
+        <b data-pipe-reveal-value>0%</b>
+      </div>
+      <input type="range" min="0" max="100" value="0" step="1" class="pipe-reveal__slider" data-pipe-reveal aria-label="Độ hiện đường ống">
+      <div class="pipe-reveal__hint">Kéo phải để mờ dần thành phố; 100% chỉ còn mạng lưới đường ống.</div>
+    </div>
+  </section>`;
+}
+
 const pageRenderers = {
   environment: {
     left: () => [
+      pipeInfrastructurePanel(),
       environmentNetwork(),
       environmentThermalMap(),
       infrastructureHealthSnapshot(),

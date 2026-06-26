@@ -100,6 +100,11 @@ export function createTrafficSpawner({
     vehicle.reversePlayback = null;
     vehicle.reversePriorityVehicle = null;
     vehicle.reverseCooldownUntil = 0;
+    vehicle.phaseThroughUntil = 0;
+    vehicle.redLightViolation = false;
+    // Mỗi lần spawn quyết định lại có vượt đèn đỏ không: 8% xe vượt, 92% dừng đèn đỏ.
+    // (Gán theo lượt spawn nên tỉ lệ ổn định ~8% bất kể số xe ngoài đường.)
+    vehicle.runsRedLight = Math.random() < 0.08;
     vehicle.maxForwardDistance = spawnS;
     vehicle.lastForwardProgressAt = t;
     vehicle.state = vehicle.route.mode === 'roundabout' ? 'APPROACHING' : 'queued';
@@ -143,6 +148,7 @@ export function createTrafficSpawner({
     vehicle.reversePlayback = null;
     vehicle.reversePriorityVehicle = null;
     vehicle.reverseCooldownUntil = 0;
+    vehicle.phaseThroughUntil = 0;
     vehicle.spawnOrder = Infinity;
     vehicle.maxForwardDistance = vehicle.distance;
     vehicle.lastForwardProgressAt = t;

@@ -9768,7 +9768,7 @@
   background: radial-gradient(circle at 50% 38%, #2fe0ff, #0090c0);
   color: #021019;
   font-size: 20px;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, calc(-50% + 9px));
   cursor: pointer;
   box-shadow: 0 0 0 6px rgba(0, 212, 255, 0.16), 0 0 22px rgba(0, 212, 255, 0.55);
   transition: transform 0.16s ease, box-shadow 0.16s ease;
@@ -9795,7 +9795,7 @@
 .traffic-camera-map__play:hover,
 .traffic-camera-map__play:focus-visible {
   outline: none;
-  transform: translate(-50%, calc(-50% + 4px)) scale(1.08);
+  transform: translate(-50%, calc(-50% + 9px)) scale(1.08);
   box-shadow: 0 0 0 7px rgba(0, 212, 255, 0.22), 0 0 28px rgba(0, 212, 255, 0.7);
 }
 
@@ -9944,6 +9944,10 @@
   font-size: 11px;
   font-weight: 700;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.traffic-live-modal__hint[data-tone="alert"] {
+  color: #ff8a8a;
 }
 
 .traffic-live-modal__hint[hidden] {
@@ -12975,5 +12979,306 @@
   border: 0;
   border-radius: 999px;
   background: rgba(216, 236, 255, 0.34);
+}
+
+/* ===== Hạ tầng đường ống (HUD block + thanh trượt hiện đường ống) ===== */
+.pipe-infra-card {
+  background: linear-gradient(165deg, rgba(11, 47, 84, 0.55), rgba(8, 27, 48, 0.35));
+  border: 1px solid rgba(0, 132, 209, 0.28);
+}
+.pipe-infra__stat {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 0 8px;
+}
+.pipe-infra__stat-main b {
+  font-size: 26px;
+  font-weight: 700;
+  color: #d6efff;
+  line-height: 1;
+}
+.pipe-infra__stat-main span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #8fbce0;
+}
+.pipe-infra__trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  font-style: normal;
+  color: #34d7c2;
+  background: rgba(52, 215, 194, 0.12);
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+.pipe-infra__chart {
+  position: relative;
+  height: 118px;
+  margin-bottom: 8px;
+}
+.pipe-infra__kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.pipe-infra__kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 4px;
+  border-radius: 8px;
+  background: rgba(0, 132, 209, 0.12);
+  border: 1px solid rgba(0, 132, 209, 0.2);
+}
+.pipe-infra__kpi i { color: #00d4ff; font-size: 15px; }
+.pipe-infra__kpi b { font-size: 14px; color: #e4f3ff; font-weight: 700; }
+.pipe-infra__kpi em { font-size: 10px; color: #8fbce0; font-style: normal; }
+
+.pipe-reveal {
+  padding-top: 9px;
+  border-top: 1px solid rgba(0, 132, 209, 0.2);
+}
+.pipe-reveal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.pipe-reveal__head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #b9def7;
+}
+.pipe-reveal__head i { color: #00d4ff; }
+.pipe-reveal__head b { font-size: 13px; font-weight: 700; color: #00d4ff; }
+.pipe-reveal__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #00d4ff, #185FA5);
+  outline: none;
+  cursor: pointer;
+}
+.pipe-reveal__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #eafaff;
+  border: 3px solid #00d4ff;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
+}
+.pipe-reveal__slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #eafaff;
+  border: 3px solid #00d4ff;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.7);
+}
+.pipe-reveal__hint {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #7fa9cf;
+  line-height: 1.4;
+}
+
+/* Switch "Bật bản đồ" (màu xanh nước biển) + nút Đến TechnoPark ở card Tổng quan vận hành */
+.smart-overview-map-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 9px;
+  margin-top: 2px;
+  border-top: 1px solid rgba(0, 132, 209, 0.2);
+}
+.map-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.map-switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.map-switch__track {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(13, 41, 66, 0.9);
+  border: 1px solid rgba(0, 132, 209, 0.5);
+  transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  flex: none;
+}
+.map-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #cfe9ff;
+  transition: transform 0.22s ease, background 0.22s ease;
+}
+.map-switch__input:checked + .map-switch__track {
+  background: linear-gradient(90deg, #0077c8, #0aa2ff);
+  border-color: #19a7ff;
+  box-shadow: 0 0 9px rgba(10, 162, 255, 0.65);
+}
+.map-switch__input:checked + .map-switch__track .map-switch__thumb {
+  transform: translateX(18px);
+  background: #f0fbff;
+}
+.map-switch__input:focus-visible + .map-switch__track {
+  box-shadow: 0 0 0 2px rgba(10, 162, 255, 0.55);
+}
+.map-switch__text {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #cfe9ff;
+}
+.map-switch__goto {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #19a7ff;
+  background: rgba(10, 119, 200, 0.18);
+  color: #d6f0ff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+.map-switch__goto:hover {
+  background: rgba(10, 162, 255, 0.32);
+  box-shadow: 0 0 8px rgba(10, 162, 255, 0.5);
+}
+.map-switch__goto[hidden] { display: none; }
+.map-switch__goto i { font-size: 14px; color: #19a7ff; }
+
+/* Bản đồ thật MapLibre GL (raster OpenStreetMap) phủ lên khung cảnh khi bật "Bật bản đồ".
+   Mô hình Smart City 3D được render thành custom layer georeferenced ngay trên bản đồ.
+   MapLibre tự nhúng dòng ghi nguồn OSM (attribution control) theo giấy phép. */
+.smartcity-world-map {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-radius: inherit;
+  overflow: hidden;
+  background: #0a1626;
+}
+.smartcity-world-map[hidden] { display: none; }
+/* Tông màu tối hài hòa với dashboard cho điều khiển zoom + ghi nguồn của MapLibre */
+.smartcity-world-map .maplibregl-ctrl-group,
+.smartcity-world-map .maplibregl-ctrl-attrib {
+  background: rgba(6, 18, 32, 0.82);
+  color: #cfe8fb;
+}
+.smartcity-world-map .maplibregl-ctrl-attrib a { color: #19a7ff; }
+.smartcity-world-map .maplibregl-ctrl-group button + button { border-top-color: rgba(255, 255, 255, 0.14); }
+
+/* Bảng IOC info khi bấm vào phần tử đường ống trong cảnh 3D */
+.pipe-ioc-panel {
+  position: fixed;
+  top: 96px;
+  right: 28px;
+  z-index: 1200;
+  width: 312px;
+  max-height: 72vh;
+  overflow-y: auto;
+  padding: 16px 16px 18px;
+  border-radius: 14px;
+  background: linear-gradient(165deg, rgba(9, 38, 70, 0.96), rgba(6, 22, 41, 0.96));
+  border: 1px solid rgba(0, 168, 255, 0.4);
+  box-shadow: 0 18px 48px rgba(0, 18, 40, 0.55), 0 0 0 1px rgba(0, 132, 209, 0.18);
+  backdrop-filter: blur(4px);
+  animation: pipe-ioc-in 0.18s ease-out;
+}
+@keyframes pipe-ioc-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pipe-ioc-panel__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #bfe4ff;
+  background: rgba(0, 132, 209, 0.18);
+}
+.pipe-ioc-panel__close:hover { background: rgba(0, 132, 209, 0.34); }
+.pipe-ioc-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-right: 26px;
+}
+.pipe-ioc-panel__head span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(0, 168, 255, 0.16);
+  color: #36c6ff;
+  font-size: 18px;
+}
+.pipe-ioc-panel__head small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6fa6d6;
+}
+.pipe-ioc-panel__head h3 {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8f5ff;
+  line-height: 1.25;
+  word-break: break-word;
+}
+.pipe-ioc-panel__grid {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 7px 10px;
+  font-size: 11.5px;
+}
+.pipe-ioc-panel__k { color: #7fb0d8; }
+.pipe-ioc-panel__v {
+  color: #e4f3ff;
+  font-weight: 500;
+  word-break: break-word;
 }
 

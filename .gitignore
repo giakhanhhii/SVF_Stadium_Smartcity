@@ -30,3 +30,6 @@ tests/screenshots/*.png
 # Generated document artifacts / local builders
 docs/
 scripts/build_stadium_brd_srs_docx.py
+
+# Blender auto-backup files (file .blend1 sinh tự động mỗi lần lưu) — không track
+*.blend1

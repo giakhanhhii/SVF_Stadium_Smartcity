@@ -157,6 +157,38 @@ function makeSignalLane(id, approach, turn, movement, points, layout) {
   return attachLaneDerivedFields(lane);
 }
 
+// Vạch dừng ĐÈN ĐỎ = mép NGOÀI vạch đi bộ (phía xe đang tới) — KHÁC vạch nhường sát vòng.
+// Hình học vạch đi bộ phải khớp addCrosswalkBars() trong smartcity-static-scene.js:
+//   tâm band = roadWidth/2 + 4.2 + barSpan/2 ;  barSpan = min(roadWidth*0.72, 6.2)
+//   => mép ngoài (phía xe tới) = roadWidth/2 + 4.2 + barSpan
+// Xe phải dừng TRƯỚC mép này nên lùi thêm SIGNAL_STOP_BACKOFF cho mũi xe nằm trước vạch.
+const CROSSWALK_INTERSECTION_MARGIN = 4.2;
+const CROSSWALK_MAX_BAR_SPAN = 6.2;
+const SIGNAL_STOP_BACKOFF = 2.0;
+
+function getSignalStopMagnitude(layout) {
+  const roadWidth = (layout.laneWidth || 3.5) * (layout.laneCountPerRoad || 4);
+  const barSpan = Math.min(roadWidth * 0.72, CROSSWALK_MAX_BAR_SPAN);
+  return roadWidth / 2 + CROSSWALK_INTERSECTION_MARGIN + barSpan + SIGNAL_STOP_BACKOFF;
+}
+
+// Quãng đường (S) trên route nơi nhánh tiếp cận cán mép ngoài vạch đi bộ. Nhánh N/S chạy
+// dọc trục z, E/W dọc trục x; magnitude của trục đó giảm dần khi xe tiến về tâm.
+function computeSignalStopS(lane, stopMagnitude) {
+  const axis = (lane.approach === 'N' || lane.approach === 'S') ? 'z' : 'x';
+  for (let i = 1; i < lane.points.length; i += 1) {
+    const prevMag = Math.abs(lane.points[i - 1][axis]);
+    const curMag = Math.abs(lane.points[i][axis]);
+    if (curMag <= stopMagnitude && prevMag > stopMagnitude) {
+      // Nội suy chính xác điểm cắt (polyline thưa nên không lấy thẳng điểm rời rạc — sẽ vọt quá).
+      const tt = (prevMag - stopMagnitude) / Math.max(0.001, prevMag - curMag);
+      const len = lane.lengths[i - 1] + (lane.lengths[i] - lane.lengths[i - 1]) * tt;
+      return Math.min(len, lane.stopLineS);
+    }
+  }
+  return lane.stopLineS;
+}
+
 function makeRoundaboutLane(id, approach, turn, points, meta) {
   const lane = {
     ...buildLaneBase(points),
@@ -256,6 +288,7 @@ function buildRoundaboutRoutes(layout, roundabout) {
   }));
   const approachOrder = ['N', 'E', 'S', 'W'];
   const turnToExitCount = { right: 1, straight: 2, left: 3 };
+  const signalStopMagnitude = getSignalStopMagnitude(layout);
   const routeDefs = [
     ['N-straight', 'N', 'straight'],
     ['S-straight', 'S', 'straight'],
@@ -294,6 +327,7 @@ function buildRoundaboutRoutes(layout, roundabout) {
       entryAngle,
       exitAngle,
     });
+    built.signalStopS = computeSignalStopS(built, signalStopMagnitude);
     return [built.id, built];
   }));
 }

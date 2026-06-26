@@ -80,33 +80,12 @@ export function createTrafficSpawner({
     vehicle.s = spawnS;
     vehicle.velocity = vehicle.speed || 0;
     vehicle.displayHeading = null;
-    vehicle.blockedFor = 0;
-    vehicle.spaceRequestFrom = null;
-    vehicle.spaceRequestUntil = 0;
-    vehicle.reverseUntil = 0;
-    vehicle.reverseStartedAt = 0;
-    vehicle.reverseRequestedAt = 0;
-    vehicle.reverseReason = null;
-    vehicle.reverseBlockedBy = null;
-    vehicle.reverseBlockedAt = 0;
-    vehicle.continuousReverse = false;
-    vehicle.bodyContactFor = 0;
     vehicle.entryClearUntil = 0;
-    vehicle.movementHistory = [];
-    vehicle.historyElapsed = 0;
-    vehicle.historyTravelTime = 0;
-    vehicle.historySampleElapsed = 0;
-    vehicle.reverseAttempt = 0;
-    vehicle.reversePlayback = null;
-    vehicle.reversePriorityVehicle = null;
-    vehicle.reverseCooldownUntil = 0;
-    vehicle.phaseThroughUntil = 0;
+    vehicle.stuckFor = 0;
     vehicle.redLightViolation = false;
     // Mỗi lần spawn quyết định lại có vượt đèn đỏ không: 8% xe vượt, 92% dừng đèn đỏ.
     // (Gán theo lượt spawn nên tỉ lệ ổn định ~8% bất kể số xe ngoài đường.)
     vehicle.runsRedLight = Math.random() < 0.08;
-    vehicle.maxForwardDistance = spawnS;
-    vehicle.lastForwardProgressAt = t;
     vehicle.state = vehicle.route.mode === 'roundabout' ? 'APPROACHING' : 'queued';
     vehicle.enteredIntersection = false;
     vehicle.exitedIntersection = false;
@@ -115,8 +94,6 @@ export function createTrafficSpawner({
     setVehiclePoseFromLane(vehicle, { s: spawnS, velocity: vehicle.speed || 0 });
     syncVehicleLaneState(vehicle);
     if (runtime()) {
-      runtime().spawnSequence = (runtime().spawnSequence || 0) + 1;
-      vehicle.spawnOrder = runtime().spawnSequence;
       runtime().lastSpawnAt = t;
       runtime().lastSpawnAtByLane.set(vehicle.route.id, t);
       runtime().lastSpawnAtByApproach?.set(vehicle.route.approach, t);
@@ -128,30 +105,7 @@ export function createTrafficSpawner({
     vehicle.mesh.visible = false;
     vehicle.velocity = 0;
     vehicle.displayHeading = null;
-    vehicle.blockedFor = 0;
-    vehicle.spaceRequestFrom = null;
-    vehicle.spaceRequestUntil = 0;
-    vehicle.reverseUntil = 0;
-    vehicle.reverseStartedAt = 0;
-    vehicle.reverseRequestedAt = 0;
-    vehicle.reverseReason = null;
-    vehicle.reverseBlockedBy = null;
-    vehicle.reverseBlockedAt = 0;
-    vehicle.continuousReverse = false;
-    vehicle.bodyContactFor = 0;
     vehicle.entryClearUntil = 0;
-    vehicle.movementHistory = [];
-    vehicle.historyElapsed = 0;
-    vehicle.historyTravelTime = 0;
-    vehicle.historySampleElapsed = 0;
-    vehicle.reverseAttempt = 0;
-    vehicle.reversePlayback = null;
-    vehicle.reversePriorityVehicle = null;
-    vehicle.reverseCooldownUntil = 0;
-    vehicle.phaseThroughUntil = 0;
-    vehicle.spawnOrder = Infinity;
-    vehicle.maxForwardDistance = vehicle.distance;
-    vehicle.lastForwardProgressAt = t;
     vehicle.state = state;
     vehicle.respawnAt = vehicle.route?.mode === 'roundabout'
       ? t + 1.5 + Math.random() * 2

@@ -1,4 +1,4 @@
-import { initSmartcityScene, disposeSmartcityScene } from './smartcity-scene-runtime.js?v=pipe-reveal-20260626d';
+import { initSmartcityScene, disposeSmartcityScene } from './smartcity-scene-runtime.js?v=pipe-reveal-20260626e';
 
 let currentPage = null;
 
@@ -14,4 +14,4 @@ export function initPageScenes(pageId) {
   currentPage = pageId;
 }
 
-export { applyPageView } from './smartcity-scene-runtime.js?v=pipe-reveal-20260626d';
+export { applyPageView } from './smartcity-scene-runtime.js?v=pipe-reveal-20260626e';

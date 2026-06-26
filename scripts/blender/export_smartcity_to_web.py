@@ -11,6 +11,7 @@ EXPORT_COLLECTIONS = {
     "SC_BUILDINGS": "buildings.glb",
     "SC_LANDSCAPE": "landscape.glb",
     "SC_VEHICLES": "vehicles.glb",
+    "SC_TRAFFIC_LIGHTS": "traffic-lights.glb",
 }
 
 
@@ -30,7 +31,19 @@ def default_output_dir():
 
 
 def collection_objects(collection):
-    objects = list(collection.objects)
+    objects = []
+    seen = set()
+
+    def add_with_children(obj):
+        if obj.name in seen:
+            return
+        seen.add(obj.name)
+        objects.append(obj)
+        for child in obj.children:
+            add_with_children(child)
+
+    for obj in collection.objects:
+        add_with_children(obj)
     for child in collection.children:
         objects.extend(collection_objects(child))
     return objects

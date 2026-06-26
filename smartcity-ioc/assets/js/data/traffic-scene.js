@@ -20,11 +20,19 @@ export const trafficSceneData = {
     minimumVehicleGap: 6.2,
     entryConflictRadius: 5.2,
     exitConflictRadius: 4.4,
-    maxActiveVehicles: 4,
-    maxActivePerApproach: 1,
-    spawnIntervalSeconds: 4.8,
-    spawnApproachIntervalSeconds: 9.0,
-    spawnClearance: 20,
+    maxActiveVehicles: 7,
+    maxActivePerApproach: 3,
+    spawnIntervalSeconds: 2.0,
+    spawnApproachIntervalSeconds: 4.5,
+    spawnClearance: 16,
+    // Đèn tín hiệu điều tiết lối vào vòng xuyến.
+    // Cặp đối diện cùng pha: N+S xanh -> E+W xanh, xen kẽ vàng + toàn đỏ.
+    signal: {
+      enabled: true,
+      greenSeconds: 8,
+      yellowSeconds: 2.5,
+      allRedSeconds: 1.5,
+    },
   },
   signalCycle: {
     yellowSeconds: 3,
@@ -36,14 +44,16 @@ export const trafficSceneData = {
       { id: 'ew-left', movement: 'EW_LEFT', label: 'EW left', greenSeconds: 8 },
     ],
   },
+  // runsRedLight: xe cố tình vượt đèn đỏ (bỏ qua tín hiệu đỏ ở lối vào).
+  // Số còn lại tuân thủ: dừng trước vạch khi đỏ.
   vehicles: [
     { type: 'car', style: 'luxurySedan', color: '#1f2530', routeId: 'N-straight', speed: 5.0, startDelay: 0 },
     { type: 'car', style: 'wedgeSupercar', color: '#f28b18', routeId: 'S-straight', speed: 4.9, startDelay: 0 },
-    { type: 'car', style: 'sportCoupe', color: '#c83838', routeId: 'W-straight', speed: 4.8, startDelay: 16 },
+    { type: 'car', style: 'sportCoupe', color: '#c83838', routeId: 'W-straight', speed: 4.8, startDelay: 16, runsRedLight: true },
     { type: 'car', style: 'urbanSuv', color: '#e8e8e8', routeId: 'E-straight', speed: 4.8, startDelay: 32 },
-    { type: 'car', style: 'wedgeSupercar', color: '#d4a030', routeId: 'E-straight', speed: 4.6, startDelay: 48 },
+    { type: 'car', style: 'wedgeSupercar', color: '#d4a030', routeId: 'E-straight', speed: 4.6, startDelay: 48, runsRedLight: true },
     { type: 'moto', color: '#222222', routeId: 'W-right', speed: 5.3, startDelay: 64 },
-    { type: 'moto', color: '#c02020', routeId: 'W-left', speed: 5.1, startDelay: 80 },
+    { type: 'moto', color: '#c02020', routeId: 'W-left', speed: 5.1, startDelay: 80, runsRedLight: true },
     { type: 'moto', color: '#1a1a1a', routeId: 'S-right', speed: 5.2, startDelay: 96 },
     { type: 'moto', color: '#444444', routeId: 'W-left', speed: 5.0, startDelay: 112 },
   ],

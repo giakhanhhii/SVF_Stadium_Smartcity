@@ -85,11 +85,11 @@ export const smartcitySceneData = {
       max: 34,
       stopRange: 4.8,
     })),
-    { id: 'veh-10', type: 'car', color: '#e24b4a', routeId: 'E-left', speed: 4.4, startDelay: 128, group: 'traffic' },
+    { id: 'veh-10', type: 'car', color: '#e24b4a', routeId: 'E-left', speed: 4.4, startDelay: 128, group: 'traffic', runsRedLight: true },
     { id: 'veh-11', type: 'car', color: '#ffffff', routeId: 'S-straight', speed: 4.8, startDelay: 144, group: 'traffic' },
     { id: 'veh-12', type: 'bus', color: '#f0b429', routeId: 'E-left', speed: 3.5, startDelay: 160, group: 'traffic' },
     { id: 'veh-13', type: 'car', color: '#1f2937', routeId: 'N-straight', speed: 4.7, startDelay: 176, group: 'traffic' },
-    { id: 'veh-14', type: 'moto', color: '#2a2a2a', routeId: 'E-straight', speed: 5.2, startDelay: 192, group: 'traffic' },
+    { id: 'veh-14', type: 'moto', color: '#2a2a2a', routeId: 'E-straight', speed: 5.2, startDelay: 192, group: 'traffic', runsRedLight: true },
   ],
   trafficLights: trafficSceneData.trafficLights.map((light, i) => ({
     id: `tl-${i + 1}`,

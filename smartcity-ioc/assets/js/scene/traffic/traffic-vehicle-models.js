@@ -71,10 +71,29 @@ export async function loadVehicleModelTemplates(loader, cacheKey = null, debug =
   }
 }
 
+function vehicleIdStableIndex(vehicleId, modulo) {
+  if (!modulo) return 0;
+  let hash = 0;
+  const str = String(vehicleId || '');
+  for (let i = 0; i < str.length; i += 1) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return hash % modulo;
+}
+
 function pickVehicleTemplate(vehicle) {
   const exact = vehicleModelTemplates.get(vehicle.id);
   if (exact) return { id: vehicle.id, object: exact, type: exact.userData?.smartcity_vehicle_type || vehicle.type || vehicle.vehicleKind || 'car' };
-  return null;
+  // Fallback: xe chưa có model riêng trong vehicles.glb thì mượn model cùng loại từ pool.
+  // Cho phép số xe trên đường vượt số model đã export (tới giới hạn maxActiveVehicles).
+  const wantType = vehicle.vehicleKind || vehicle.type || 'car';
+  let pool = vehicleModelTemplatePools.get(wantType);
+  if (!pool || !pool.length) {
+    // Không có pool đúng loại: gom mọi pool lại để vẫn spawn được.
+    pool = [...vehicleModelTemplatePools.values()].flat();
+  }
+  if (!pool.length) return null;
+  // Chọn ổn định theo id để mỗi xe luôn hiện cùng một model qua các lần respawn.
+  const picked = pool[vehicleIdStableIndex(vehicle.id, pool.length)];
+  return { id: picked.id, object: picked.object, type: picked.type || wantType };
 }
 
 function centerVehicleModelOnRoute(wrapper, clone) {

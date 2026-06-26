@@ -8,19 +8,25 @@ bl_info = {
     "category": "Import-Export",
 }
 
+import json
 from pathlib import Path
 
 import bpy
+import mathutils
 from bpy.app.handlers import persistent
 
 
 MASTER_FILENAME = "smartcity-master.blend"
+TECHNOPARK_ROOT = "TECHNOPARK_ROOT"
+# Blender Z-up -> glTF/three.js Y-up: point (x, y, z) -> (x, z, -y) (rot -90° about X).
+_YUP = mathutils.Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, -1, 0, 0), (0, 0, 0, 1)))
 EXPORT_COLLECTIONS = {
     "SC_TERRAIN": "terrain.glb",
     "SC_ROADS": "roads.glb",
     "SC_BUILDINGS": "buildings.glb",
     "SC_LANDSCAPE": "landscape.glb",
     "SC_VEHICLES": "vehicles.glb",
+    "SC_TRAFFIC_LIGHTS": "traffic-lights.glb",
 }
 
 _exporting = False
@@ -30,8 +36,39 @@ def _output_dir():
     return Path(bpy.data.filepath).resolve().parent.parent / "models" / "smartcity"
 
 
+def export_technopark_transform(output_dir):
+    """Write the TecnoPark placement (position/scale/rotation) as a tiny matrix
+    JSON so the website applies it to the geometry-only technopark.glb. This is
+    what makes moving / scaling the building in Blender update the web on save
+    in real time (the heavy GLB itself is only re-exported when geometry edits;
+    see scripts/blender/export_technopark_to_web.py)."""
+    root = bpy.data.objects.get(TECHNOPARK_ROOT)
+    if root is None:
+        return None
+    # Convert Blender world matrix into the same Y-up frame the web GLBs use.
+    matrix = _YUP @ root.matrix_world @ _YUP.inverted()
+    # three.js Matrix4.elements is column-major.
+    elements = [round(matrix[r][c], 6) for c in range(4) for r in range(4)]
+    (output_dir / "technopark-transform.json").write_text(
+        json.dumps({"matrix": elements}), encoding="utf-8"
+    )
+    return elements
+
+
 def _collection_objects(collection):
-    objects = list(collection.objects)
+    objects = []
+    seen = set()
+
+    def add_with_children(obj):
+        if obj.name in seen:
+            return
+        seen.add(obj.name)
+        objects.append(obj)
+        for child in obj.children:
+            add_with_children(child)
+
+    for obj in collection.objects:
+        add_with_children(obj)
     for child in collection.children:
         objects.extend(_collection_objects(child))
     return objects
@@ -88,6 +125,10 @@ def export_web_glbs():
                 export_attributes=True,
             )
             exported[filename] = filepath.stat().st_size
+        # TecnoPark: only its placement changes on a normal save -> write the
+        # tiny transform JSON (fast, real-time). The geometry GLB stays as-is.
+        if export_technopark_transform(output_dir) is not None:
+            exported["technopark-transform.json"] = (output_dir / "technopark-transform.json").stat().st_size
     finally:
         bpy.ops.object.select_all(action="DESELECT")
         for obj, was_hidden in hidden.items():

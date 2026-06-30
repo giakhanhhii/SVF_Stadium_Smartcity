@@ -862,6 +862,7 @@ async function createScene(container, pageId) {
     window.__smartcityClearPipeHighlight = () => cityPicking.clearPipeHighlight();
     window.__smartcityClearTechnoHighlight = () => cityPicking.clearTechnoHighlight();
     window.__smartcitySetWorldMap = (on) => worldMap.setMode(on);
+    window.__smartcitySetTechnoparkQuality = (high) => cityPicking.setTechnoparkQuality(high);
     // "Đến TechnoPark": khi bản đồ đang mở → canh lại tâm bản đồ về TechnoPark;
     // ngược lại → kéo camera 3D về tòa nhà như trước.
     window.__smartcityFocusTechnopark = () => {
@@ -926,6 +927,7 @@ async function createScene(container, pageId) {
         window.__smartcitySetPipeReveal = null;
         window.__smartcityClearPipeHighlight = null;
         window.__smartcitySetWorldMap = null;
+        window.__smartcitySetTechnoparkQuality = null;
         window.__smartcityFocusTechnopark = null;
       }
       trafficSim?.dispose();

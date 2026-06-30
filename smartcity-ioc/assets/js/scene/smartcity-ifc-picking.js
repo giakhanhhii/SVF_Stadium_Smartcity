@@ -174,6 +174,26 @@ export function createIfcPicking({ getCityReveal, urls }) {
         mesh.castShadow = false;
         mesh.receiveShadow = false;
         mesh.matrixAutoUpdate = false;
+        // Nút "Kính chất lượng cao": tạo SẴN vật liệu kính phản chiếu (PBR) cho từng
+        // khối đã gộp, giữ cùng màu. Phản chiếu lấy từ scene.environment có sẵn nên
+        // KHÔNG cần trong suốt → không rối lớp kính, vẫn giữ ~20 draw-call như bản nhẹ.
+        // Chỉ tốn hơn khi NGƯỜI DÙNG chủ động bật; mặc định vẫn là bản phẳng nhẹ.
+        // Màu nền sáng hơn hẳn bản nhẹ (xanh nước biển sáng) để khi bật không bị đen.
+        // metalness vừa phải → vẫn bóng/phản chiếu nhưng màu xanh vẫn hiện rõ;
+        // emissive nhẹ theo chính màu → mặt khuất không bị tối đen.
+        const fancyColor = mat.color.clone().multiplyScalar(2.1);
+        const fancy = new THREE.MeshStandardMaterial({
+          color: fancyColor,
+          metalness: 0.4,
+          roughness: 0.16,
+          envMapIntensity: 1.1,
+          emissive: fancyColor.clone().multiplyScalar(0.18),
+          emissiveIntensity: 1,
+          side: mat.side,
+          vertexColors: mat.vertexColors,
+        });
+        mesh.userData.liteMat = mat;
+        mesh.userData.fancyMat = fancy;
         merged.add(mesh);
         drawCalls += 1;
       }
@@ -432,6 +452,17 @@ export function createIfcPicking({ getCityReveal, urls }) {
     };
   }
 
+  // Nút "Kính chất lượng cao": đổi qua lại giữa vật liệu phẳng nhẹ (mặc định) và
+  // vật liệu kính phản chiếu PBR đã dựng sẵn. Chỉ đổi material, không đụng hình học.
+  function setTechnoparkQuality(high) {
+    if (!technoparkGroup) return false;
+    technoparkGroup.traverse((m) => {
+      if (!m.isMesh || !m.userData.liteMat) return;
+      m.material = high ? m.userData.fancyMat : m.userData.liteMat;
+    });
+    return true;
+  }
+
   // Dọn state khi hủy cảnh (mirror đúng khối dispose cũ trong runtime).
   function dispose() {
     clearPipeHighlight();
@@ -452,6 +483,7 @@ export function createIfcPicking({ getCityReveal, urls }) {
     attachTechnoPicking,
     clearPipeHighlight,
     clearTechnoHighlight,
+    setTechnoparkQuality,
     getPipeGroup: () => pipeGroup,
     getPipeMaterials: () => pipeMaterials,
     dispose,

@@ -1627,6 +1627,7 @@
   stroke: #00d4ff;
   stroke-linecap: round;
   filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.38));
+  transition: stroke-dashoffset 180ms ease;
 }
 
 .smartcity-smoke-gauge strong {

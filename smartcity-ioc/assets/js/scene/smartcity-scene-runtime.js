@@ -514,6 +514,9 @@ async function loadStaticCity(scene) {
         materials.forEach((material) => {
           if (!material) return;
           material.userData.baseOpacity = material.opacity;
+          // Lưu trạng thái transparent gốc để khôi phục đúng khi thành phố hiện lại
+          // (vật liệu vốn đục về lại đục, vật liệu vốn trong giữ nguyên trong).
+          material.userData.baseTransparent = material.transparent;
         });
       });
       return gltf.scene;
@@ -651,14 +654,18 @@ function fadeRootMaterials(root, factor) {
     materials.forEach((material) => {
       if (material.opacity === undefined) return;
       const baseOpacity = material.userData.baseOpacity ?? 1;
-      // Vật liệu mặt đường/nền vốn đục: phải bật transparent VÀ tắt depthWrite khi
-      // đang mờ, nếu không chúng vẫn ghi chiều sâu và trông như không hề mờ đi.
-      if (fading) {
-        material.transparent = true;
-        material.depthWrite = false;
-      } else {
-        material.depthWrite = true;
+      const baseTransparent = material.userData.baseTransparent ?? false;
+      // Vật liệu mặt đường/nền vốn đục (transparent=false): phải bật transparent VÀ
+      // tắt depthWrite khi đang mờ. QUAN TRỌNG: đổi cờ transparent lúc runtime bắt
+      // buộc material.needsUpdate = true để THREE biên dịch lại shader; nếu không,
+      // shader vẫn ở chế độ đục và bỏ qua opacity → mặt đất trông như không hề mờ.
+      // Chỉ gán needsUpdate khi cờ thực sự đổi để tránh recompile mỗi khung hình.
+      const wantTransparent = fading ? true : baseTransparent;
+      if (material.transparent !== wantTransparent) {
+        material.transparent = wantTransparent;
+        material.needsUpdate = true;
       }
+      material.depthWrite = !fading;
       // Gán trực tiếp opacity theo factor — mọi vật liệu mờ đồng đều, không trễ.
       material.opacity = baseOpacity * factor;
     });

@@ -333,6 +333,11 @@ export function renderSmartcityOverviewRight(d) {
           <span>Auto PCCC</span>
         </button>
         <p data-pccc-card-status>2 tòa nhà có nguy cơ cháy nổ</p>
+        <label class="map-switch smart-overview-techno-quality" data-techno-quality-host>
+          <input type="checkbox" class="map-switch__input" data-techno-quality-toggle aria-label="Bật kính chất lượng cao cho TechnoPark">
+          <span class="map-switch__track"><span class="map-switch__thumb"></span></span>
+          <span class="map-switch__text"><i class="ti ti-sparkles"></i> TechnoPark · Kính chất lượng cao</span>
+        </label>
       </div>`,
     },
     {

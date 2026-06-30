@@ -649,6 +649,14 @@ export function bindInfrastructureOpsModal() {
     window.__smartcitySetWorldMap?.(on);
   });
 
+  // Switch "Kính chất lượng cao": đổi tòa TechnoPark sang kính phản chiếu PBR (đẹp,
+  // nặng hơn) để trình diễn; tắt → về bản phẳng nhẹ mặc định.
+  document.addEventListener('change', (event) => {
+    const toggle = event.target.closest('[data-techno-quality-toggle]');
+    if (!toggle) return;
+    window.__smartcitySetTechnoparkQuality?.(toggle.checked);
+  });
+
   document.addEventListener('click', (event) => {
     if (event.target.closest('[data-worldmap-goto]')) {
       window.__smartcityFocusTechnopark?.();

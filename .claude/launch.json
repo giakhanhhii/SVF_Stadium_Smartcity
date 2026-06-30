@@ -7,6 +7,12 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3457,
       "autoPort": true
+    },
+    {
+      "name": "thuthiem-map",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8011", "--directory", "C:/Users/Administrator/Documents/Projects/TwinInput/ThuThiemDoan_Map"],
+      "port": 8011
     }
   ]
 }

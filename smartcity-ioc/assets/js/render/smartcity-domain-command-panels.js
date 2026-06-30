@@ -482,8 +482,9 @@ function runPcccSmokeGauge() {
     ring.style.strokeDashoffset = String(circ);
     let pct = 0;
     const timer = window.setInterval(() => {
-      pct = Math.min(100, pct + 20);
-      pctEl.textContent = String(pct);
+      // Bước nhỏ ngẫu nhiên (4–11%) + CSS transition trên ring → mượt như Auto PCCC ở SVĐ.
+      pct = Math.min(100, pct + 4 + Math.random() * 7);
+      pctEl.textContent = String(Math.round(pct));
       ring.style.strokeDashoffset = String(circ * (1 - pct / 100));
       status.textContent = pct >= 100
         ? 'Đã hút khói khu nguy cơ, cảm biến đang trở về ngưỡng an toàn.'
@@ -499,7 +500,8 @@ function runPcccSmokeGauge() {
 function runPcccPowerSequence() {
   return new Promise((resolve) => {
     const modal = document.querySelector('[data-pccc-power-modal]');
-    const zones = Array.from(modal?.querySelectorAll('[data-pccc-power-zone]') || []);
+    const zones = Array.from(modal?.querySelectorAll('[data-pccc-power-zone]') || [])
+      .sort(() => Math.random() - 0.5);
     const status = modal?.querySelector('[data-pccc-power-status]');
     let index = 0;
     const tick = () => {

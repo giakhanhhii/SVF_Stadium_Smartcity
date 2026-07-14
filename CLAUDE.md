@@ -14,7 +14,7 @@ Lệnh phụ khi agent cần server nền: `npm run dev:start` / `dev:check` / `
 ```
 partials/pages/*.html                        (khung trang, chứa các [data-mount])
   → assets/js/pages/*-page-hydration.js     (phễu duy nhất: lấy data, gọi render, gắn vào [data-mount])
-  → assets/js/services/data-service.js     (smartcity: getData/subscribe; provider chọn trong data-config.js)
+  → assets/js/services/data-service.js     (getData/subscribe; provider chọn trong data-config.js)
   → assets/js/render/*.js                   (hàm nhận data qua tham số, trả HTML string)
   → assets/js/data/*.js                     (mock data tĩnh — MockProvider trả nguyên các object này)
   → assets/js/scene/*.js                    (Three.js 3D, load .glb từ assets/models/)
@@ -23,9 +23,10 @@ partials/pages/*.html                        (khung trang, chứa các [data-mou
 
 Entry point mỗi app: `smartcity-ioc/assets/js/smartcity-app.js`, `stadium-ioc/assets/js/stadium-app.js`.
 
-Smartcity đã có tầng data-service (Phase 6): hydration gọi `await getData(pageId)`;
-đổi nguồn dữ liệu (mock/REST/WebSocket) chỉ cần sửa `services/data-config.js`,
-KHÔNG sửa render. Stadium chưa có tầng này.
+Cả 2 app đã có tầng data-service (Phase 6): hydration gọi `await getData(pageId)`;
+đổi nguồn dữ liệu (mock/REST/WebSocket) chỉ cần sửa `services/data-config.js` của app đó,
+KHÔNG sửa render. Domain `security` của stadium gộp `{ interior, exterior, legend }`;
+domain `reports` của stadium đọc từ `data/stadium-report-store.js` (store cục bộ).
 
 3 trang environment/utilities/reports của smartcity: data nằm ở
 `data/smartcity-domain-panels-data.js`; panel nằm trong

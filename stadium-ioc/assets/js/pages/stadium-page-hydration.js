@@ -7,37 +7,30 @@ import { renderEventsLeft, renderEventsRight, bindEventsHudTabs } from '../rende
 import { renderFacilitiesLeft, renderFacilitiesRight, bindFacilitiesActions } from '../render/stadium-facilities-hud-render.js';
 import { renderServicesLeft, renderServicesRight, bindServicesHudTabs } from '../render/stadium-services-hud-render.js';
 import { renderReportsLeft, renderReportsRight, bindReportsHistory } from '../render/reports-hud.js';
-import { overviewHud } from '../data/stadium-overview-hud-data.js';
-import { securityHud } from '../data/stadium-security-hud-data.js';
-import { securityExteriorHud, SECURITY_LEGEND } from '../data/security-exterior-hud.js';
-import { eventsHud } from '../data/stadium-events-hud-data.js';
-import { facilitiesHud } from '../data/stadium-facilities-hud-data.js';
-import { servicesHud } from '../data/stadium-services-hud-data.js';
-import { getReportsData } from '../data/stadium-report-store.js';
 import { renderViewTabs } from '../render/scene-view-tabs.js';
 import { initHudBlockDrag } from '../../../../shared-ioc/assets/js/render/hud-block-drag.js';
+import { getData, subscribe } from '../services/data-service.js';
 
 const STADIUM_INTERACTION_SCOPE = { storageNamespace: 'stadium' };
+const PAGE_IDS = ['overview', 'security', 'events', 'facilities', 'services', 'reports'];
 
-export function hydrateSecuritySidebars(mode = 'interior') {
-  const root = document.getElementById('page-security');
-  if (!root) return;
+function renderSecuritySidebars(root, securityData, mode = 'interior') {
   const left = root.querySelector('.sidebar-hud[data-mount="sidebar-left"]');
   const right = root.querySelector('.sidebar-hud[data-mount="sidebar-right"]');
   const legend = root.querySelector('.security-center__legend');
   root.classList.toggle('security-exterior-mode', mode === 'exterior');
   root.classList.toggle('security-interior-mode', mode !== 'exterior');
   if (mode === 'exterior') {
-    if (left) left.innerHTML = renderSecurityExteriorLeft(securityExteriorHud.left);
-    if (right) right.innerHTML = renderSecurityExteriorRight(securityExteriorHud.right);
-    bindSecurityExteriorHudTabs(root, securityExteriorHud);
+    if (left) left.innerHTML = renderSecurityExteriorLeft(securityData.exterior.left);
+    if (right) right.innerHTML = renderSecurityExteriorRight(securityData.exterior.right);
+    bindSecurityExteriorHudTabs(root, securityData.exterior);
   } else {
-    if (left) left.innerHTML = renderSecurityLeft(securityHud.left);
-    if (right) right.innerHTML = renderSecurityRight(securityHud.right);
-    bindSecurityHudTabs(root, securityHud);
+    if (left) left.innerHTML = renderSecurityLeft(securityData.interior.left);
+    if (right) right.innerHTML = renderSecurityRight(securityData.interior.right);
+    bindSecurityHudTabs(root, securityData.interior);
   }
   if (legend) {
-    const items = SECURITY_LEGEND[mode] || SECURITY_LEGEND.interior;
+    const items = securityData.legend[mode] || securityData.legend.interior;
     legend.innerHTML = items.map((item) =>
       `<span class="legend-item"><span class="legend-dot" style="background:${item.color}"></span>${item.label}</span>`,
     ).join('');
@@ -45,60 +38,72 @@ export function hydrateSecuritySidebars(mode = 'interior') {
   initHudBlockDrag(root, STADIUM_INTERACTION_SCOPE);
 }
 
-export function hydratePage(pageId) {
-  const root = document.getElementById('page-' + pageId);
+export async function hydrateSecuritySidebars(mode = 'interior') {
+  const root = document.getElementById('page-security');
   if (!root) return;
+  const securityData = await getData('security');
+  renderSecuritySidebars(root, securityData, mode);
+}
 
+function renderPage(root, pageId, data) {
   const mounts = {
     overview: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderOverviewLeft(overviewHud.left);
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderOverviewRight(overviewHud.right);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderOverviewLeft(data.left);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderOverviewRight(data.right);
       mountOverviewOpsBind(root);
-      const tabs = root.querySelector('[data-mount="view-tabs"]');
-      if (tabs) tabs.innerHTML = renderViewTabs('overview');
     },
     security: () => {
-      hydrateSecuritySidebars('interior');
-      const tabs = root.querySelector('[data-mount="view-tabs"]');
-      if (tabs) tabs.innerHTML = renderViewTabs('security');
+      renderSecuritySidebars(root, data, 'interior');
     },
     events: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderEventsLeft(eventsHud.left);
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderEventsRight(eventsHud.right);
-      bindEventsHudTabs(root, eventsHud);
-      const tabs = root.querySelector('[data-mount="view-tabs"]');
-      if (tabs) tabs.innerHTML = renderViewTabs('events');
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderEventsLeft(data.left);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderEventsRight(data.right);
+      bindEventsHudTabs(root, data);
     },
     facilities: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderFacilitiesLeft(facilitiesHud.left);
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderFacilitiesRight(facilitiesHud.right);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderFacilitiesLeft(data.left);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderFacilitiesRight(data.right);
       bindFacilitiesActions(root);
-      const tabs = root.querySelector('[data-mount="view-tabs"]');
-      if (tabs) tabs.innerHTML = renderViewTabs('facilities');
     },
     services: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderServicesLeft(servicesHud.left);
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderServicesRight(servicesHud.right);
-      bindServicesHudTabs(root, servicesHud);
-      const tabs = root.querySelector('[data-mount="view-tabs"]');
-      if (tabs) tabs.innerHTML = renderViewTabs('services');
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderServicesLeft(data.left);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderServicesRight(data.right);
+      bindServicesHudTabs(root, data);
     },
     reports: () => {
-      const reportsData = getReportsData();
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderReportsLeft(reportsData);
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderReportsRight(reportsData);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderReportsLeft(data);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderReportsRight(data);
       bindReportsHistory(root);
-      const tabs = root.querySelector('[data-mount="view-tabs"]');
-      if (tabs) tabs.innerHTML = renderViewTabs('reports');
     },
   };
 
   if (mounts[pageId]) mounts[pageId]();
+  const tabs = root.querySelector('[data-mount="view-tabs"]');
+  if (tabs) tabs.innerHTML = renderViewTabs(pageId);
   initHudBlockDrag(root, STADIUM_INTERACTION_SCOPE);
 }
 
-export function hydrateAllPages() {
-  ['overview', 'security', 'events', 'facilities', 'services', 'reports'].forEach(hydratePage);
+const subscribedPages = new Set();
+
+function ensureSubscription(pageId) {
+  if (subscribedPages.has(pageId)) return;
+  subscribedPages.add(pageId);
+  subscribe(pageId, (data) => {
+    const root = document.getElementById('page-' + pageId);
+    if (root) renderPage(root, pageId, data);
+  });
+}
+
+export async function hydratePage(pageId) {
+  const root = document.getElementById('page-' + pageId);
+  if (!root) return;
+  const data = await getData(pageId);
+  renderPage(root, pageId, data);
+  ensureSubscription(pageId);
+}
+
+export async function hydrateAllPages() {
+  await Promise.all(PAGE_IDS.map(hydratePage));
 }
 
 document.addEventListener('voc-security-view-changed', (event) => {
@@ -108,15 +113,5 @@ document.addEventListener('voc-security-view-changed', (event) => {
 });
 
 document.addEventListener('stadium-report-history-updated', () => {
-  const root = document.getElementById('page-reports');
-  if (!root) return;
-  const left = root.querySelector('[data-mount="sidebar-left"]');
-  const right = root.querySelector('[data-mount="sidebar-right"]');
-  if (!left || !right) return;
-  const reportsData = getReportsData();
-  left.innerHTML = renderReportsLeft(reportsData);
-  right.innerHTML = renderReportsRight(reportsData);
-  const tabs = root.querySelector('[data-mount="view-tabs"]');
-  if (tabs) tabs.innerHTML = renderViewTabs('reports');
-  initHudBlockDrag(root, STADIUM_INTERACTION_SCOPE);
+  hydratePage('reports');
 });

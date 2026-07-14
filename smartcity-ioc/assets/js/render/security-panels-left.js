@@ -1,18 +1,5 @@
 import { SMARTCITY_DEVICE_PRESETS } from './security-panels-right.js';
-
-function hudHead(title) {
-  return `<div class="hud-head"><span>${title}</span><i class="ti ti-dots"></i></div>`;
-}
-
-function piePoint(cx, cy, r, angle) {
-  const rad = (angle - 90) * Math.PI / 180;
-  return `${(cx + Math.cos(rad) * r).toFixed(1)} ${(cy + Math.sin(rad) * r).toFixed(1)}`;
-}
-
-function piePath(cx, cy, r, start, end) {
-  const large = end - start > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${piePoint(cx, cy, r, start)} A ${r} ${r} 0 ${large} 1 ${piePoint(cx, cy, r, end)} Z`;
-}
+import { hudHead, piePoint, piePath } from '../../../../shared-ioc/assets/js/render/hud-primitives.js';
 
 function residentPie3d(items) {
   let angle = -22;

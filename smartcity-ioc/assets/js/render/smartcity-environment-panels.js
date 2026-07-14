@@ -11,7 +11,7 @@ import {
   pcccFireHistory,
   pcccPowerZones,
 } from '../data/smartcity-domain-panels-data.js';
-import { hudHead, infraPiePoint, infraPiePath } from './smartcity-domain-panel-helpers.js';
+import { hudHead, piePoint as infraPiePoint, piePath as infraPiePath } from '../../../../shared-ioc/assets/js/render/hud-primitives.js';
 
 export function environmentThermalMap({ metrics }) {
   return `<section class="hud-block sc-diagram infra-ops-card" data-diagram-family="infrastructure-ops">

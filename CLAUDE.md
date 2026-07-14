@@ -13,19 +13,25 @@ Lệnh phụ khi agent cần server nền: `npm run dev:start` / `dev:check` / `
 
 ```
 partials/pages/*.html                        (khung trang, chứa các [data-mount])
-  → assets/js/pages/*-page-hydration.js     (phễu duy nhất: import data, gọi render, gắn vào [data-mount])
+  → assets/js/pages/*-page-hydration.js     (phễu duy nhất: lấy data, gọi render, gắn vào [data-mount])
+  → assets/js/services/data-service.js     (smartcity: getData/subscribe; provider chọn trong data-config.js)
   → assets/js/render/*.js                   (hàm nhận data qua tham số, trả HTML string)
-  → assets/js/data/*.js                     (mock data tĩnh — sau này thay bằng data-service)
+  → assets/js/data/*.js                     (mock data tĩnh — MockProvider trả nguyên các object này)
   → assets/js/scene/*.js                    (Three.js 3D, load .glb từ assets/models/)
   → assets/js/charts/*.js                   (Chart.js, đăng ký theo trang qua *-chart-registry.js)
 ```
 
 Entry point mỗi app: `smartcity-ioc/assets/js/smartcity-app.js`, `stadium-ioc/assets/js/stadium-app.js`.
 
-Ngoại lệ đã biết: 3 trang environment/utilities/reports của smartcity gọi
-`renderSmartcityDomainLeft('environment' | 'utilities' | 'reports')` — data của các panel này
-đang nhúng cứng bên trong `render/smartcity-domain-command-panels.js` (~2.400 dòng),
-chưa tách ra `data/*.js`.
+Smartcity đã có tầng data-service (Phase 6): hydration gọi `await getData(pageId)`;
+đổi nguồn dữ liệu (mock/REST/WebSocket) chỉ cần sửa `services/data-config.js`,
+KHÔNG sửa render. Stadium chưa có tầng này.
+
+3 trang environment/utilities/reports của smartcity: data nằm ở
+`data/smartcity-domain-panels-data.js`; panel nằm trong
+`render/smartcity-{environment,utilities,reports}-panels.js`;
+`render/smartcity-domain-command-panels.js` chỉ là aggregator giữ API
+`renderSmartcityDomainLeft/Right(pageId, data)` + các hàm `bind*`.
 
 ## Quy tắc
 
@@ -41,14 +47,17 @@ chưa tách ra `data/*.js`.
 - Test: `npm run test:stadium` (Playwright, chạy `tests/stadium-visual.spec.js`).
   Chưa có test cho smartcity.
 
-## Trùng lặp đã biết — KHÔNG tạo thêm bản copy mới
+## Dùng chung & phân kỳ có chủ đích
 
-Các file sau tồn tại ở 2 nơi với nội dung ĐÃ PHÂN KỲ (không giống nhau). Kiểm tra import trong
-`*-app.js` / `*-page-hydration.js` trước khi sửa để chọn đúng bản; không hợp nhất khi chưa có
-yêu cầu (việc hợp nhất thuộc lộ trình Phase 6 trong CLEANUP_PLAN.md):
+Đã hợp nhất về `shared-ioc` (cả 2 app cùng dùng, KHÔNG tạo bản copy mới):
+`render/hud-block-drag.js`, `render/sidebar-resize.js` (nhận `{ storageNamespace }`),
+`charts/chart-font.js`, `render/hud-primitives.js` (`hudHead`, `piePoint`, `piePath`).
 
-| File | Smartcity dùng | Stadium dùng |
-| --- | --- | --- |
-| `hud-block-drag.js` | `shared-ioc/assets/js/render/` | bản riêng `stadium-ioc/assets/js/render/` |
-| `sidebar-resize.js` | `shared-ioc/assets/js/render/` | bản riêng `stadium-ioc/assets/js/render/` |
-| `chart-font.js` | bản riêng `smartcity-ioc/assets/js/charts/` | bản riêng `stadium-ioc/assets/js/charts/` |
+Phân kỳ CÓ CHỦ ĐÍCH — đừng "hợp nhất" các thứ sau:
+- `ringSvg` có 3 bản (security-panels-right, traffic-panels-right, stadium hud-charts)
+  với kích thước/màu/class khác nhau theo từng chỗ dùng.
+- Boilerplate three.js (`setupRenderer`/`setupLighting`/`createScene`) và
+  `tweenCamera`/`shortestAngleDelta` được tinh chỉnh riêng theo từng scene
+  (pixelRatio, exposure, thời lượng tween, công thức góc của traffic sim).
+- Chart mini trong HUD cố ý vẽ bằng SVG string (không dùng Chart.js) để nhẹ —
+  đây là chủ đích, đừng "sửa" thành Chart.js.

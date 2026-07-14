@@ -1,6 +1,6 @@
 // Panel + modal trang Utilities (dịch vụ cư dân Vin). Tách từ smartcity-domain-command-panels.js.
 import { vinServiceModalData } from '../data/smartcity-domain-panels-data.js';
-import { hudHead, infraPiePoint, infraPiePath } from './smartcity-domain-panel-helpers.js';
+import { hudHead, piePoint as infraPiePoint, piePath as infraPiePath } from '../../../../shared-ioc/assets/js/render/hud-primitives.js';
 
 export function utilityResidentHero({ points }) {
   const line = points.map((point) => `${point.x},${point.y}`).join(' ');

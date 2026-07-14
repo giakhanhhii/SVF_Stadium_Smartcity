@@ -1,6 +1,4 @@
-export function hudHead(title) {
-  return `<div class="hud-head"><span>${title}</span><i class="ti ti-dots"></i></div>`;
-}
+export { hudHead } from '../../../../shared-ioc/assets/js/render/hud-primitives.js';
 
 export function barChartSvg(bars, { showLabels = true } = {}) {
   const max = Math.max(...bars.map((b) => b.value), 1);

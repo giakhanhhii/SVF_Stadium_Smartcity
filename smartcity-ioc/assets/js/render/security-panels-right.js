@@ -1,6 +1,4 @@
-function hudHead(title) {
-  return `<div class="hud-head"><span>${title}</span><i class="ti ti-dots"></i></div>`;
-}
+import { hudHead } from '../../../../shared-ioc/assets/js/render/hud-primitives.js';
 
 function ringSvg(pct, label) {
   const r = 24;

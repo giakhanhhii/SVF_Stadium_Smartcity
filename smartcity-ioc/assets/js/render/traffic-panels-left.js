@@ -1,5 +1,6 @@
 import { renderTrafficViolations, redLightModal } from './traffic-violations.js';
 import { openTrafficLiveMap, closeTrafficLiveMap } from './traffic-live-map.js';
+import { hudHead, piePoint, piePath } from '../../../../shared-ioc/assets/js/render/hud-primitives.js';
 
 const BLUE = '#00d4ff';
 const BLUE_DARK = '#185FA5';
@@ -100,20 +101,6 @@ const trafficCameraConfigs = [
     done: 'Đã xác nhận camera vạch dừng và lưu nhật ký theo dõi.',
   },
 ];
-
-function hudHead(title) {
-  return `<div class="hud-head"><span>${title}</span><i class="ti ti-dots"></i></div>`;
-}
-
-function piePoint(cx, cy, r, angle) {
-  const rad = (angle - 90) * Math.PI / 180;
-  return `${(cx + Math.cos(rad) * r).toFixed(1)} ${(cy + Math.sin(rad) * r).toFixed(1)}`;
-}
-
-function piePath(cx, cy, r, start, end) {
-  const large = end - start > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${piePoint(cx, cy, r, start)} A ${r} ${r} 0 ${large} 1 ${piePoint(cx, cy, r, end)} Z`;
-}
 
 function trafficPie3d(items) {
   let angle = -22;

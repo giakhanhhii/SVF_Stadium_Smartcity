@@ -4,7 +4,7 @@ import {
   trafficViolationDetails,
   reportIncidentDetails,
 } from '../data/smartcity-domain-panels-data.js';
-import { hudHead } from './smartcity-domain-panel-helpers.js';
+import { hudHead } from '../../../../shared-ioc/assets/js/render/hud-primitives.js';
 
 export function reportSummary({ slaPct, chips }) {
   return `<section class="hud-block sc-diagram" data-diagram-family="report-summary">

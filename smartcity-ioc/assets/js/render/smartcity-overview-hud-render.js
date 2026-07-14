@@ -1,6 +1,4 @@
-function hudHead(title) {
-  return `<div class="hud-head"><span>${title}</span><i class="ti ti-dots"></i></div>`;
-}
+import { hudHead, piePoint, piePath } from '../../../../shared-ioc/assets/js/render/hud-primitives.js';
 
 function compactLineChart(values, labels, id) {
   const max = Math.max(...values, 1);
@@ -69,16 +67,6 @@ function utilityUsageChart(data) {
       </span>`).join('')}
     </div>
   </div>`;
-}
-
-function piePoint(cx, cy, r, angle) {
-  const rad = (angle - 90) * Math.PI / 180;
-  return `${(cx + Math.cos(rad) * r).toFixed(1)} ${(cy + Math.sin(rad) * r).toFixed(1)}`;
-}
-
-function piePath(cx, cy, r, start, end) {
-  const large = end - start > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${piePoint(cx, cy, r, start)} A ${r} ${r} 0 ${large} 1 ${piePoint(cx, cy, r, end)} Z`;
 }
 
 function cityPie3d(groups) {

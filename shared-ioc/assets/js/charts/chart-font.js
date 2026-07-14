@@ -1,4 +1,4 @@
-/** Font Chart.js — khớp typography.css */
+/** Font Chart.js — khớp typography.css (dùng chung smartcity + stadium) */
 export const CHART_FONT_FAMILY = 'Roboto, "Segoe UI", Arial, sans-serif';
 
 if (globalThis.Chart?.defaults?.font) {

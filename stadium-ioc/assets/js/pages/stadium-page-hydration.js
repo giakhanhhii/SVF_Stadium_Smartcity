@@ -15,7 +15,9 @@ import { facilitiesHud } from '../data/stadium-facilities-hud-data.js';
 import { servicesHud } from '../data/stadium-services-hud-data.js';
 import { getReportsData } from '../data/stadium-report-store.js';
 import { renderViewTabs } from '../render/scene-view-tabs.js';
-import { initHudBlockDrag } from '../render/hud-block-drag.js';
+import { initHudBlockDrag } from '../../../../shared-ioc/assets/js/render/hud-block-drag.js';
+
+const STADIUM_INTERACTION_SCOPE = { storageNamespace: 'stadium' };
 
 export function hydrateSecuritySidebars(mode = 'interior') {
   const root = document.getElementById('page-security');
@@ -40,7 +42,7 @@ export function hydrateSecuritySidebars(mode = 'interior') {
       `<span class="legend-item"><span class="legend-dot" style="background:${item.color}"></span>${item.label}</span>`,
     ).join('');
   }
-  initHudBlockDrag(root);
+  initHudBlockDrag(root, STADIUM_INTERACTION_SCOPE);
 }
 
 export function hydratePage(pageId) {
@@ -92,7 +94,7 @@ export function hydratePage(pageId) {
   };
 
   if (mounts[pageId]) mounts[pageId]();
-  initHudBlockDrag(root);
+  initHudBlockDrag(root, STADIUM_INTERACTION_SCOPE);
 }
 
 export function hydrateAllPages() {
@@ -116,5 +118,5 @@ document.addEventListener('stadium-report-history-updated', () => {
   right.innerHTML = renderReportsRight(reportsData);
   const tabs = root.querySelector('[data-mount="view-tabs"]');
   if (tabs) tabs.innerHTML = renderViewTabs('reports');
-  initHudBlockDrag(root);
+  initHudBlockDrag(root, STADIUM_INTERACTION_SCOPE);
 });

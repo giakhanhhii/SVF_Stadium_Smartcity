@@ -1,4 +1,4 @@
-import { chartTickFont } from './chart-font.js';
+import { chartTickFont } from '../../../../shared-ioc/assets/js/charts/chart-font.js';
 
 const charts = {};
 const tick = chartTickFont(9);

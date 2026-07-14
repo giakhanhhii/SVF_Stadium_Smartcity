@@ -9,7 +9,9 @@ import {
 import { bindViewTabs } from './render/scene-view-tabs.js';
 import { bindHudTabs } from '../../../shared-ioc/assets/js/render/hud-tabs.js';
 import { mountStadiumSideNav } from './render/side-nav.js';
-import { initSidebarResize } from './render/sidebar-resize.js';
+import { initSidebarResize } from '../../../shared-ioc/assets/js/render/sidebar-resize.js';
+
+const STADIUM_INTERACTION_SCOPE = { storageNamespace: 'stadium' };
 
 const SCENE_PAGES = new Set(['overview', 'security', 'events', 'facilities', 'services', 'reports']);
 let currentPage = 'overview';
@@ -23,7 +25,7 @@ function onNavigate(pageId) {
   if (pageId === 'overview') initControlRoomUI('overview');
   if (pageId === 'security') activateSecurityTab();
   if (SCENE_PAGES.has(pageId)) bindViewTabs(pageId);
-  if (SCENE_PAGES.has(pageId)) initSidebarResize(pageId);
+  if (SCENE_PAGES.has(pageId)) initSidebarResize(pageId, STADIUM_INTERACTION_SCOPE);
 
   currentPage = pageId;
 }

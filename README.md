@@ -83,17 +83,11 @@ Trong Codex sandbox, Playwright có thể bị Windows chặn khi mở Chromium 
 npm run test:stadium
 ```
 
-## Ghi Chú Cho Codex Agent
+## Ghi Chú Cho AI Agent
 
-Người dùng chạy website bằng `npm run dev`. Các lệnh dưới đây chỉ là tiện ích phụ khi agent cần bật server nền hoặc kiểm tra môi trường:
-
-```powershell
-npm.cmd run dev:start
-npm.cmd run dev:check
-npm.cmd run dev:stop
-```
-
-Không dùng các lệnh phụ này thay cho hướng dẫn chạy website thông thường.
+Xem [CLAUDE.md](CLAUDE.md) — bản đồ codebase, luồng kiến trúc, quy tắc sửa code và danh sách
+file trùng lặp đã biết. Các lệnh tiện ích cho agent (`dev:start` / `dev:check` / `dev:stop`)
+cũng ghi ở đó.
 
 ## Export Excel
 

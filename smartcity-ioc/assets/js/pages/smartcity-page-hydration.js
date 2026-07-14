@@ -24,43 +24,37 @@ import {
   renderSmartcityOverviewLeft,
   renderSmartcityOverviewRight,
 } from '../render/smartcity-overview-hud-render.js';
-import { overviewData } from '../data/smartcity-overview-data.js';
-import { trafficData } from '../data/traffic.js';
-import { securityData } from '../data/smartcity-security-data.js';
-import { environmentData } from '../data/environment.js';
-import { utilitiesData } from '../data/utilities.js';
-import { reportsData } from '../data/smartcity-reports-data.js';
+import { getData, subscribe } from '../services/data-service.js';
 
-export function hydratePage(pageId) {
-  const root = document.getElementById('page-' + pageId);
-  if (!root) return;
+const PAGE_IDS = ['overview', 'traffic', 'security', 'environment', 'utilities', 'reports'];
 
+function renderPage(root, pageId, data) {
   const mounts = {
     overview: () => {
-      root.querySelector('[data-mount="overview-left"]').innerHTML = renderSmartcityOverviewLeft(overviewData);
-      root.querySelector('[data-mount="overview-right"]').innerHTML = renderSmartcityOverviewRight(overviewData);
+      root.querySelector('[data-mount="overview-left"]').innerHTML = renderSmartcityOverviewLeft(data);
+      root.querySelector('[data-mount="overview-right"]').innerHTML = renderSmartcityOverviewRight(data);
     },
     traffic: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderTrafficLeftSidebar(trafficData.left);
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderTrafficRightSidebar(trafficData.right);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderTrafficLeftSidebar(data.left);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderTrafficRightSidebar(data.right);
     },
     security: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderLeftSidebar(securityData.left);
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderRightSidebar(securityData.right);
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderLeftSidebar(data.left);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderRightSidebar(data.right);
     },
     environment: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('environment');
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('environment');
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('environment', data);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('environment', data);
       bindInfrastructureOpsModal();
     },
     utilities: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('utilities');
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('utilities');
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('utilities', data);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('utilities', data);
       bindVinServiceModal();
     },
     reports: () => {
-      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('reports');
-      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('reports');
+      root.querySelector('[data-mount="sidebar-left"]').innerHTML = renderSmartcityDomainLeft('reports', data);
+      root.querySelector('[data-mount="sidebar-right"]').innerHTML = renderSmartcityDomainRight('reports', data);
       bindSmartcityReportHistory();
     },
   };
@@ -68,8 +62,27 @@ export function hydratePage(pageId) {
   if (mounts[pageId]) mounts[pageId]();
 }
 
-export function hydrateAllPages() {
-  ['overview', 'traffic', 'security', 'environment', 'utilities', 'reports'].forEach(hydratePage);
+const subscribedPages = new Set();
+
+function ensureSubscription(pageId) {
+  if (subscribedPages.has(pageId)) return;
+  subscribedPages.add(pageId);
+  subscribe(pageId, (data) => {
+    const root = document.getElementById('page-' + pageId);
+    if (root) renderPage(root, pageId, data);
+  });
+}
+
+export async function hydratePage(pageId) {
+  const root = document.getElementById('page-' + pageId);
+  if (!root) return;
+  const data = await getData(pageId);
+  renderPage(root, pageId, data);
+  ensureSubscription(pageId);
+}
+
+export async function hydrateAllPages() {
+  await Promise.all(PAGE_IDS.map(hydratePage));
   bindTrafficCameraModal();
   bindSecurityModeTabs();
   bindRiskZoneTabs();

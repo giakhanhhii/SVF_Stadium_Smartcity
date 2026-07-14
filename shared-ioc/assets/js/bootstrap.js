@@ -14,7 +14,7 @@ export async function createApp({ pageIds, shellPath, pagePaths = {}, hydrateAll
   const html = await Promise.all(pageIds.map((id) => loadPartial(pagePaths[id] || `partials/pages/${id}.html`)));
   root.innerHTML = html.join('');
 
-  if (hydrateAllPages) hydrateAllPages();
+  if (hydrateAllPages) await hydrateAllPages();
   bindRouter(onNavigate);
   bindTimeTabs();
 }

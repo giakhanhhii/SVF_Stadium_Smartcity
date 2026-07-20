@@ -4,6 +4,7 @@
 ## 1. Hiện trạng dự án (SVF_Stadium_Smartcity)
 
 - Pipeline hiện có: **Blender (script Python) → GLB → dashboard web IOC** (`scripts/blender/`, `scripts/generate-smartcity-glb.mjs`, `scripts/generate-stadium-glb.mjs`, `shared-ioc/` với scene-3d, chart, map).
+- **Đã có sẵn twin cấp phần tử từ BIM/IFC thật** cho tòa TecnoPark và mạng đường ống ngầm: mô hình sinh trực tiếp từ file IFC gốc (bake chỉ số phần tử theo vertex, đối chiếu CSDL SQLite trích từ IFC), bấm chọn từng phần tử ra info panel ngay trên dashboard (`smartcity-ifc-picking.js`, `technopark-ifc-map.json`, `pipes-ifc-map.json`) — đây là proof-of-concept đúng mẫu SoFi Stadium × Willow (BIM + asset registry), nên dùng làm khuôn mẫu khi mở rộng sang các công trình/khu vực khác thay vì làm lại từ đầu.
 - Đã có logic mô phỏng xe (car logic), dashboard realtime mockup, tài liệu BRD/SRS IOC.
 - **Đối chiếu case study:** hướng web-first này trùng với xu hướng thế giới (client-side rendering chi phí thấp, truy cập rộng) — nên **giữ và củng cố**, không cần chuyển toàn bộ sang Unity/Unreal.
 
